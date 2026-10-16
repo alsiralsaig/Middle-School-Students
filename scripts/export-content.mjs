@@ -21,7 +21,7 @@ tsx.register();
 const mod = await import(resolve(root, 'apps/student/src/data/curriculumData.ts'));
 const subjects = mod.SUBJECTS_DATA;
 
-const dir = resolve(root, 'apps/student/src/content');
+const dir = resolve(root, 'shared/content');
 mkdirSync(dir, { recursive: true });
 
 let units = 0;

@@ -13,12 +13,12 @@ import {
   Table,
 } from '../components/ui';
 import { useSimulatedData } from '../hooks/useSimulatedData';
-import { SAMPLE_SUBJECTS } from '@shared/sampleContent';
+import { SUBJECTS_DATA, subjectEmoji, CONTENT_STATUS } from '@shared/curriculum';
 
 /* ============================ قائمة المواد ============================ */
 
 export const SubjectsPage: React.FC = () => {
-  const { data: subjects, loading } = useSimulatedData(SAMPLE_SUBJECTS);
+  const { data: subjects, loading } = useSimulatedData(SUBJECTS_DATA);
 
   return (
     <div className="space-y-5">
@@ -45,7 +45,7 @@ export const SubjectsPage: React.FC = () => {
                 <tr key={s.id} className="hover:bg-slate-50/70">
                   <td className="py-3 px-3">
                     <div className="flex items-center gap-2.5">
-                      <span className="text-lg">{s.icon}</span>
+                      <span className="text-lg">{subjectEmoji(s.id)}</span>
                       <div>
                         <p className="font-bold text-navy-800">{s.name}</p>
                         <p className="text-[10px] text-slate-500">{s.nameEn}</p>
@@ -56,7 +56,7 @@ export const SubjectsPage: React.FC = () => {
                   <td className="py-3 px-3 nums">{s.units.length}</td>
                   <td className="py-3 px-3 nums">{lessons}</td>
                   <td className="py-3 px-3">
-                    <StatusBadge status={s.status} />
+                    <StatusBadge status={CONTENT_STATUS} />
                   </td>
                   <td className="py-3 px-3">
                     <Link
@@ -81,7 +81,7 @@ export const SubjectsPage: React.FC = () => {
 
 export const SubjectDetailPage: React.FC = () => {
   const { subjectId } = useParams<{ subjectId: string }>();
-  const { data: subjects, loading } = useSimulatedData(SAMPLE_SUBJECTS);
+  const { data: subjects, loading } = useSimulatedData(SUBJECTS_DATA);
   const subject = (subjects ?? []).find((s) => s.id === subjectId);
 
   if (loading) return <LoadingState label="جارٍ تحميل تفاصيل المادة…" />;
@@ -108,7 +108,7 @@ export const SubjectDetailPage: React.FC = () => {
 
       <header className="flex items-start justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-3">
-          <span className="text-3xl">{subject.icon}</span>
+          <span className="text-3xl">{subjectEmoji(subject.id)}</span>
           <div>
             <h1 className="text-xl font-black text-navy-800">{subject.name}</h1>
             <p className="text-xs text-slate-500 mt-0.5">{subject.description}</p>
@@ -151,16 +151,16 @@ export const SubjectDetailPage: React.FC = () => {
                 <Table head={['#', 'الدرس', 'المدة', 'الأهداف', 'المرفقات', 'الحالة']}>
                   {unit.lessons.map((l) => (
                     <tr key={l.id} className="hover:bg-slate-50/70">
-                      <td className="py-2.5 px-3 nums text-slate-500">{l.number}</td>
+                      <td className="py-2.5 px-3 nums text-slate-500">{l.lessonNumber}</td>
                       <td className="py-2.5 px-3">
                         <p className="font-bold text-navy-800">{l.title}</p>
                         <p className="text-[10px] text-slate-500 line-clamp-1">{l.summary}</p>
                       </td>
                       <td className="py-2.5 px-3 nums">{l.durationMinutes} د</td>
-                      <td className="py-2.5 px-3 nums">{l.objectives.length}</td>
+                      <td className="py-2.5 px-3 nums">{l.learningObjectives.length}</td>
                       <td className="py-2.5 px-3 nums">{l.attachments.length}</td>
                       <td className="py-2.5 px-3">
-                        <StatusBadge status={l.status} />
+                        <StatusBadge status={CONTENT_STATUS} />
                       </td>
                     </tr>
                   ))}

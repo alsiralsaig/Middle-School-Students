@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Coffee, Maximize2, Minimize2, Pause, Play, RotateCcw, SkipForward, Timer, X } from 'lucide-react';
 import { pushNotification, showToast } from '../utils/toastBus';
+import { addFocusSession, getFocusLog } from '../utils/focusStore';
 
 interface Props {
   lessonTitle: string;
@@ -65,7 +66,10 @@ export const FocusModeOverlay: React.FC<Props> = ({ lessonTitle, onExit, onSessi
   const [mode, setMode] = useState<'work' | 'break'>('work');
   const [secondsLeft, setSecondsLeft] = useState(WORK_MIN * 60);
   const [running, setRunning] = useState(false);
-  const [sessions, setSessions] = useState(readSessions);
+  const [sessions, setSessions] = useState(() => {
+    const log = getFocusLog();
+    return Object.values(log).reduce((a, b) => a + b, 0);
+  });
   const [minimized, setMinimized] = useState(false);
   const runningRef = useRef(running);
   runningRef.current = running;
@@ -77,13 +81,10 @@ export const FocusModeOverlay: React.FC<Props> = ({ lessonTitle, onExit, onSessi
     (finishedMode: 'work' | 'break') => {
       beep(2);
       if (finishedMode === 'work') {
-        const next = sessions + 1;
+        const log = addFocusSession();
+        const next = Object.values(log).reduce((a, b) => a + b, 0);
         setSessions(next);
-        try {
-          localStorage.setItem(SESSIONS_KEY, String(next));
-        } catch {
-          /* تجاهل */
-        }
+        window.dispatchEvent(new CustomEvent('ssp:focus-changed'));
         showToast({
           title: 'انتهت جلسة التركيز (25 دقيقة) 🎯',
           message: 'أحسنت! خذ راحة قصيرة قبل مواصلة المذاكرة.',

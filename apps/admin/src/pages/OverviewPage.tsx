@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { Badge, Card, NotConnectedNote, StatusBadge } from '../components/ui';
 import { useSimulatedData } from '../hooks/useSimulatedData';
-import { SAMPLE_SUBJECTS, contentStats } from '@shared/sampleContent';
+import { SUBJECTS_DATA, curriculumStats, subjectEmoji, CONTENT_STATUS } from '@shared/curriculum';
 import { BRAND } from '@shared/brand';
 
 const StatCard: React.FC<{
@@ -35,8 +35,8 @@ const StatCard: React.FC<{
 );
 
 export const OverviewPage: React.FC = () => {
-  const { data: subjects, loading } = useSimulatedData(SAMPLE_SUBJECTS);
-  const stats = contentStats();
+  const { data: subjects, loading } = useSimulatedData(SUBJECTS_DATA);
+  const stats = curriculumStats();
 
   return (
     <div className="space-y-5">
@@ -63,13 +63,13 @@ export const OverviewPage: React.FC = () => {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <StatCard icon={BookOpen} label="المواد" value={stats.subjects} />
         <StatCard icon={Layers} label="الوحدات" value={stats.units} />
-        <StatCard icon={FlaskConical} label="الدروس" value={stats.lessons} hint="كلها تجريبية" />
-        <StatCard icon={FileText} label="عناصر المكتبة" value={stats.resources} hint="غير متاحة للتحميل" />
+        <StatCard icon={FlaskConical} label="الدروس" value={stats.lessons} hint={`من ${stats.plannedLessons} في الخطة`} />
+        <StatCard icon={FileText} label="عناصر المكتبة" value={stats.resources} hint="للعرض — غير مرفوعة" />
       </div>
 
       {/* حالة المحتوى */}
       <div className="grid lg:grid-cols-2 gap-4">
-        <Card title="المواد وحالة المحتوى" subtitle="مصدر البيانات: shared/sampleContent.ts">
+        <Card title="المواد وحالة المحتوى" subtitle="نفس مصدر بيانات تطبيق الطالب: shared/content/*.json">
           {loading ? (
             <div className="space-y-2">
               {[0, 1, 2, 3].map((i) => (
@@ -82,14 +82,14 @@ export const OverviewPage: React.FC = () => {
                 const lessons = s.units.reduce((a, u) => a + u.lessons.length, 0);
                 return (
                   <li key={s.id} className="flex items-center gap-3 py-2.5">
-                    <span className="text-lg w-8 text-center">{s.icon}</span>
+                    <span className="text-lg w-8 text-center">{subjectEmoji(s.id)}</span>
                     <div className="min-w-0 flex-1">
                       <p className="font-bold text-xs text-navy-800 truncate">{s.name}</p>
                       <p className="text-[10px] text-slate-500">
-                        {s.units.length} وحدة · {lessons} درس
+                        {s.units.length} من {s.unitsCount} وحدة · {lessons} من {s.lessonsCount} درس
                       </p>
                     </div>
-                    <StatusBadge status={s.status} />
+                    <StatusBadge status={CONTENT_STATUS} />
                   </li>
                 );
               })}

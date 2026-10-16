@@ -8,24 +8,13 @@
  *    والأرقام الأساسية (SAMPLE_RATING_STATS) بيانات تجريبية للعرض.
  */
 import { LessonFeedback } from '../types';
+import { SAMPLE_RATING_STATS } from '@shared/curriculum';
 
 const KEY = 'ssp_lesson_feedback_v1';
 const EVENT = 'ssp:feedback-changed';
 
 /** أرقام تجريبية للعرض (تحاكي تقييمات سابقة) — تُوسم بأنها تجريبية في الواجهة */
-export const SAMPLE_RATING_STATS: Record<string, { average: number; total: number }> = {
-  'math-l1': { average: 4.8, total: 54 },
-  'math-l2': { average: 4.7, total: 42 },
-  'math-l3': { average: 4.9, total: 88 },
-  'sci-l1': { average: 4.8, total: 63 },
-  'sci-l2': { average: 4.6, total: 39 },
-  'arb-l1': { average: 4.9, total: 96 },
-  'isl-l1': { average: 5.0, total: 112 },
-  'soc-l1': { average: 4.8, total: 75 },
-  'eng-l1': { average: 4.7, total: 50 },
-  'ict-l1': { average: 4.8, total: 37 },
-  'civ-l1': { average: 4.9, total: 44 },
-};
+
 
 export function getAllFeedback(): Record<string, LessonFeedback> {
   try {

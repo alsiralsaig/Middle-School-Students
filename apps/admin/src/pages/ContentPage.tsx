@@ -12,21 +12,25 @@ import {
   Table,
 } from '../components/ui';
 import { useSimulatedData } from '../hooks/useSimulatedData';
-import { allLessons } from '@shared/sampleContent';
+import { allLessons, CONTENT_STATUS } from '@shared/curriculum';
 
 export const ContentPage: React.FC = () => {
   const { data: lessons, loading } = useSimulatedData(allLessons());
   const [q, setQ] = useState('');
-  const [status, setStatus] = useState<'all' | 'sample' | 'verified'>('all');
 
   const filtered = useMemo(() => {
     const list = lessons ?? [];
     return list.filter((l) => {
-      const matchQ = !q.trim() || l.title.includes(q.trim()) || l.summary.includes(q.trim());
-      const matchS = status === 'all' || l.status === status;
-      return matchQ && matchS;
+      const term = q.trim();
+      if (!term) return true;
+      return (
+        l.title.includes(term) ||
+        l.summary.includes(term) ||
+        l.subjectName.includes(term) ||
+        l.unitTitle.includes(term)
+      );
     });
-  }, [lessons, q, status]);
+  }, [lessons, q]);
 
   return (
     <div className="space-y-5">
@@ -56,20 +60,9 @@ export const ContentPage: React.FC = () => {
               className="w-full pr-9 pl-3 py-2.5 rounded-xl border border-slate-200 text-xs focus:border-navy-800 focus:ring-2 focus:ring-navy-100 outline-none bg-white"
             />
           </div>
-          <div className="flex gap-2">
-            {(['all', 'sample', 'verified'] as const).map((s) => (
-              <button
-                key={s}
-                onClick={() => setStatus(s)}
-                className={`px-3 py-2 rounded-xl text-[11px] font-bold border transition-colors ${
-                  status === s
-                    ? 'bg-navy-800 text-white border-navy-800'
-                    : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
-                }`}
-              >
-                {s === 'all' ? 'الكل' : s === 'sample' ? 'تجريبي' : 'معتمد'}
-              </button>
-            ))}
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] text-slate-500">حالة كل المحتوى:</span>
+            <StatusBadge status={CONTENT_STATUS} />
           </div>
         </div>
 
@@ -101,7 +94,7 @@ export const ContentPage: React.FC = () => {
                     </span>
                   </td>
                   <td className="py-2.5 px-3">
-                    <StatusBadge status={l.status} />
+                    <StatusBadge status={CONTENT_STATUS} />
                   </td>
                 </tr>
               ))}
