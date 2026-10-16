@@ -10,7 +10,6 @@ import {
   CheckSquare, 
   Sparkles, 
   User, 
-  ShieldCheck, 
   Menu, 
   X,
   GraduationCap,
@@ -72,7 +71,7 @@ export const Header: React.FC<HeaderProps> = ({
             </span>
             <span className="text-slate-500">·</span>
             <span className="hidden sm:inline">
-              {language === 'en' ? 'Secondary Certificate Stage' : 'مرحلة الشهادة الثانوية والمقررات المعتمدة'}
+              {language === 'en' ? 'Middle School Certificate' : 'الشهادة المتوسطة — الصف الثالث المتوسط'}
             </span>
           </div>
           <div className="flex items-center gap-4 text-slate-300">
@@ -84,16 +83,6 @@ export const Header: React.FC<HeaderProps> = ({
             >
               <Languages className="w-3.5 h-3.5" />
               <span>{language === 'ar' ? 'English (EN)' : 'العربية (AR)'}</span>
-            </button>
-
-            <button
-              onClick={() => handleNavClick('admin-dashboard')}
-              className={`hover:text-amber-300 transition-colors flex items-center gap-1.5 cursor-pointer ${
-                currentView === 'admin-dashboard' ? 'text-amber-300 font-semibold' : ''
-              }`}
-            >
-              <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
-              <span>{t('adminDashboard')}</span>
             </button>
           </div>
         </div>
@@ -111,11 +100,11 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
           <div className="min-w-0 text-right">
             <span className="text-sm sm:text-lg font-bold tracking-tight text-white block truncate max-w-[40vw] sm:max-w-none">
-              <span className="sm:hidden">{language === 'en' ? 'Sudan Edu' : 'المنهاج'}</span>
-              <span className="hidden sm:inline">{language === 'en' ? 'Sudan Edu Platform' : 'منصة المنهاج السوداني'}</span>
+              <span className="sm:hidden">{language === 'en' ? 'Student Platform' : 'الطالب السوداني'}</span>
+              <span className="hidden sm:inline">{language === 'en' ? 'Smart Sudanese Student Platform' : 'منصة الطالب السوداني الذكية'}</span>
             </span>
             <span className="text-[10px] text-amber-400 font-medium hidden sm:block">
-              {language === 'en' ? 'Smart Secondary Education' : 'للشهادة الثانوية العامة'}
+              {language === 'en' ? 'Grade 9 — Sudan' : 'الصف الثالث المتوسط — السودان'}
             </span>
           </div>
         </button>

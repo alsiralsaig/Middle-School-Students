@@ -276,7 +276,7 @@ export const AccountManagerModal: React.FC = () => {
                     type="text"
                     value={newSchool}
                     onChange={e => setNewSchool(e.target.value)}
-                    placeholder="مثال: مدرسة وادي سيدنا الثانوية"
+                    placeholder="مثال: مدرسة وادي سيدنا المتوسطة"
                     className="w-full bg-[#08172B] border border-[#1B3658] focus:border-emerald-500 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-slate-500 outline-hidden transition-colors"
                   />
                 </div>

@@ -96,7 +96,7 @@ export const StudyReminderWidget: React.FC = () => {
         const perm = await Notification.requestPermission();
         setNotificationPermission(perm);
         if (perm === 'granted') {
-          new Notification('منصة المنهاج السوداني 🇸🇩', {
+          new Notification('منصة الطالب السوداني الذكية 🇸🇩', {
             body: 'تم تفعيل تذكيرات المذاكرة بنجاح! سنقوم بتنبيهك بمواعيد مراجعتك المقررة.',
             icon: '/favicon.ico',
           });

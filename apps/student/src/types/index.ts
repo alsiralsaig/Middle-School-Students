@@ -197,7 +197,6 @@ export type ViewMode =
   | 'exams'
   | 'ai-assistant'
   | 'student-dashboard'
-  | 'admin-dashboard'
   | 'leaderboard'
   | 'achievements'
   | 'study-rooms';

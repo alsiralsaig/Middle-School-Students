@@ -21,7 +21,6 @@ import { ResourcesView } from './views/ResourcesView';
 import { ExamsView } from './views/ExamsView';
 import { AIAssistantView } from './views/AIAssistantView';
 import { StudentDashboardView } from './views/StudentDashboardView';
-import { AdminDashboardView } from './views/AdminDashboardView';
 import { LeaderboardView } from './views/LeaderboardView';
 import { AchievementsView } from './views/AchievementsView';
 import { StudyRoomsView } from './views/StudyRoomsView';
@@ -196,9 +195,6 @@ function AppContent() {
           <StudyRoomsView onBackToDashboard={() => setCurrentView('student-dashboard')} />
         )}
 
-        {currentView === 'admin-dashboard' && (
-          <AdminDashboardView subjects={SUBJECTS_DATA} />
-        )}
       </main>
 
       {/* Footer */}

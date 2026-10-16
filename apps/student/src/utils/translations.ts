@@ -3,14 +3,13 @@ import { Language } from '../types';
 export const translations = {
   ar: {
     // Navigation & General
-    appTitle: 'منصة المنهاج السوداني للشهادة الثانوية',
+    appTitle: 'منصة الطالب السوداني الذكية — الصف الثالث المتوسط',
     home: 'الرئيسية',
     subjects: 'المقررات الدراسية',
     resources: 'المذكرات والملخصات',
     exams: 'بنك الامتحانات',
     aiAssistant: 'المعلم الذكي',
     dashboard: 'لوحة تحكم الطالب',
-    adminDashboard: 'لوحة الإدارة',
     leaderboard: 'لوحة الشرف',
     achievements: 'إنجازاتي',
     back: 'رجوع',
@@ -98,14 +97,13 @@ export const translations = {
   },
   en: {
     // Navigation & General
-    appTitle: 'Sudanese Secondary Certificate Platform',
+    appTitle: 'Smart Sudanese Student Platform — Grade 9',
     home: 'Home',
     subjects: 'Curriculum Subjects',
     resources: 'Notes & Resources',
     exams: 'Exam Bank',
     aiAssistant: 'Smart Tutor',
     dashboard: 'Student Dashboard',
-    adminDashboard: 'Admin Panel',
     leaderboard: 'Leaderboard',
     achievements: 'My Achievements',
     back: 'Back',

@@ -325,7 +325,7 @@ export const AchievementsView: React.FC<AchievementsViewProps> = ({ onBack }) =>
 
                 {/* Body Text */}
                 <p className="text-sm text-slate-700 mb-4">
-                  تشهد منصة المنهاج السوداني الإلكترونية للشهادة الثانوية بأن الطالب/الطالبة:
+                  تشهد منصة الطالب السوداني الذكية — الصف الثالث المتوسط (الشهادة المتوسطة) بأن الطالب/الطالبة:
                 </p>
 
                 <div className="my-5 py-3 px-6 bg-white/80 rounded-xl border border-amber-300 shadow-inner inline-block">
