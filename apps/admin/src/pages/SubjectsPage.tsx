@@ -14,6 +14,7 @@ import {
 } from '../components/ui';
 import { useSimulatedData } from '../hooks/useSimulatedData';
 import { SUBJECTS_DATA, subjectEmoji, CONTENT_STATUS } from '@shared/curriculum';
+import OfficialStructureCard from '../components/OfficialStructureCard';
 
 /* ============================ قائمة المواد ============================ */
 
@@ -38,7 +39,7 @@ export const SubjectsPage: React.FC = () => {
         {loading ? (
           <LoadingState label="جارٍ تحميل المواد…" />
         ) : (
-          <Table head={['المادة', 'الكود', 'الوحدات', 'الدروس', 'الحالة', '']}>
+          <Table head={['المادة', 'الكود', 'المقرَّر (كتاب)', 'شرحنا', 'الحالة', '']}>
             {(subjects ?? []).map((s) => {
               const lessons = s.units.reduce((a, u) => a + u.lessons.length, 0);
               return (
@@ -53,8 +54,19 @@ export const SubjectsPage: React.FC = () => {
                     </div>
                   </td>
                   <td className="py-3 px-3 nums text-slate-500">{s.code}</td>
-                  <td className="py-3 px-3 nums">{s.units.length}</td>
-                  <td className="py-3 px-3 nums">{lessons}</td>
+                  <td className="py-3 px-3 nums" title="ما يقرّره الكتاب الرسمي">
+                    <span className="font-bold text-emerald-700">
+                      {s.unitsCount} و / {s.lessonsCount}
+                    </span>
+                    {s.gradeWarning && (
+                      <span className="block text-[9px] text-amber-600 font-bold">
+                        كتاب صف آخر
+                      </span>
+                    )}
+                  </td>
+                  <td className="py-3 px-3 nums text-amber-700" title="ما ألّفناه نحن">
+                    {s.units.length} و / {lessons}
+                  </td>
                   <td className="py-3 px-3">
                     <StatusBadge status={CONTENT_STATUS} />
                   </td>
@@ -115,6 +127,11 @@ export const SubjectDetailPage: React.FC = () => {
           <div>
             <h1 className="text-xl font-black text-navy-800">{subject.name}</h1>
             <p className="text-xs text-slate-500 mt-0.5">{subject.description}</p>
+            {subject.curriculumRef && (
+              <p className="text-[10px] text-slate-400 mt-1 max-w-xl leading-relaxed">
+                {subject.curriculumRef}
+              </p>
+            )}
           </div>
         </div>
         <Button disabled title="التعديل يتطلب قاعدة بيانات (المرحلة القادمة)">
@@ -122,6 +139,8 @@ export const SubjectDetailPage: React.FC = () => {
           تعديل المادة
         </Button>
       </header>
+
+      <OfficialStructureCard subject={subject} />
 
       {subject.units.length === 0 ? (
         <Card>
