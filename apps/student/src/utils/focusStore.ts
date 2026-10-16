@@ -6,9 +6,17 @@
  * محفوظ محلياً حتى يتوفر حساب وقاعدة بيانات في المرحلة القادمة.
  */
 
+import { markDirty, registerSyncSource } from './syncBus';
+
 const LOG_KEY = 'ssp_focus_log_v1';
 const LEGACY_KEY = 'ssp_focus_sessions_v1';
+const CHANGE_EVENT = 'ssp:focus-changed';
 export const SESSION_MINUTES = 25;
+
+function notify(): void {
+  if (typeof window === 'undefined') return;
+  window.dispatchEvent(new CustomEvent(CHANGE_EVENT));
+}
 
 const pad = (n: number) => String(n).padStart(2, '0');
 export const dayKey = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
@@ -39,6 +47,8 @@ export function addFocusSession(date = new Date()): FocusLog {
     log[key] = (log[key] ?? 0) + 1;
     localStorage.setItem(LOG_KEY, JSON.stringify(log));
     localStorage.setItem(LEGACY_KEY, String(Object.values(log).reduce((a, b) => a + b, 0)));
+    notify();
+    markDirty('focus');
     return log;
   } catch {
     return getFocusLog();
@@ -90,3 +100,38 @@ export function focusStats(log: FocusLog = getFocusLog()): FocusStats {
     last7,
   };
 }
+
+/* ==================== ربط المخزن بمحرّك المزامنة ==================== */
+
+registerSyncSource(
+  'focus',
+  () => ({ log: getFocusLog() }),
+  (serverValue) => {
+    const log =
+      serverValue && typeof serverValue === 'object' && 'log' in serverValue
+        ? ((serverValue as { log?: Record<string, number> }).log ?? null)
+        : null;
+    if (!log) return;
+    try {
+      const merged = { ...getFocusLog() };
+      let changed = false;
+      Object.entries(log).forEach(([day, sessions]) => {
+        const want = Math.max(0, Math.min(50, Number(sessions) || 0));
+        if ((merged[day] ?? 0) < want) {
+          merged[day] = want;
+          changed = true;
+        }
+      });
+      if (changed) {
+        localStorage.setItem(LOG_KEY, JSON.stringify(merged));
+        localStorage.setItem(
+          LEGACY_KEY,
+          String(Object.values(merged).reduce((a, b) => a + b, 0)),
+        );
+        notify();
+      }
+    } catch (e) {
+      console.error('تعذّر دمج جلسات التركيز من الخادم:', e);
+    }
+  },
+);

@@ -9,6 +9,7 @@
  */
 import { LessonFeedback } from '../types';
 import { SAMPLE_RATING_STATS } from '@shared/curriculum';
+import { markDirty, registerSyncSource } from './syncBus';
 
 const KEY = 'ssp_lesson_feedback_v1';
 const EVENT = 'ssp:feedback-changed';
@@ -42,6 +43,7 @@ export function saveFeedback(feedback: Omit<LessonFeedback, 'updatedAt'>): void 
     all[feedback.lessonId] = { ...feedback, updatedAt: new Date().toISOString() };
     localStorage.setItem(KEY, JSON.stringify(all));
     notify();
+    markDirty('ratings');
   } catch (e) {
     console.error('تعذّر حفظ التقييم:', e);
   }
@@ -53,6 +55,7 @@ export function removeFeedback(lessonId: string): void {
     delete all[lessonId];
     localStorage.setItem(KEY, JSON.stringify(all));
     notify();
+    markDirty('ratings');
   } catch (e) {
     console.error('تعذّر حذف التقييم:', e);
   }
@@ -104,3 +107,46 @@ export const FEEDBACK_TAGS = [
   'الدرس طويل ويحتاج تقسيم',
   'المرفقات لا تعمل',
 ];
+
+/* ==================== ربط المخزن بمحرّك المزامنة ==================== */
+
+registerSyncSource(
+  'ratings',
+  () =>
+    Object.values(getAllFeedback()).map((f) => ({
+      lessonId: f.lessonId,
+      rating: f.rating,
+      comment: f.comment || null,
+      createdAt: f.updatedAt,
+    })),
+  (serverValue) => {
+    const list = Array.isArray(serverValue) ? (serverValue as Array<Record<string, unknown>>) : [];
+    if (!list.length) return;
+    try {
+      const all = getAllFeedback();
+      let changed = false;
+      list.forEach((row) => {
+        const lessonId = String(row.lessonId ?? '');
+        const rating = Number(row.rating ?? 0);
+        if (!lessonId || rating < 1 || rating > 5) return;
+        const serverAt = String(row.createdAt ?? '');
+        const local = all[lessonId];
+        if (local && serverAt && local.updatedAt > serverAt) return; // المحلي أحدث
+        if (local && local.rating === rating && (local.comment || '') === String(row.comment ?? '')) return;
+        all[lessonId] = {
+          lessonId,
+          rating,
+          comment: String(row.comment ?? ''),
+          updatedAt: serverAt || new Date().toISOString(),
+        };
+        changed = true;
+      });
+      if (changed) {
+        localStorage.setItem(KEY, JSON.stringify(all));
+        notify();
+      }
+    } catch (e) {
+      console.error('تعذّر دمج التقييمات من الخادم:', e);
+    }
+  },
+);

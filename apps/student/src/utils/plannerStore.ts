@@ -9,6 +9,7 @@
  */
 import { CalendarEvent } from '../types';
 import { INITIAL_CALENDAR_EVENTS } from '../data/platformFeaturesData';
+import { markDirty, registerSyncSource } from './syncBus';
 
 const STORE_KEY = 'ssp_planner_events_v1';
 const CHANGE_EVENT = 'ssp:planner-changed';
@@ -58,19 +59,58 @@ export function getAllEvents(): PlannerEvent[] {
 
 export function addEvent(event: PlannerEvent): void {
   writeUserEvents([...readUserEvents(), event]);
+  markDirty('planner');
 }
 
 export function addEvents(events: PlannerEvent[]): void {
   writeUserEvents([...readUserEvents(), ...events]);
+  markDirty('planner');
 }
 
 export function removeEvent(id: string): void {
   writeUserEvents(readUserEvents().filter((e) => e.id !== id));
+  markDirty('planner');
 }
 
 export function removeGroup(groupId: string): void {
   writeUserEvents(readUserEvents().filter((e) => e.recurring?.groupId !== groupId));
+  markDirty('planner');
 }
+
+/* ==================== ربط المخزن بمحرّك المزامنة ==================== */
+
+/** يدمج مواعيد الخادم مع المحلية (يتجاهل المواعيد التجريبية status=sample) */
+registerSyncSource(
+  'planner',
+  () => readUserEvents(),
+  (serverValue) => {
+    const list = Array.isArray(serverValue) ? (serverValue as Array<Record<string, unknown>>) : [];
+    if (!list.length) return;
+    const local = readUserEvents();
+    const byId = new Map(local.map((e) => [e.id, e]));
+    let changed = false;
+    list.forEach((row) => {
+      const id = String(row.id ?? '');
+      if (!id) return;
+      const event = {
+        ...(byId.get(id) ?? {}),
+        id,
+        title: String(row.title ?? ''),
+        date: String(row.date ?? ''),
+        time: String(row.time ?? '19:00'),
+        type: row.type as PlannerEvent['type'],
+        subjectName: String(row.subjectName ?? 'عام'),
+        description: row.description ? String(row.description) : undefined,
+        status: 'user' as const,
+      } as PlannerEvent;
+      if (JSON.stringify(byId.get(id)) !== JSON.stringify(event)) {
+        byId.set(id, event);
+        changed = true;
+      }
+    });
+    if (changed) writeUserEvents([...byId.values()]);
+  },
+);
 
 export function subscribePlanner(handler: () => void): () => void {
   if (typeof window === 'undefined') return () => undefined;

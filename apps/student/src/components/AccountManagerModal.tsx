@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useAccount } from '../context/AccountContext';
 import { useLanguage } from '../context/LanguageContext';
 import { X, UserPlus, Check, User, School, MapPin, Sparkles, Award } from 'lucide-react';
+import { PlatformAuthCard } from './PlatformAuthCard';
 
 const SUDANESE_STATES = [
   'الخرطوم',
@@ -102,6 +103,8 @@ export const AccountManagerModal: React.FC = () => {
 
         {/* Modal Body */}
         <div className="p-6 overflow-y-auto space-y-5">
+          {mode === 'list' && <PlatformAuthCard />}
+
           {mode === 'list' ? (
             <>
               {/* Account list */}

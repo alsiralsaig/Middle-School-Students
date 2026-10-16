@@ -87,7 +87,9 @@ async function startServer() {
   const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
   const isProd = process.env.NODE_ENV === 'production';
 
-  app.use(express.json());
+  // تحليل JSON لمسارات Gemini فقط — لا يجوز استهلاك جسم الطلب قبل
+  // وصوله إلى وكيل Vite (proxy) المسؤول عن /backend (وإلا يتجمد الطلب)
+  app.use('/api', express.json());
 
   // Shared Gemini client with telemetry header
   const ai = new GoogleGenAI({

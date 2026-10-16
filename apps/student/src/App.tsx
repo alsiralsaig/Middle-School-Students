@@ -14,6 +14,8 @@ import { LanguageProvider, useLanguage } from './context/LanguageContext';
 import { ToastHost } from './components/ToastHost';
 import { useReminderEngine, PendingLesson } from './hooks/useReminderEngine';
 import { AccountProvider, useAccount } from './context/AccountContext';
+import { startSyncEngine, runSync } from './utils/syncEngine';
+import { refreshSession } from './utils/sessionStore';
 
 import { HomeView } from './views/HomeView';
 import { SubjectsView } from './views/SubjectsView';
@@ -47,6 +49,25 @@ function AppContent() {
     }
     return false;
   });
+
+  /* ===== الجلسة والمزامنة مع خادم المنصة (apps/api) =====
+     كل شيء اختياري: إذا تعذّر الاتصال تبقى المنصة تعمل من localStorage. */
+  useEffect(() => {
+    const stopEngine = startSyncEngine();
+    let cancelled = false;
+
+    (async () => {
+      const user = await refreshSession();
+      if (cancelled || !user) return;
+      // نجاح الاتصال: اسحب الحالة من الخادم ثم ادفع ما تغيّر محلياً
+      await runSync();
+    })();
+
+    return () => {
+      cancelled = true;
+      stopEngine();
+    };
+  }, []);
 
   // Sync theme with document class and localStorage
   useEffect(() => {
