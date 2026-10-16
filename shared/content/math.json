@@ -211,9 +211,9 @@
     "url": "https://docs.google.com/uc?export=download&id=1N8PjB61itGALhOPTl32tiM1PV1w4Iy7t",
     "unitsCount": 8,
     "lessonsCount": null,
-    "confidence": "partial",
-    "verifiedAt": "2026-10-16",
-    "note": "الكتاب لا يرقّم دروسه؛ الرقم ١٦ موروث من بيانات سابقة ولم نتحقق منه من الكتاب.",
+    "confidence": "high",
+    "verifiedAt": "2026-10-17",
+    "note": "عناوين الوحدات الثماني وصفحات افتتاحها من رؤوس الصفحات (ص٥، ٤٩، ٧٥، ١٢٧، ١٧١، ٢١٩، ٢٤٠، ٢٧٠) مطابقة لفهرس المحتويات. عنوان الوحدة الثانية لم يُقرأ في رأس الصفحة فأُخذ من الفهرس.",
     "numbering": "themes",
     "themesCount": 8
   },
@@ -223,6 +223,7 @@
       "title": "الدالة (التطبيق)",
       "sourceConfidence": "high",
       "numbering": "lessons",
+      "sourcePage": 5,
       "lessons": []
     },
     {
@@ -230,6 +231,7 @@
       "title": "الأسس واللوغريثمات",
       "sourceConfidence": "high",
       "numbering": "lessons",
+      "sourcePage": 49,
       "lessons": []
     },
     {
@@ -237,6 +239,7 @@
       "title": "المستوى الديكارتي والمعادلات الآنية",
       "sourceConfidence": "high",
       "numbering": "lessons",
+      "sourcePage": 75,
       "lessons": []
     },
     {
@@ -244,6 +247,7 @@
       "title": "الدائرة",
       "sourceConfidence": "high",
       "numbering": "lessons",
+      "sourcePage": 127,
       "lessons": []
     },
     {
@@ -251,6 +255,7 @@
       "title": "ضرب وتحليل المقادير الجبرية",
       "sourceConfidence": "high",
       "numbering": "lessons",
+      "sourcePage": 171,
       "lessons": []
     },
     {
@@ -258,6 +263,7 @@
       "title": "معادلات الدرجة الثانية",
       "sourceConfidence": "high",
       "numbering": "lessons",
+      "sourcePage": 219,
       "lessons": []
     },
     {
@@ -265,6 +271,7 @@
       "title": "الإحصاء",
       "sourceConfidence": "high",
       "numbering": "lessons",
+      "sourcePage": 240,
       "lessons": []
     },
     {
@@ -272,9 +279,10 @@
       "title": "الحجوم",
       "sourceConfidence": "high",
       "numbering": "lessons",
+      "sourcePage": 270,
       "lessons": []
     }
   ],
-  "lessonsCountNote": "⚠️ عناوين الوحدات من فهرس المحتويات (ص٣)، لكن **أرقام الصفحات غير مقروءة في المسح** فلم نخترعها. الكتاب لا يرقّم دروسه بصيغة «الدرس الأول/الثاني» بل يقسّم كل وحدة إلى موضوعات.",
+  "lessonsCountNote": "الكتاب **لا يرقّم دروسه** بصيغة «الدرس الأول/الثاني»، بل يقسّم كل وحدة إلى موضوعات. عناوين الوحدات الثماني وأرقام صفحاتها من رؤوس الصفحات (ص٥، ٤٩، ٧٥، ١٢٧، ١٧١، ٢١٩، ٢٤٠، ٢٧٠) مطابقة لفهرس المحتويات. ⚠️ الرقم ١٦ الذي كان مسجَّلاً كعدد الدروس موروث ولم نتحقق منه من الكتاب.",
   "lessonsCountUnverified": true
 }

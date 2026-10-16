@@ -65,6 +65,10 @@ async function main() {
         unitsCount: subject.unitsCount ?? 0,
         lessonsCount: subject.lessonsCount ?? 0,
         official: subject.official ? JSON.stringify(subject.official) : null,
+        // ⚠️ `syllabus` = الهيكل **الرسمي** من الكتاب. `units` أدناه = **ما ألّفناه نحن**.
+        // الرقمان مختلفان قصداً (العلوم: ٧ وحدات رسمية مقابل وحدتين مؤلَّفتين).
+        syllabus: subject.syllabus ? JSON.stringify(subject.syllabus) : null,
+        gradeWarning: subject.gradeWarning ?? null,
         status: 'sample',
       },
     });

@@ -14,7 +14,7 @@ cd apps/api
 |---|---|
 | محرّك التطوير | SQLite (`prisma/dev.db`) |
 | عدد النماذج | ١٤ |
-| الهجرات (migrations) | ✅ `prisma/migrations/20261017000000_init_2026_10` |
+| الهجرات (migrations) | ✅ `20261017000000_init_2026_10` · `20261017000100_subject_syllabus` |
 | النسخ الاحتياطي | ✅ `npm run db:backup` / `db:restore` |
 | حارس بيئة الإنتاج | ✅ يمنع الإقلاع بسرّ JWT افتراضي |
 | الانتقال إلى PostgreSQL | ⚠️ مهيَّأ وموثَّق، لم يُنفَّذ بعد |
@@ -114,6 +114,22 @@ datasource db {
 تختلف بين المحرّكين):
 
 ```bash
+# أضف ترحيلاً جديداً بعد تعديل schema.prisma:
+#  ١) ولّد SQL تفاضلياً من قاعدة البيانات الحالية إلى المخطط الجديد
+prisma migrate diff \
+  --from-schema-datasource prisma/schema.prisma \
+  --to-schema-datamodel prisma/schema.prisma \
+  --script > prisma/migrations/<طابع_زمني>_<اسم>/migration.sql
+printf 'provider = "sqlite"\n' > prisma/migrations/<طابع_زمني>_<اسم>/migration_lock.toml
+#  ٢) طبّقه
+npm run db:deploy
+#  ٣) ولّد الأنواع ثم تحقّق
+npx prisma generate && npm run lint
+
+# ⚠️ `prisma migrate dev` يرفض العمل هنا (انحراف قديم) ويطلب إعادة تعيين
+#    قاعدة البيانات. استخدم `migrate diff` أعلاه بدلاً منه.
+
+# إعادة بناء من الصفر (تحذف البيانات!):
 rm -rf prisma/migrations
 npm run db:migrate -- --name init_postgres
 ```

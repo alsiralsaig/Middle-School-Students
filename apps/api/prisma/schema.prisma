@@ -47,6 +47,11 @@ model Subject {
   lessonsCount  Int        @default(0)
   // مصدر رسمي لهيكل المادة (JSON): {book, publisher, pages, url, confidence, note...}
   official      String?
+  // الهيكل الرسمي الكامل (JSON): [{unitNumber, title, startPage, endPage, lessons[]}]
+  // يختلف عن `units` التي تمثّل **ما ألّفناه نحن** في التطبيق.
+  syllabus      String?
+  // تحذير اختلاف الصف (مثل: الكتاب المعتمد للصف الثاني لا الثالث)
+  gradeWarning  String?
   status        String     @default("sample") // sample | verified
 
   units     Unit[]

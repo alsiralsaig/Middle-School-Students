@@ -11,3 +11,7 @@ coverage/
 *.db
 *.db-journal
 uploads/
+
+# بايثون
+__pycache__/
+*.pyc

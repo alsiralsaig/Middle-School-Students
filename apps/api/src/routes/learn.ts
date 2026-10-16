@@ -21,6 +21,8 @@ learnRouter.get('/subjects', async (_req, res) => {
       subjects: subjects.map((s) => ({
         ...s,
         official: s.official ? JSON.parse(s.official) : null,
+        // الهيكل الرسمي من الكتاب (ليس بالضرورة مساوياً لـ `units` المؤلَّفة)
+        syllabus: s.syllabus ? JSON.parse(s.syllabus) : null,
         units: s.units.map((u) => ({
           ...u,
           lessons: u.lessons.map((l) => ({
