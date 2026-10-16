@@ -342,7 +342,7 @@ ENGLISH_UNITS = [
         (1, 'A Traditional Story', 9), (2, 'National Dress', 10),
         (3, 'Famous Sudanese Writers', 11), (4, 'Sand Art', 12),
         (5, 'Robinson Crusoe', 13),
-        (6, '(العنوان غير مقروء في المسح — الصفحة عن فن الخط)', 14),
+        (6, 'Calligraphy', 14),
         (7, 'A Sudanese Artist', 15), (8, 'Revision — Words and Pictures', 16)]),
     (3, 'Around the World', 17, [
         (1, 'Where is Sudan?', 17), (2, 'Countries Quiz', 18),
@@ -368,7 +368,8 @@ ENGLISH_UNITS = [
         (1, 'Learning a Lesson', 49), (2, 'Learning for a Competition', 50),
         (3, 'The History of the University of Khartoum', 51),
         (4, 'Learning to Do Things Yourself', 52), (5, "Learning isn't Easy", 53),
-        (6, '(العنوان غير مقروء في المسح)', 54), (7, 'Test Your Knowledge', 55),
+        (6, '(العنوان غير مقروء في المسح — المسح أعطى «…Brain»)', 54),
+        (7, 'Test Your Knowledge', 55),
         (8, 'Revision — Test Your Learning', 56)]),
     (8, 'Looking Back', 57, [
         (1, 'Protecting Animals', 57), (2, 'Sports Time', 58),
