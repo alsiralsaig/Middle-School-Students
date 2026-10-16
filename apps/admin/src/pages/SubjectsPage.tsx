@@ -61,7 +61,7 @@ export const SubjectsPage: React.FC = () => {
                   <td className="py-3 px-3">
                     <Link
                       to={`/subjects/${s.id}`}
-                      className="inline-flex items-center gap-1 text-xs font-bold text-navy-800 hover:text-gold-600"
+                      className="inline-flex items-center gap-1 text-xs font-bold text-navy-800 hover:text-gold-600 py-2.5 px-1 min-h-[36px]"
                     >
                       تفاصيل
                       <ArrowRight className="w-3.5 h-3.5" />
@@ -89,7 +89,10 @@ export const SubjectDetailPage: React.FC = () => {
   if (!subject) {
     return (
       <div className="space-y-4">
-        <Link to="/subjects" className="text-xs font-bold text-navy-800 hover:text-gold-600">
+        <Link
+          to="/subjects"
+          className="inline-flex items-center text-xs font-bold text-navy-800 hover:text-gold-600 py-2.5 min-h-[36px]"
+        >
           ← الرجوع للمواد
         </Link>
         <ErrorState
@@ -102,7 +105,7 @@ export const SubjectDetailPage: React.FC = () => {
 
   return (
     <div className="space-y-5">
-      <Link to="/subjects" className="text-xs font-bold text-navy-800 hover:text-gold-600">
+      <Link to="/subjects" className="inline-flex items-center text-xs font-bold text-navy-800 hover:text-gold-600 py-2.5 min-h-[36px]">
         ← الرجوع للمواد
       </Link>
 

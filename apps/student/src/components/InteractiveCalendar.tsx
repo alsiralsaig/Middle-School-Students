@@ -133,7 +133,7 @@ export const InteractiveCalendar: React.FC = () => {
         <div className="flex items-center gap-1.5 flex-wrap">
           <button
             onClick={() => setSelectedEventType('all')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+            className={`px-3 py-2 min-h-[36px] inline-flex items-center rounded-lg text-xs font-medium transition-all cursor-pointer ${
               selectedEventType === 'all'
                 ? 'bg-emerald-600 text-white shadow-md'
                 : 'bg-[#0E2440] text-slate-300 hover:text-white border border-[#1B385D]'
@@ -143,7 +143,7 @@ export const InteractiveCalendar: React.FC = () => {
           </button>
           <button
             onClick={() => setSelectedEventType('live_class')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+            className={`flex items-center gap-1.5 px-3 py-2 min-h-[36px] rounded-lg text-xs font-medium transition-all cursor-pointer ${
               selectedEventType === 'live_class'
                 ? 'bg-emerald-600 text-white shadow-md'
                 : 'bg-[#0E2440] text-emerald-400 hover:bg-[#122E52] border border-emerald-500/30'
@@ -154,7 +154,7 @@ export const InteractiveCalendar: React.FC = () => {
           </button>
           <button
             onClick={() => setSelectedEventType('deadline')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+            className={`flex items-center gap-1.5 px-3 py-2 min-h-[36px] rounded-lg text-xs font-medium transition-all cursor-pointer ${
               selectedEventType === 'deadline'
                 ? 'bg-amber-600 text-white shadow-md'
                 : 'bg-[#0E2440] text-amber-400 hover:bg-[#122E52] border border-amber-500/30'
@@ -165,7 +165,7 @@ export const InteractiveCalendar: React.FC = () => {
           </button>
           <button
             onClick={() => setSelectedEventType('exam')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+            className={`flex items-center gap-1.5 px-3 py-2 min-h-[36px] rounded-lg text-xs font-medium transition-all cursor-pointer ${
               selectedEventType === 'exam'
                 ? 'bg-rose-600 text-white shadow-md'
                 : 'bg-[#0E2440] text-rose-400 hover:bg-[#122E52] border border-rose-500/30'
@@ -176,7 +176,7 @@ export const InteractiveCalendar: React.FC = () => {
           </button>
           <button
             onClick={() => setSelectedEventType('trial_exam')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+            className={`flex items-center gap-1.5 px-3 py-2 min-h-[36px] rounded-lg text-xs font-medium transition-all cursor-pointer ${
               selectedEventType === 'trial_exam'
                 ? 'bg-amber-500 text-slate-950 shadow-md'
                 : 'bg-[#0E2440] text-amber-300 hover:bg-[#122E52] border border-amber-500/30'
@@ -200,14 +200,14 @@ export const InteractiveCalendar: React.FC = () => {
             <div className="flex items-center gap-1">
               <button
                 onClick={prevMonth}
-                className="p-1.5 rounded-lg bg-[#0E2440] text-slate-300 hover:text-white hover:bg-[#16355C] border border-[#1A385C] transition-colors"
+                className="p-2 min-h-[36px] min-w-[36px] grid place-items-center rounded-lg bg-[#0E2440] text-slate-300 hover:text-white hover:bg-[#16355C] border border-[#1A385C] transition-colors"
                 title="الشهر السابق"
               >
                 {isRtl ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
               </button>
               <button
                 onClick={nextMonth}
-                className="p-1.5 rounded-lg bg-[#0E2440] text-slate-300 hover:text-white hover:bg-[#16355C] border border-[#1A385C] transition-colors"
+                className="p-2 min-h-[36px] min-w-[36px] grid place-items-center rounded-lg bg-[#0E2440] text-slate-300 hover:text-white hover:bg-[#16355C] border border-[#1A385C] transition-colors"
                 title="الشهر القادم"
               >
                 {isRtl ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
@@ -375,7 +375,7 @@ export const InteractiveCalendar: React.FC = () => {
                           target="_blank"
                           rel="noreferrer"
                           onClick={e => e.stopPropagation()}
-                          className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-emerald-300 hover:text-emerald-200 bg-emerald-500/20 border border-emerald-500/30 px-3 py-1 rounded-lg transition-colors"
+                          className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-emerald-300 hover:text-emerald-200 bg-emerald-500/20 border border-emerald-500/30 px-3 py-2 min-h-[36px] rounded-lg transition-colors"
                         >
                           <Video className="w-3 h-3" />
                           <span>{t('joinLive')}</span>

@@ -25,6 +25,8 @@
 @layer base {
   html {
     -webkit-text-size-adjust: 100%;
+    /* يمنع التمرير الأفقي الناتج عن العناصر الثابتة مع شريط التمرير الكلاسيكي */
+    overflow-x: hidden;
   }
   body {
     font-family: var(--font-sans);
@@ -32,6 +34,8 @@
     text-align: right;
     background: #f6f8fb;
     color: var(--color-navy-900);
+    /* يمنع أي تمرير أفقي طفيف ناتج عن العناصر الثابتة (fixed) وشريط التمرير */
+    overflow-x: hidden;
   }
   :focus-visible {
     outline: 3px solid var(--color-gold-400);

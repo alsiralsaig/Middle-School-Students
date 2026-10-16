@@ -139,7 +139,7 @@ export const WeeklyProgressChart: React.FC<WeeklyProgressChartProps> = ({
           <div className="bg-slate-100 dark:bg-[#122844] p-1 rounded-xl flex items-center text-xs font-medium border border-slate-200 dark:border-[#1E3A60]">
             <button
               onClick={() => setViewMode('weekly')}
-              className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+              className={`px-3 py-2 min-h-[36px] inline-flex items-center rounded-lg transition-all cursor-pointer ${
                 viewMode === 'weekly'
                   ? 'bg-white dark:bg-[#1C3A62] text-blue-900 dark:text-white shadow-xs font-bold'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -149,7 +149,7 @@ export const WeeklyProgressChart: React.FC<WeeklyProgressChartProps> = ({
             </button>
             <button
               onClick={() => setViewMode('daily')}
-              className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+              className={`px-3 py-2 min-h-[36px] inline-flex items-center rounded-lg transition-all cursor-pointer ${
                 viewMode === 'daily'
                   ? 'bg-white dark:bg-[#1C3A62] text-blue-900 dark:text-white shadow-xs font-bold'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'

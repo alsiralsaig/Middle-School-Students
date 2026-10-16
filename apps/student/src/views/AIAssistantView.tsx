@@ -128,7 +128,7 @@ export const AIAssistantView: React.FC = () => {
           </div>
           <button
             onClick={handleClearChat}
-            className="flex items-center gap-1.5 text-xs text-slate-300 hover:text-white bg-[#142A46] px-3 py-1.5 rounded-lg border border-[#21436F] transition-colors cursor-pointer self-start sm:self-auto"
+            className="flex items-center gap-1.5 text-xs text-slate-300 hover:text-white bg-[#142A46] px-3 py-2 min-h-[36px] rounded-lg border border-[#21436F] transition-colors cursor-pointer self-start sm:self-auto"
           >
             <RotateCcw className="w-3.5 h-3.5" />
             <span>مسح المحادثة</span>

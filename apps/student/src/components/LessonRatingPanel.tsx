@@ -212,7 +212,7 @@ export const LessonRatingPanel: React.FC<Props> = ({ lessonId, lessonTitle }) =>
                   key={tag}
                   type="button"
                   onClick={() => appendTag(tag)}
-                  className="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-slate-100 dark:bg-[#142A46] text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-[#21436F] hover:border-amber-400 hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
+                  className="px-3 py-1.5 min-h-[32px] inline-flex items-center rounded-lg text-[10px] font-bold bg-slate-100 dark:bg-[#142A46] text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-[#21436F] hover:border-amber-400 hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
                 >
                   + {tag}
                 </button>

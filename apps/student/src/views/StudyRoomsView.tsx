@@ -330,7 +330,7 @@ export const StudyRoomsView: React.FC<StudyRoomsViewProps> = ({ onBackToDashboar
                   key={tag}
                   type="button"
                   onClick={() => setSelectedTag(tag)}
-                  className={`px-3 py-1.5 rounded-xl font-bold transition-all cursor-pointer whitespace-nowrap ${
+                  className={`px-3.5 py-2 min-h-[36px] inline-flex items-center rounded-xl font-bold transition-all cursor-pointer whitespace-nowrap ${
                     selectedTag === tag
                       ? 'bg-blue-700 text-white shadow-sm'
                       : 'bg-slate-100 dark:bg-[#142A46] text-slate-600 dark:text-slate-300 hover:bg-slate-200'

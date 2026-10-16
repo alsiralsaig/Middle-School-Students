@@ -453,7 +453,7 @@ export const StudentDashboardView: React.FC<StudentDashboardViewProps> = ({
                             e.stopPropagation();
                             onToggleBookmark(lesson.id);
                           }}
-                          className="p-1.5 rounded-lg text-amber-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors cursor-pointer shrink-0"
+                          className="p-2 min-h-[36px] min-w-[36px] grid place-items-center rounded-lg text-amber-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors cursor-pointer shrink-0"
                           title="إزالة من قائمة المتابعة لاحقاً"
                           aria-label="إزالة من قائمة المتابعة"
                         >

@@ -36,7 +36,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
               <li>
                 <button
                   onClick={() => onNavigate('subjects')}
-                  className="hover:text-amber-300 transition-colors cursor-pointer"
+                  className="hover:text-amber-300 transition-colors cursor-pointer inline-block py-2 min-h-[36px]"
                 >
                   المواد الدراسية المقررة
                 </button>
@@ -44,7 +44,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
               <li>
                 <button
                   onClick={() => onNavigate('resources')}
-                  className="hover:text-amber-300 transition-colors cursor-pointer"
+                  className="hover:text-amber-300 transition-colors cursor-pointer inline-block py-2 min-h-[36px]"
                 >
                   بنك المذكرات والملخصات
                 </button>
@@ -52,7 +52,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
               <li>
                 <button
                   onClick={() => onNavigate('exams')}
-                  className="hover:text-amber-300 transition-colors cursor-pointer"
+                  className="hover:text-amber-300 transition-colors cursor-pointer inline-block py-2 min-h-[36px]"
                 >
                   نماذج الامتحانات والاختبارات
                 </button>
@@ -60,7 +60,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
               <li>
                 <button
                   onClick={() => onNavigate('ai-assistant')}
-                  className="hover:text-amber-300 transition-colors cursor-pointer"
+                  className="hover:text-amber-300 transition-colors cursor-pointer inline-block py-2 min-h-[36px]"
                 >
                   المساعد التعليمي الاسترشادي
                 </button>
@@ -68,7 +68,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
               <li>
                 <button
                   onClick={() => onNavigate('student-dashboard')}
-                  className="hover:text-amber-300 transition-colors cursor-pointer"
+                  className="hover:text-amber-300 transition-colors cursor-pointer inline-block py-2 min-h-[36px]"
                 >
                   لوحة متابعة إنجاز الطالب
                 </button>

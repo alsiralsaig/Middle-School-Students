@@ -78,7 +78,7 @@ export const Header: React.FC<HeaderProps> = ({
             {/* Language Switcher in Top Bar */}
             <button
               onClick={toggleLanguage}
-              className="flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-[#122846] hover:bg-[#1C3B65] text-amber-300 hover:text-white border border-[#234572] transition-colors cursor-pointer text-[11px] font-semibold"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 min-h-[32px] rounded-lg bg-[#122846] hover:bg-[#1C3B65] text-amber-300 hover:text-white border border-[#234572] transition-colors cursor-pointer text-[11px] font-semibold"
               title="Switch Interface Language (EN / AR)"
             >
               <Languages className="w-3.5 h-3.5" />

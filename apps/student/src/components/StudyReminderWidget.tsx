@@ -399,7 +399,7 @@ export const StudyReminderWidget: React.FC = () => {
               <button
                 type="button"
                 onClick={() => handleTestReminder(rem)}
-                className="text-[11px] text-blue-600 dark:text-amber-400 hover:underline font-bold flex items-center gap-1 cursor-pointer"
+                className="text-[11px] text-blue-600 dark:text-amber-400 hover:underline font-bold flex items-center gap-1 cursor-pointer inline-block py-2 min-h-[36px]"
                 title="إرسال تنبيه تجريبي لمعاينة الإشعار والرسالة المنبثقة"
               >
                 <Send className="w-3 h-3" />
@@ -409,7 +409,7 @@ export const StudyReminderWidget: React.FC = () => {
               <button
                 type="button"
                 onClick={() => handleDeleteReminder(rem.id)}
-                className="text-slate-400 hover:text-red-500 p-1 rounded-lg transition-colors cursor-pointer"
+                className="text-slate-400 hover:text-red-500 p-2 min-h-[36px] min-w-[36px] grid place-items-center rounded-lg transition-colors cursor-pointer"
                 title="حذف هذا التذكير"
               >
                 <Trash2 className="w-3.5 h-3.5" />

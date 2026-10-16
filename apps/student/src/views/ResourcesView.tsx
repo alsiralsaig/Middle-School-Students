@@ -138,7 +138,7 @@ export const ResourcesView: React.FC<ResourcesViewProps> = ({
             </span>
             <button
               onClick={() => setSelectedSubjectId('all')}
-              className={`px-3 py-1.5 rounded-lg border transition-colors whitespace-nowrap cursor-pointer ${
+              className={`px-3 py-2 min-h-[36px] inline-flex items-center rounded-lg border transition-colors whitespace-nowrap cursor-pointer ${
                 selectedSubjectId === 'all'
                   ? 'bg-blue-900 dark:bg-amber-400 dark:text-slate-950 text-white border-blue-900 dark:border-amber-400 font-bold'
                   : 'bg-white dark:bg-[#122844] text-slate-700 dark:text-slate-300 border-slate-200 dark:border-[#1E3A60] hover:border-slate-300 dark:hover:border-slate-600'
@@ -150,7 +150,7 @@ export const ResourcesView: React.FC<ResourcesViewProps> = ({
               <button
                 key={sub.id}
                 onClick={() => setSelectedSubjectId(sub.id)}
-                className={`px-3 py-1.5 rounded-lg border transition-colors whitespace-nowrap cursor-pointer ${
+                className={`px-3 py-2 min-h-[36px] inline-flex items-center rounded-lg border transition-colors whitespace-nowrap cursor-pointer ${
                   selectedSubjectId === sub.id
                     ? 'bg-blue-900 dark:bg-amber-400 dark:text-slate-950 text-white border-blue-900 dark:border-amber-400 font-bold'
                     : 'bg-white dark:bg-[#122844] text-slate-700 dark:text-slate-300 border-slate-200 dark:border-[#1E3A60] hover:border-slate-300 dark:hover:border-slate-600'

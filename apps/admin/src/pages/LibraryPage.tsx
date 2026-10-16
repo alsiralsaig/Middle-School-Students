@@ -60,7 +60,7 @@ export const LibraryPage: React.FC = () => {
             <button
               key={c}
               onClick={() => setCategory(c)}
-              className={`px-3 py-1.5 rounded-full text-[11px] font-bold border transition-colors ${
+              className={`px-3.5 py-2 rounded-full text-[11px] font-bold border transition-colors min-h-[36px] inline-flex items-center ${
                 category === c
                   ? 'bg-navy-800 text-white border-navy-800'
                   : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
