@@ -315,7 +315,7 @@ export const AchievementsView: React.FC<AchievementsViewProps> = ({ onBack }) =>
                 {/* Header */}
                 <div className="space-y-1 mb-6">
                   <span className="text-xs tracking-widest text-amber-900 font-semibold uppercase">
-                    جمهورية السودان • وزارة التربية والتعليم العام
+                    منصة الطالب السوداني الذكية • الصف الثالث المتوسط
                   </span>
                   <h2 className="text-2xl sm:text-3xl font-black text-amber-950 mt-1">
                     شهادة تفوق وإنجاز دراسي

@@ -9,6 +9,79 @@ dotenv.config();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+/** ======================== حماية واجهة الذكاء الاصطناعي ========================
+ * بدون ده أي شخص يلاقي الرابط يقدر يستنزف حصة Gemini ويفوتر على المفتاح.
+ * القيود: 20 طلب / 10 دقائق لكل IP · أقصى 1,200 حرف للسؤال · سقف يومي عام.
+ * ملاحظة: الذاكرة محلية لنسخة السيرفر — على أكثر من نسخة (Cloud Run) استخدم
+ * مخزن مشترك (Redis) أو حط السقف اليومي من متغير البيئة.
+ */
+const AI_RATE_WINDOW_MS = 10 * 60_000;
+const AI_RATE_MAX = Number(process.env.AI_RATE_MAX || 20);
+const AI_DAILY_CAP = Number(process.env.AI_DAILY_CAP || 2000);
+
+const hits = new Map<string, { count: number; resetAt: number }>();
+let dayKey = new Date().toISOString().slice(0, 10);
+let dayCount = 0;
+
+/** تنظيف دوري للذاكرة حتى لا تكبر بلا حد */
+setInterval(() => {
+  const now = Date.now();
+  for (const [k, v] of hits) if (now > v.resetAt) hits.delete(k);
+}, 10 * 60_000).unref?.();
+
+function rollDayIfNeeded() {
+  const today = new Date().toISOString().slice(0, 10);
+  if (today !== dayKey) {
+    dayKey = today;
+    dayCount = 0;
+  }
+}
+
+function rateLimit(ip: string): { ok: boolean; retryMinutes?: number } {
+  rollDayIfNeeded();
+  const now = Date.now();
+  const rec = hits.get(ip);
+  if (!rec || now > rec.resetAt) {
+    hits.set(ip, { count: 1, resetAt: now + AI_RATE_WINDOW_MS });
+    return { ok: true };
+  }
+  rec.count += 1;
+  return rec.count <= AI_RATE_MAX
+    ? { ok: true }
+    : { ok: false, retryMinutes: Math.ceil((rec.resetAt - now) / 60_000) };
+}
+
+/** تنظيف نص المدخلات: قصّ الطول + منع الحقن في الـ prompt */
+function cleanText(v: unknown, max: number): string {
+  if (typeof v !== 'string') return '';
+  return v.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, ' ').trim().slice(0, max);
+}
+
+const clientIp = (req: express.Request): string =>
+  (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ||
+  (req.socket.remoteAddress ?? 'unknown');
+
+/** فحص مشترك: معدل + سقف يومي + طول السؤال */
+function guardAi(req: express.Request, res: express.Response, text: string): boolean {
+  if (!text) {
+    res.status(400).json({ error: 'السؤال مطلوب' });
+    return false;
+  }
+  if (dayCount >= AI_DAILY_CAP) {
+    res.status(503).json({ reply: 'وصلنا الحد الأقصى لطلبات اليوم، جرّب بكرة يا بطل 🌙' });
+    return false;
+  }
+  const limited = rateLimit(clientIp(req));
+  if (!limited.ok) {
+    res.status(429).json({
+      reply: `استخدمت كل الأسئلة المتاحة لفترة بسيطة 😊 جرّب بعد ${limited.retryMinutes} دقيقة.`,
+    });
+    return false;
+  }
+  dayCount += 1;
+  return true;
+}
+
 async function startServer() {
   const app = express();
   const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
@@ -40,15 +113,17 @@ async function startServer() {
     try {
       const { lessonTitle, subjectName, lessonContext, question, history } = req.body;
 
-      if (!question || typeof question !== 'string') {
-        return res.status(400).json({ error: 'السؤال مطلوب' });
-      }
+      const safeQuestion = cleanText(question, 1200);
+      const safeContext = cleanText(lessonContext, 4000);
+      const safeTitle = cleanText(lessonTitle, 200);
+      const safeSubject = cleanText(subjectName, 100);
+      if (!guardAi(req, res, safeQuestion)) return;
 
       if (!process.env.GEMINI_API_KEY) {
         // High quality educational pedagogical fallback if API key is not yet set
         return res.json({
-          reply: `أهلاً بك يا بطل! تلقيت سؤالك حول درس "${lessonTitle || 'الدرس'}" في مادة ${subjectName || 'المنهج'}:\n\n` +
-            `"${question}"\n\n` +
+          reply: `أهلاً بك يا بطل! تلقيت سؤالك حول درس "${safeTitle || 'الدرس'}" في مادة ${safeSubject || 'المنهج'}:\n\n` +
+            `"${safeQuestion}"\n\n` +
             `💡 **نصيحة تعليمية سريعة:**\n` +
             `• راجع المفاهيم والقوانين الأساسية في تبويب الشرح التفصيلي للدرس.\n` +
             `• اربط كل خطوة حل بالمعطيات والمطلوب بدقة.\n\n` +
@@ -58,14 +133,14 @@ async function startServer() {
 
       const promptContext = `أنت معلم سوداني خبير ومحبوب لمرحلة التعليم العام والصف الثالث المتوسط والشهادة السودانية.
 أنت تجيب الطالب الذي يتصفح حالياً هذا الدرس تحديداً:
-- المادة: ${subjectName || 'المقرر الدراسي'}
-- عنوان الدرس: ${lessonTitle || 'الدرس الحالي'}
+- المادة: ${safeSubject || 'المقرر الدراسي'}
+- عنوان الدرس: ${safeTitle || 'الدرس الحالي'}
 - محتوى وسياق الدرس الحالي للمرجع:
-${lessonContext ? `"""\n${lessonContext}\n"""` : 'مقرر المنهج السوداني'}
+${safeContext ? `"""\n${safeContext}\n"""` : 'مقرر المنهج السوداني'}
 
 تعليمات صارمة للإجابة:
 1. أجب باللغة العربية الفصحى الواضحة وبأسلوب تربوي لطيف ومشجع (استخدم عبارات مثل: يا بطل، أحسنت السؤال، ممتاز، خطوة بخطوة).
-2. اجعل الشرح مركزاً ومباشراً ومرتبطاً بدرس "${lessonTitle}".
+2. اجعل الشرح مركزاً ومباشراً ومرتبطاً بدرس "${safeTitle}".
 3. إذا كان السؤال عن مسألة رياضية أو قاعدة نحوية أو تجربة علمية، قم بحلها وتوضيحها خطوة بخطوة.
 4. استخدم تنسيق Markdown أنيق مع نقاط وعناوين واضحة لسهولة القراءة على الهاتف والحاسوب.
 5. لا تتجاوز حدود المنهج وتجنب الإطالة غير المفيدة.`;
@@ -75,11 +150,10 @@ ${lessonContext ? `"""\n${lessonContext}\n"""` : 'مقرر المنهج السو
       // Add relevant past messages if provided
       if (Array.isArray(history) && history.length > 0) {
         history.slice(-4).forEach((msg) => {
-          if (msg.sender === 'user' && msg.text) {
-            contents.push({ role: 'user', parts: [{ text: msg.text }] });
-          } else if (msg.sender === 'assistant' && msg.text) {
-            contents.push({ role: 'model', parts: [{ text: msg.text }] });
-          }
+          const txt = cleanText(msg?.text, 800);
+          if (!txt) return;
+          if (msg.sender === 'user') contents.push({ role: 'user', parts: [{ text: txt }] });
+          else if (msg.sender === 'assistant') contents.push({ role: 'model', parts: [{ text: txt }] });
         });
       }
 
@@ -88,7 +162,7 @@ ${lessonContext ? `"""\n${lessonContext}\n"""` : 'مقرر المنهج السو
         role: 'user',
         parts: [
           {
-            text: `${promptContext}\n\nسؤال الطالب الحالي: ${question}`,
+            text: `${promptContext}\n\nسؤال الطالب الحالي: ${safeQuestion}`,
           },
         ],
       });
@@ -113,7 +187,7 @@ ${lessonContext ? `"""\n${lessonContext}\n"""` : 'مقرر المنهج السو
         } catch (secondaryErr: any) {
           console.error('All Gemini model calls failed:', secondaryErr?.message);
           // Educational intelligent fallback based on lesson context
-          replyText = `أهلاً بك يا بطل! 🇸🇩\nبخصوص سؤالك عن درس «${lessonTitle}» في مادة ${subjectName}:\n\n` +
+          replyText = `أهلاً بك يا بطل! 🇸🇩\nبخصوص سؤالك عن درس «${safeTitle}» في مادة ${safeSubject}:\n\n` +
             `📌 **نصيحة تعليمية استرشادية:**\n` +
             `• يُركز هذا الدرس على المفاهيم والقواعد الموضحة في الشرح التفصيلي.\n` +
             `• راجع القواعد الأساسية والأمثلة التطبيقية المحلولة خطوة بخطوة في قسم المذكرة.\n` +
@@ -136,13 +210,13 @@ ${lessonContext ? `"""\n${lessonContext}\n"""` : 'مقرر المنهج السو
   app.post('/api/gemini/chat', async (req, res) => {
     try {
       const { prompt, subject } = req.body;
-      if (!prompt) {
-        return res.status(400).json({ error: 'السؤال مطلوب' });
-      }
+      const safePrompt = cleanText(prompt, 1200);
+      const safeSubject = cleanText(subject, 100);
+      if (!guardAi(req, res, safePrompt)) return;
 
       if (!process.env.GEMINI_API_KEY) {
         return res.json({
-          reply: `أهلاً بك يا بطل! وصل سؤالك في مادة ${subject || 'المنهج السوداني'}. يرجى تزويد المنصة بمفتاح GEMINI_API_KEY للاستفادة الكاملة من نموذج Gemini 3.8 Flash.`,
+          reply: `أهلاً بك يا بطل! وصل سؤالك في مادة ${safeSubject || 'المنهج السوداني'}. يرجى تزويد المنصة بمفتاح GEMINI_API_KEY للاستفادة الكاملة من نموذج Gemini 3.8 Flash.`,
         });
       }
 
@@ -153,7 +227,7 @@ ${lessonContext ? `"""\n${lessonContext}\n"""` : 'مقرر المنهج السو
             role: 'user',
             parts: [
               {
-                text: `أنت المساعد الدراسي الذكي لمنصة المنهج السوداني للشهادة المتوسطة. ساعد الطالب في سؤاله التعليمي بأسلوب تربوي مبسط ودقيق وداعم:\n\nالسؤال: ${prompt}`,
+                text: `أنت المساعد الدراسي الذكي لمنصة المنهج السوداني للشهادة المتوسطة. ساعد الطالب في سؤاله التعليمي بأسلوب تربوي مبسط ودقيق وداعم:\n\nالسؤال: ${safePrompt}`,
               },
             ],
           },
@@ -164,7 +238,6 @@ ${lessonContext ? `"""\n${lessonContext}\n"""` : 'مقرر المنهج السو
     } catch (error: any) {
       console.error('Error in general chat:', error);
       return res.status(500).json({
-        error: error.message || 'خطأ في معالجة الطلب',
         reply: 'عذراً، حدث خطأ مؤقت أثناء الاتصال بـ Gemini API.',
       });
     }

@@ -2,49 +2,17 @@ import { ResourceItem } from '../types';
 import { RESOURCE_DOCUMENTS, ResourceDocument } from '../data/resourcePagesData';
 
 /**
- * Generates and downloads a valid PDF document Blob for the given educational resource.
+ * تحميل المذكرة كملف PDF.
+ *
+ * ⚠️ كان هنا مولّد PDF مكتوب بالإيد يطلع ملف **تالف** (إزاحات xref ثابتة)
+ * و**يحذف كل العربي** (لأن الخطوط اللاتينية ما بتدعمهوش) وفوق ده كان يكتب
+ * داخل الملف "Verified by Ministry of Education" — انتحال صفة جهة حكومية.
+ *
+ * البديل الصحيح: نفتح نافذة طباعة A4 مصمّمة (**نفس مكوّن الطباعة الجاهز**)
+ * والطالب يختار «حفظ كـ PDF» — يطلع ملف سليم والعربي فيه مظبوط 100%.
  */
 export function downloadResourcePDF(item: ResourceItem): void {
-  const docData: ResourceDocument | undefined = RESOURCE_DOCUMENTS[item.id];
-
-  // Build structured text content
-  const title = item.title;
-  const author = item.author;
-  const subject = item.subjectName;
-  const year = item.publishYear;
-
-  let textContent = `%PDF-1.4\n%âãÏÓ\n`;
-  textContent += `1 0 obj\n<< /Title (${title}) /Author (${author}) /Subject (${subject}) /Creator (منصة المنهاج السوداني للشهادة المتوسطة) >>\nendobj\n`;
-  textContent += `2 0 obj\n<< /Type /Catalog /Pages 3 0 R >>\nendobj\n`;
-  textContent += `3 0 obj\n<< /Type /Pages /Kids [4 0 R] /Count 1 >>\nendobj\n`;
-  textContent += `4 0 obj\n<< /Type /Page /Parent 3 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> >> >> /Contents 5 0 R >>\nendobj\n`;
-
-  // Educational watermark and document summary in PDF stream
-  const rawStream = `BT /F1 16 Tf 50 800 Td (Sudanese Curriculum - Certificate of Intermediate Education) Tj ET\n` +
-    `BT /F1 12 Tf 50 770 Td (Subject: ${subject}) Tj ET\n` +
-    `BT /F1 14 Tf 50 740 Td (${title.replace(/[^\x00-\x7F]/g, '') || 'Official Educational Study Note'}) Tj ET\n` +
-    `BT /F1 10 Tf 50 710 Td (Author: ${author.replace(/[^\x00-\x7F]/g, '') || 'Curriculum Committee'}) Tj ET\n` +
-    `BT /F1 10 Tf 50 690 Td (Academic Year: ${year} | Verified Official Resource) Tj ET\n` +
-    `BT /F1 10 Tf 50 660 Td (Verified by Ministry of Education - Republic of Sudan) Tj ET\n` +
-    `BT /F1 9 Tf 50 100 Td (Downloaded via Sudanese Educational Platform - Smart Student Portal) Tj ET\n`;
-
-  const streamLength = rawStream.length;
-  textContent += `5 0 obj\n<< /Length ${streamLength} >>\nstream\n${rawStream}\nendstream\nendobj\n`;
-  textContent += `xref\n0 6\n0000000000 65535 f \n0000000015 00000 n \n0000000140 00000 n \n0000000195 00000 n \n0000000260 00000 n \n0000000420 00000 n \ntrailer\n<< /Size 6 /Root 2 0 R /Info 1 0 R >>\nstartxref\n550\n%%EOF`;
-
-  // Create Blob
-  const blob = new Blob([textContent], { type: 'application/pdf' });
-  const url = URL.createObjectURL(blob);
-
-  // Trigger download
-  const safeFilename = `${item.title.replace(/[\/\\?%*:|"<>]/g, '_')}.pdf`;
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = safeFilename;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  setTimeout(() => URL.revokeObjectURL(url), 2000);
+  printResourceDocument(item);
 }
 
 /**
@@ -62,9 +30,9 @@ export function printResourceDocument(item: ResourceItem): void {
           (page) => `
     <div class="pdf-page">
       <div class="page-header">
-        <div class="header-right">جمهورية السودان<br/>وزارة التربية والتعليم الاتحادية</div>
-        <div class="header-center">منصة المنهاج السوداني للشهادة المتوسطة<br/><strong>${doc.documentTitle}</strong></div>
-        <div class="header-left">🇸🇩 معتمد رسمياً<br/>الصفحة ${page.pageNumber} من ${doc.pageCount}</div>
+        <div class="header-right">منصة الطالب السوداني الذكية<br/>محتوى تعليمي مطابق للمنهج القومي</div>
+        <div class="header-center">الصف الثالث المتوسط — الشهادة المتوسطة<br/><strong>${doc.documentTitle}</strong></div>
+        <div class="header-left">🇸🇩 إعداد المنصة<br/>الصفحة ${page.pageNumber} من ${doc.pageCount}</div>
       </div>
       <hr class="header-line" />
       <div class="page-title-block">

@@ -1,0 +1,72 @@
+{
+  "id": "english",
+  "name": "اللغة الإنجليزية",
+  "nameEn": "English Language",
+  "code": "ENG-09",
+  "category": "humanities",
+  "description": "English for Grade 9: Reading comprehension, grammar (tenses, passive voice, conditionals), vocabulary, and guided writing.",
+  "curriculumRef": "وثيقة المنهج القومي - وزارة التربية والتعليم السودانية (Smile Book 3)",
+  "unitsCount": 3,
+  "lessonsCount": 12,
+  "colorScheme": {
+    "bg": "bg-indigo-50",
+    "text": "text-indigo-900",
+    "border": "border-indigo-200",
+    "accent": "bg-indigo-700",
+    "pillBg": "bg-indigo-100 text-indigo-800"
+  },
+  "units": [
+    {
+      "id": "eng-u1",
+      "subjectId": "english",
+      "unitNumber": 1,
+      "title": "Unit 1: The Present Perfect & Past Simple",
+      "description": "Using present perfect for experiences and past simple for finished events with specific time references.",
+      "lessons": [
+        {
+          "id": "eng-l1",
+          "subjectId": "english",
+          "unitId": "eng-u1",
+          "lessonNumber": 1,
+          "title": "Distinguishing Present Perfect and Past Simple Tenses",
+          "durationMinutes": 35,
+          "summary": "Understanding the usage of have/has + V3 versus past simple V2, with keywords like since, for, already, yet, and yesterday.",
+          "learningObjectives": [
+            "Form sentences using have/has + past participle",
+            "Identify the difference between specific past time (in 2020, yesterday) and indefinite time",
+            "Correct common error patterns in Grade 9 English exams"
+          ],
+          "sections": [
+            {
+              "title": "Grammar Rule & Comparison",
+              "content": "We use the Past Simple for actions completed at a specific time in the past (yesterday, last week, ago, in 2023). We use the Present Perfect (have/has + past participle) for actions that happened at an unspecified time or started in the past and continue to the present.",
+              "formulaOrRule": "Present Perfect: Subject + have/has + V3 (Past Participle)"
+            }
+          ],
+          "keyRules": [
+            "Past Simple needs a finished time word.",
+            "Present Perfect connects past and present."
+          ],
+          "attachments": [
+            {
+              "id": "att-eng-1",
+              "title": "Grade 9 Irregular Verbs & Tenses Sheet",
+              "type": "worksheet",
+              "size": "600 كيلوبايت",
+              "pages": 2
+            }
+          ],
+          "faq": [
+            {
+              "question": "When do we use \"since\" vs \"for\"?",
+              "answer": "Use \"since\" with a specific starting point (since 2018, since Monday). Use \"for\" with a duration (for three years, for two hours)."
+            }
+          ],
+          "examTips": [
+            "Watch out for time markers in the exam sentence to choose the right tense form."
+          ]
+        }
+      ]
+    }
+  ]
+}

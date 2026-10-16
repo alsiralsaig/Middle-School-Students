@@ -248,7 +248,7 @@ export const ExamSimulator: React.FC = () => {
               </div>
 
               <div className="text-xs text-amber-300/90 font-medium">
-                🇸🇩 أسئلة معتمدة مطابقة لمواصفات وزارة التربية والتعليم
+                🇸🇩 أسئلة تجريبية مطابقة لنمط امتحانات الشهادة المتوسطة
               </div>
             </div>
           </div>

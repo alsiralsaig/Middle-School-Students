@@ -41,12 +41,12 @@ export const RESOURCE_DOCUMENTS: Record<string, ResourceDocument> = {
     pages: [
       {
         pageNumber: 1,
-        title: 'الغلاف الرسمي والبيانات المعتمدة',
-        subtitle: 'وثيقة المنهج القومي - وزارة التربية والتعليم السودانية',
+        title: 'الغلاف وبيانات المذكرة',
+        subtitle: 'المنهج القومي الموحد — الصف الثالث المتوسط',
         sections: [
           {
             type: 'box',
-            content: 'جمهورية السودان · وزارة التربية والتعليم الاتحادية · إدارة المناهج والبحث التربوي (بخت الرضا)\nالمقرر المعتمد لامتحانات الشهادة المتوسطة للعام الدراسي 2025 / 2026',
+            content: 'منصة الطالب السوداني الذكية — محتوى تعليمي مطابق للمنهج القومي\nالصف الثالث المتوسط · الشهادة المتوسطة · العام الدراسي 2025 / 2026',
           },
           {
             heading: 'فهرس الوحدات الدراسية المقررة في المذكرة',
@@ -100,7 +100,7 @@ export const RESOURCE_DOCUMENTS: Record<string, ResourceDocument> = {
       {
         pageNumber: 3,
         title: 'نماذج امتحانية محلولة بالتفصيل (امتحانات الولايات السابقة)',
-        subtitle: 'خطوات الحل النموذجية المعتمدة في لجان التصحيح',
+        subtitle: 'خطوات الحل النموذجية المقترحة',
         sections: [
           {
             type: 'question',
@@ -171,7 +171,7 @@ export const RESOURCE_DOCUMENTS: Record<string, ResourceDocument> = {
     pages: [
       {
         pageNumber: 1,
-        title: 'غلاف المذكرة الرسمية للعلوم',
+        title: 'غلاف مذكرة العلوم',
         subtitle: 'منهاج الصف الثالث المتوسط - جمهورية السودان',
         sections: [
           {

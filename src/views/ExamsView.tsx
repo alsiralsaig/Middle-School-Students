@@ -70,7 +70,7 @@ export const ExamsView: React.FC = () => {
       year: '2024',
       subjects: ['الرياضيات', 'العلوم', 'اللغة العربية', 'التربية الإسلامية'],
       size: '6.4 ميغابايت',
-      type: 'PDF مدمج مع نموذج الإجابة الرسمي'
+      type: 'PDF مدمج مع نموذج الإجابة'
     },
     {
       state: 'ولاية الجزيرة',
@@ -113,7 +113,7 @@ export const ExamsView: React.FC = () => {
               <span>تقييم واستعداد امتحانات الشهادة المتوسطة</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white">
-              بنك الاختبارات ونماذج الامتحانات الرسمية
+              بنك الاختبارات ونماذج امتحانات تجريبية
             </h1>
             <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed max-w-2xl">
               تدرب على أسئلة امتحانات الشهادة المتوسطة في بيئة تفاعلية لاختبار مدى استيعابك للمواد واكتشاف النقاط التي تحتاج لمزيد من المراجعة.

@@ -61,7 +61,7 @@ export const PDFViewerModal: React.FC<PDFViewerModalProps> = ({ item, onClose })
         sections: [
           {
             type: 'box',
-            content: `جمهورية السودان · وزارة التربية والتعليم الاتحادية\n${item.description}`,
+            content: `منصة الطالب السوداني الذكية · الصف الثالث المتوسط\n${item.description}`,
           },
           {
             heading: 'محتويات المذكرة',
@@ -371,7 +371,7 @@ export const PDFViewerModal: React.FC<PDFViewerModalProps> = ({ item, onClose })
                     <div className="flex items-center justify-between border-b-2 border-blue-900 pb-3 mb-6 text-right">
                       <div className="text-right">
                         <div className="text-xs sm:text-sm font-extrabold text-blue-950">
-                          جمهورية السودان · وزارة التربية والتعليم الاتحادية
+                          منصة الطالب السوداني الذكية · الشهادة المتوسطة
                         </div>
                         <div className="text-[11px] sm:text-xs text-slate-600 font-medium">
                           منصة المنهاج القومي للشهادة المتوسطة · {docData.subjectName}
@@ -380,7 +380,7 @@ export const PDFViewerModal: React.FC<PDFViewerModalProps> = ({ item, onClose })
 
                       <div className="flex items-center gap-2">
                         <div className="text-left text-[10px] sm:text-xs text-slate-600">
-                          <span className="font-bold block text-blue-900">معتمد رسمياً</span>
+                          <span className="font-bold block text-blue-900">إعداد المنصة</span>
                           <span>ص {page.pageNumber} من {totalPages}</span>
                         </div>
                         <div className="w-8 h-8 rounded-full bg-blue-50 border border-blue-200 flex items-center justify-center text-sm shadow-sm">

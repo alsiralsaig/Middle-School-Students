@@ -1,0 +1,24 @@
+{
+  "name": "منصة الطالب السوداني الذكية - الصف الثالث المتوسط",
+  "short_name": "الطالب الذكي",
+  "description": "منصة تعليمية لطلاب الصف الثالث المتوسط بالمنهج السوداني: شروحات، مذكرات، وبنك امتحانات.",
+  "lang": "ar",
+  "dir": "rtl",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#071322",
+  "theme_color": "#0B1E36",
+  "categories": ["education", "kids"],
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "/icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "المقررات الدراسية", "short_name": "المقررات", "url": "/?view=subjects", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "بنك الامتحانات", "short_name": "الامتحانات", "url": "/?view=exams", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] }
+  ]
+}

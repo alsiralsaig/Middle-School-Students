@@ -563,8 +563,8 @@ export const LessonView: React.FC<LessonViewProps> = ({
       <div className="hidden print:block text-right border-b-2 border-slate-900 pb-5 mb-8">
         <div className="flex items-center justify-between border-b border-slate-400 pb-3 mb-3">
           <div>
-            <span className="text-xs font-bold text-slate-800">جمهورية السودان • وزارة التربية والتعليم العام</span>
-            <h2 className="text-lg font-black text-slate-950">منصة المنهاج السوداني للشهادة الثانوية</h2>
+            <span className="text-xs font-bold text-slate-800">منصة الطالب السوداني الذكية • الصف الثالث المتوسط</span>
+            <h2 className="text-lg font-black text-slate-950">منصة الطالب السوداني الذكية — الشهادة المتوسطة</h2>
           </div>
           <div className="text-left text-xs text-slate-700">
             <span className="block font-bold">مذكرات المذاكرة النموذجية</span>

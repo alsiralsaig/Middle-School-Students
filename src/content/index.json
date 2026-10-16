@@ -1,0 +1,66 @@
+[
+  {
+    "id": "math",
+    "name": "الرياضيات",
+    "icon": "📘",
+    "color": "indigo",
+    "totalHours": null,
+    "description": "تشمل الجبر، المعادلات، الهندسة الإقليدية، نظرية فيثاغورس، الدائرة، والإحصاء والاحتمالات."
+  },
+  {
+    "id": "science",
+    "name": "العلوم",
+    "icon": "📘",
+    "color": "indigo",
+    "totalHours": null,
+    "description": "تشمل الكيمياء، الفيزياء، وعلم الأحياء: التفاعلات الكيميائية، القوى والحركة، أجهزة جسم الإنسان، والتوازن البيئي."
+  },
+  {
+    "id": "arabic",
+    "name": "اللغة العربية",
+    "icon": "📘",
+    "color": "indigo",
+    "totalHours": null,
+    "description": "تشمل قواعد النحو والصرف، البلاغة، النصوص الأدبية، الإملاء، والتعبير الوظيفي والإبداعي."
+  },
+  {
+    "id": "islamic",
+    "name": "التربية الإسلامية",
+    "icon": "📘",
+    "color": "indigo",
+    "totalHours": null,
+    "description": "تشمل القرآن الكريم وتفسيره، الأحاديث الشريفة، العقيدة الإسلامية، الفقه، وسيرة الخلفاء الراشدين."
+  },
+  {
+    "id": "social",
+    "name": "الدراسات الاجتماعية",
+    "icon": "📘",
+    "color": "indigo",
+    "totalHours": null,
+    "description": "تشمل تاريخ السودان الحديث والمعاصر، الثورة المهدية، موقع السودان الجغرافي، التضاريس، والمناخ والموارد."
+  },
+  {
+    "id": "english",
+    "name": "اللغة الإنجليزية",
+    "icon": "📘",
+    "color": "indigo",
+    "totalHours": null,
+    "description": "English for Grade 9: Reading comprehension, grammar (tenses, passive voice, conditionals), vocabulary, and guided writing."
+  },
+  {
+    "id": "ict",
+    "name": "تكنولوجيا المعلومات والاتصالات",
+    "icon": "📘",
+    "color": "indigo",
+    "totalHours": null,
+    "description": "تشمل مكونات الحاسوب، شبكات الاتصال، أمن المعلومات الرقمية، التفكير المنطقي، ومبادئ كتابة الخوارزميات."
+  },
+  {
+    "id": "civics",
+    "name": "التربية الوطنية والحياتية",
+    "icon": "📘",
+    "color": "indigo",
+    "totalHours": null,
+    "description": "مبادئ الدستور، حقوق وواجبات المواطنة، السلام الاجتماعي، التنوع الثقافي في السودان، والتنمية المستدامة."
+  }
+]
