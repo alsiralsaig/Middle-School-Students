@@ -1,0 +1,234 @@
+// مخطط قاعدة البيانات — منصة الطالب السوداني الذكية
+// SQLite للتطوير · PostgreSQL للإنتاج (غيّر provider في datasource)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+/* ============================ المستخدمون ============================ */
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  phone        String?  @unique
+  email        String?  @unique
+  passwordHash String
+  role         String   @default("student") // student | admin
+  grade        String?
+  school       String?
+  state        String?
+  avatar       String?
+  createdAt    DateTime @default(now())
+
+  progress    LessonProgress[]
+  ratings     LessonRating[]
+  sessions    StudySession[]
+  events      PlannerEvent[]
+  attempts    ExamAttempt[]
+  notifications Notification[]
+}
+
+/* ============================ المنهج ============================ */
+
+model Subject {
+  id            String     @id
+  name          String
+  nameEn        String
+  code          String     @unique
+  category      String
+  description   String
+  curriculumRef String?
+  unitsCount    Int        @default(0)
+  lessonsCount  Int        @default(0)
+  status        String     @default("sample") // sample | verified
+
+  units     Unit[]
+  lessons   Lesson[]
+  resources Resource[]
+  exams     Exam[]
+}
+
+model Unit {
+  id          String  @id
+  subjectId   String
+  unitNumber  Int
+  title       String
+  description String
+
+  subject Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  lessons Lesson[]
+}
+
+model Lesson {
+  id                String @id
+  subjectId         String
+  unitId            String
+  lessonNumber      Int
+  title             String
+  durationMinutes   Int    @default(30)
+  summary           String
+  // حقول JSON مخزّنة كنص (SQLite لا يدعم مصفوفات)
+  learningObjectives String @default("[]")
+  sections           String @default("[]")
+  keyRules           String @default("[]")
+  attachments        String @default("[]")
+  faq                String @default("[]")
+  examTips           String @default("[]")
+  status             String @default("sample") // sample | verified
+
+  subject  Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  unit     Unit    @relation(fields: [unitId], references: [id], onDelete: Cascade)
+
+  progress  LessonProgress[]
+  ratings   LessonRating[]
+  questions ExamQuestion[]
+
+  @@unique([subjectId, unitId, lessonNumber])
+}
+
+/* ============================ تقدّم الطالب ============================ */
+
+model LessonProgress {
+  id           String   @id @default(cuid())
+  userId       String
+  lessonId     String
+  completed    Boolean  @default(false)
+  bookmarked   Boolean  @default(false)
+  secondsSpent Int      @default(0)
+  updatedAt    DateTime @updatedAt
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, lessonId])
+}
+
+model LessonRating {
+  id        String   @id @default(cuid())
+  userId    String?
+  lessonId  String
+  rating    Int
+  comment   String?
+  createdAt DateTime @default(now())
+
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+  lesson Lesson  @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, lessonId])
+}
+
+model StudySession {
+  id        String   @id @default(cuid())
+  userId    String
+  day       String // YYYY-MM-DD
+  minutes   Int
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model PlannerEvent {
+  id          String  @id @default(cuid())
+  userId      String
+  title       String
+  type        String // exam | trial_exam | review | deadline | live_class | reminder
+  date        String // YYYY-MM-DD
+  time        String // HH:MM
+  subjectName String
+  description String?
+  groupId     String?
+  weekday     Int?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  message   String
+  type      String   @default("system")
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+/* ============================ المكتبة ============================ */
+
+model Resource {
+  id                   String  @id
+  subjectId            String?
+  title                String
+  category             String
+  fileType             String
+  fileSize             String
+  pageCount            Int     @default(0)
+  author               String?
+  publishYear          String?
+  isVerifiedCurriculum Boolean @default(false)
+  downloadCount        Int     @default(0)
+  description          String
+  previewSummary       String  @default("[]")
+  filePath             String? // مسار الملف بعد ربط التخزين
+  status               String  @default("sample")
+
+  subject Subject? @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+}
+
+/* ============================ الاختبارات ============================ */
+
+model Exam {
+  id              String   @id @default(cuid())
+  subjectId       String
+  title           String
+  durationMinutes Int      @default(30)
+  status          String   @default("sample")
+  createdAt       DateTime @default(now())
+
+  subject  Subject        @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  questions ExamQuestion[]
+  attempts  ExamAttempt[]
+}
+
+model ExamQuestion {
+  id           String  @id @default(cuid())
+  examId       String
+  lessonId     String?
+  question     String
+  options      String // JSON
+  correctIndex Int
+  explanation  String?
+
+  exam   Exam    @relation(fields: [examId], references: [id], onDelete: Cascade)
+  lesson Lesson? @relation(fields: [lessonId], references: [id], onDelete: SetNull)
+}
+
+model ExamAttempt {
+  id         String    @id @default(cuid())
+  examId     String
+  userId     String
+  score      Int       @default(0)
+  total      Int       @default(0)
+  startedAt  DateTime  @default(now())
+  finishedAt DateTime?
+
+  exam    Exam         @relation(fields: [examId], references: [id], onDelete: Cascade)
+  user    User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  answers ExamAnswer[]
+}
+
+model ExamAnswer {
+  id          String @id @default(cuid())
+  attemptId   String
+  questionId  String
+  chosenIndex Int
+  correct     Boolean
+
+  attempt ExamAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+}

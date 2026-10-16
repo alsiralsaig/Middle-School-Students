@@ -6,3 +6,8 @@ coverage/
 *.log
 .env*
 !.env.example
+
+# قاعدة بيانات التطوير والملفات المرفوعة
+*.db
+*.db-journal
+uploads/

@@ -5,6 +5,7 @@
   "description": "منصة الطالب السوداني الذكية — تطبيقان منفصلان: الطالب والإدارة",
   "workspaces": [
     "shared",
+    "apps/api",
     "apps/student",
     "apps/admin"
   ],
@@ -12,11 +13,14 @@
     "dev": "npm run dev:student",
     "dev:student": "npm run dev --workspace apps/student",
     "dev:admin": "npm run dev --workspace apps/admin",
+    "dev:api": "npm run dev --workspace apps/api",
     "dev:all": "node scripts/run-both.mjs",
+    "api:push": "npm run db:push --workspace apps/api",
+    "api:seed": "npm run db:seed --workspace apps/api",
     "build": "npm run build --workspace apps/student && npm run build --workspace apps/admin",
     "build:student": "npm run build --workspace apps/student",
     "build:admin": "npm run build --workspace apps/admin",
-    "lint": "npm run lint --workspace apps/student && npm run lint --workspace apps/admin",
+    "lint": "npm run lint --workspace apps/api && npm run lint --workspace apps/student && npm run lint --workspace apps/admin",
     "content:check": "node scripts/validate-content.mjs"
   }
 }
