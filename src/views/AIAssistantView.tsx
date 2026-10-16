@@ -34,9 +34,9 @@ export const AIAssistantView: React.FC = () => {
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
 
-  const handleSend = (textToSend?: string) => {
+  const handleSend = async (textToSend?: string) => {
     const query = (textToSend || inputText).trim();
-    if (!query) return;
+    if (!query || isTyping) return;
 
     const userMsg: ChatMessage = {
       id: `user-${Date.now()}`,
@@ -49,43 +49,60 @@ export const AIAssistantView: React.FC = () => {
     if (!textToSend) setInputText('');
     setIsTyping(true);
 
-    // Simulate smart pedagogical response based on curriculum keywords
-    setTimeout(() => {
-      let replyText = '';
-      const lower = query.toLowerCase();
+    try {
+      const response = await fetch('/api/gemini/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: query }),
+      });
 
-      // Check presets first
-      const matchedPreset = AI_ASSISTANT_PRESETS.find(
-        (p) =>
-          query.includes(p.subject) ||
-          p.prompt.includes(query) ||
-          query.includes('صرف') ||
-          (query.includes('فيثاغورس') && p.subject === 'الرياضيات') ||
-          (query.includes('رابطة') && p.subject === 'العلوم') ||
-          (query.includes('شيكان') && p.subject === 'الدراسات الاجتماعية')
-      );
-
-      if (matchedPreset) {
-        replyText = matchedPreset.reply;
-      } else if (lower.includes('رياضيات') || lower.includes('معادلة') || lower.includes('جبر')) {
-        replyText = `في مادة الرياضيات للصف الثالث المتوسط، يركز المنهج السوداني على التحليل الجبري، المعادلات الآنية بمجهولين، نظرية فيثاغورس، وهندسة الدائرة.\n\nتنبيه: هذه إجابة استرشادية مولدة تجريبياً في الواجهة الأمامية دون اتصال بخادم ذكاء اصطناعي خارجي حالياً.`;
-      } else if (lower.includes('علوم') || lower.includes('فيزياء') || lower.includes('كيمياء')) {
-        replyText = `في مادة العلوم، ننصحك بالتركيز على الروابط الكيميائية وتكافؤات العناصر، وقوانين نيوتن للحركة وقانون القوة = الكتلة × التسارع، بالإضافة للرسوم التوضيحية لأجهزة جسم الإنسان.`;
-      } else {
-        replyText = `شكراً لسؤالك حول: "${query}"!\n\nوفق متطلبات المرحلة الأولى، تعمل هذه الواجهة بنظام الاستعراض التفاعلي (Interactive Prototype) لبيان تجربة المستخدم قبل ربط الواجهة الخلفية ونموذج الذكاء الاصطناعي السحابي.\n\nجرّب النقر على الأسئلة السريعة المقترحة أدناه للاطلاع على شروح نموذجية لمقرر الشهادة المتوسطة.`;
+      if (response.ok) {
+        const data = await response.json();
+        if (data.reply) {
+          const botMsg: ChatMessage = {
+            id: `bot-${Date.now()}`,
+            sender: 'assistant',
+            text: data.reply,
+            timestamp: 'الآن',
+            isSimulatedDemo: false
+          };
+          setMessages((prev) => [...prev, botMsg]);
+          setIsTyping(false);
+          return;
+        }
       }
+    } catch {
+      // Fallback to curriculum preset responses
+    }
 
-      const botMsg: ChatMessage = {
-        id: `bot-${Date.now()}`,
-        sender: 'assistant',
-        text: replyText,
-        timestamp: 'الآن',
-        isSimulatedDemo: true
-      };
+    // Pedagogical curriculum presets fallback
+    const matchedPreset = AI_ASSISTANT_PRESETS.find(
+      (p) =>
+        query.includes(p.subject) ||
+        p.prompt.includes(query) ||
+        query.includes('صرف') ||
+        (query.includes('فيثاغورس') && p.subject === 'الرياضيات') ||
+        (query.includes('رابطة') && p.subject === 'العلوم') ||
+        (query.includes('شيكان') && p.subject === 'الدراسات الاجتماعية')
+    );
 
-      setMessages((prev) => [...prev, botMsg]);
-      setIsTyping(false);
-    }, 600);
+    let replyText = '';
+    if (matchedPreset) {
+      replyText = matchedPreset.reply;
+    } else {
+      replyText = `شكراً لسؤالك حول: "${query}"! في مقررات المنهج السوداني، ننصحك أيضاً باستخدام نافذة "معلم الدرس الذكي" في صفحة أي درس للحصول على شروحات تفصيلية فورية لكل مسألة وقانون بواسطة نموذج Gemini API.`;
+    }
+
+    const botMsg: ChatMessage = {
+      id: `bot-${Date.now()}`,
+      sender: 'assistant',
+      text: replyText,
+      timestamp: 'الآن',
+      isSimulatedDemo: true
+    };
+
+    setMessages((prev) => [...prev, botMsg]);
+    setIsTyping(false);
   };
 
   const handleClearChat = () => {

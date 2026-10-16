@@ -23,8 +23,18 @@ import {
   Check,
   ExternalLink,
   MessageCircle,
-  Send
+  Send,
+  Printer,
+  SlidersHorizontal,
+  Sun,
+  Moon,
+  Palette,
+  Type
 } from 'lucide-react';
+import { ReaderSettings, ReaderTheme, ReaderLineHeight, ReaderFontSize } from '../types';
+import { ChatWidget } from '../components/ChatWidget';
+import { InteractiveQuiz } from '../components/InteractiveQuiz';
+
 
 interface EncouragementToast {
   title: string;
@@ -71,6 +81,50 @@ export const LessonView: React.FC<LessonViewProps> = ({
   const [copiedLink, setCopiedLink] = useState(false);
   const [copiedSummary, setCopiedSummary] = useState(false);
   const [shareToastMessage, setShareToastMessage] = useState<string | null>(null);
+
+  // Reader Settings & Auto Night Mode
+  const [readerSettings, setReaderSettings] = useState<ReaderSettings>(() => {
+    try {
+      const saved = localStorage.getItem('sudanese_platform_reader_settings');
+      if (saved) return JSON.parse(saved);
+    } catch {
+      // fallback
+    }
+    return {
+      lineHeight: 'relaxed',
+      fontSize: 'base',
+      theme: 'comfort',
+      autoNightMode: true,
+    };
+  });
+  const [showReaderControls, setShowReaderControls] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
+
+  // Auto Night mode detection (7 PM to 6 AM)
+  const isNightHour = () => {
+    const hr = new Date().getHours();
+    return hr >= 19 || hr < 6;
+  };
+
+  const isAutoNightActive = readerSettings.autoNightMode && isNightHour();
+  const effectiveTheme: ReaderTheme = isAutoNightActive ? 'dark' : readerSettings.theme;
+
+  const handlePrint = () => {
+    window.print();
+  };
+
+  const updateReaderSetting = <K extends keyof ReaderSettings>(key: K, value: ReaderSettings[K]) => {
+    setReaderSettings(prev => {
+      const next = { ...prev, [key]: value };
+      try {
+        localStorage.setItem('sudanese_platform_reader_settings', JSON.stringify(next));
+      } catch {
+        // ignore
+      }
+      return next;
+    });
+  };
+
 
   // 5-Star Ratings State per lesson
   const [ratingsMap, setRatingsMap] = useState<Record<string, LessonRatingInfo>>({
@@ -411,8 +465,52 @@ export const LessonView: React.FC<LessonViewProps> = ({
               aria-label="مشاركة الدرس"
             >
               <Share2 className="w-4 h-4 text-blue-900 dark:text-amber-400" />
-              <span>مشاركة الدرس</span>
+              <span>مشاركة</span>
             </button>
+
+            {/* Print Lesson / Note Button */}
+            <button
+              onClick={handlePrint}
+              className="flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-sm bg-emerald-50 dark:bg-[#142A46] hover:bg-emerald-100 dark:hover:bg-[#1E3A60] text-emerald-800 dark:text-emerald-400 border border-emerald-200 dark:border-[#21436F] min-h-[44px]"
+              title="طباعة مذكرة الدرس بتنسيق ورقي ملائم"
+              aria-label="طباعة المذكرة"
+            >
+              <Printer className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+              <span>طباعة المذكرة</span>
+            </button>
+
+            {/* Ask Gemini AI Teacher Chat Button */}
+            <button
+              onClick={() => setIsChatOpen(true)}
+              className="flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-black transition-all cursor-pointer shadow-sm bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-500 hover:to-amber-700 text-slate-950 border border-amber-300 dark:border-amber-500/40 min-h-[44px] shadow-amber-500/20 hover:scale-[1.02] active:scale-[0.98]"
+              title="اسأل المعلم الذكي عن هذا الدرس (Gemini API)"
+              aria-label="اسأل المعلم الذكي"
+            >
+              <Sparkles className="w-4 h-4 text-slate-950 animate-pulse" />
+              <span>اسأل المعلم الذكي</span>
+              <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-slate-950/20 text-slate-950 font-mono font-bold">
+                Gemini
+              </span>
+            </button>
+
+            {/* Reader Controls Toggle Button */}
+            <button
+              onClick={() => setShowReaderControls(!showReaderControls)}
+              className={`flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-sm min-h-[44px] ${
+                showReaderControls
+                  ? 'bg-amber-400 text-slate-950 font-black border border-amber-500 shadow-md ring-2 ring-amber-400/30'
+                  : 'bg-slate-100 dark:bg-[#142A46] hover:bg-amber-50 dark:hover:bg-amber-950/30 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-[#21436F]'
+              }`}
+              title="تخصيص القراءة (السمة، تباعد الأسطر، حجم الخط، القراءة الليلية)"
+              aria-label="تخصيص القراءة"
+            >
+              <SlidersHorizontal className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+              <span>تخصيص القراءة</span>
+              {isAutoNightActive && (
+                <span className="w-2 h-2 rounded-full bg-indigo-400 animate-pulse" title="القراءة الليلية نشطة" />
+              )}
+            </button>
+
 
             {/* Mark Complete Action Button */}
             <button
@@ -461,8 +559,220 @@ export const LessonView: React.FC<LessonViewProps> = ({
         </div>
       </div>
 
+      {/* Dedicated Printable Header (visible ONLY when printed / Save to PDF) */}
+      <div className="hidden print:block text-right border-b-2 border-slate-900 pb-5 mb-8">
+        <div className="flex items-center justify-between border-b border-slate-400 pb-3 mb-3">
+          <div>
+            <span className="text-xs font-bold text-slate-800">جمهورية السودان • وزارة التربية والتعليم العام</span>
+            <h2 className="text-lg font-black text-slate-950">منصة المنهاج السوداني للشهادة الثانوية</h2>
+          </div>
+          <div className="text-left text-xs text-slate-700">
+            <span className="block font-bold">مذكرات المذاكرة النموذجية</span>
+            <span className="font-mono">{new Date().toLocaleDateString('ar-SD')}</span>
+          </div>
+        </div>
+        <h1 className="text-2xl font-black text-slate-950 mb-1">{lesson.title}</h1>
+        <p className="text-xs text-slate-700">
+          <strong>المقرر:</strong> {subject.name} | <strong>درس رقم:</strong> {lesson.lessonNumber} | <strong>الوقت المقدر:</strong> {lesson.durationMinutes} دقيقة
+        </p>
+      </div>
+
+      {/* Reader Controls Toolbar (Toggleable or Floating) */}
+      {showReaderControls && (
+        <div className="bg-[#0B1E36] border border-[#1E3A60] rounded-2xl p-5 shadow-2xl animate-in fade-in slide-in-from-top-2 duration-200 print:hidden space-y-4 text-right">
+          <div className="flex items-center justify-between border-b border-[#1A385C] pb-3">
+            <div className="flex items-center gap-2">
+              <SlidersHorizontal className="w-4 h-4 text-amber-400" />
+              <h3 className="text-xs font-bold text-white">شريط تخصيص تجربة القراءة والمذاكرة</h3>
+            </div>
+            <div className="flex items-center gap-2">
+              {isAutoNightActive ? (
+                <span className="text-[10px] bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 px-2 py-0.5 rounded-full flex items-center gap-1 font-semibold">
+                  <Moon className="w-3 h-3 text-indigo-400" />
+                  <span>الوضع الليلي التلقائي نشط الآن</span>
+                </span>
+              ) : (
+                <span className="text-[10px] bg-amber-500/10 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded-full flex items-center gap-1 font-semibold">
+                  <Sun className="w-3 h-3 text-amber-400" />
+                  <span>الوضع النهاري</span>
+                </span>
+              )}
+              <button
+                onClick={() => setShowReaderControls(false)}
+                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-[#142A46]"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
+            {/* Color Theme Selector */}
+            <div className="space-y-1.5">
+              <span className="block font-semibold text-slate-300">سمة العرض والخلفية:</span>
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => updateReaderSetting('theme', 'comfort')}
+                  className={`flex-1 py-1.5 px-2 rounded-xl font-bold flex items-center justify-center gap-1 border transition-all cursor-pointer ${
+                    readerSettings.theme === 'comfort'
+                      ? 'bg-[#FBF0D9] text-[#433422] border-[#C8B18B] ring-2 ring-amber-400 shadow-sm'
+                      : 'bg-[#0E2440] text-amber-200 border-[#1B3658] hover:bg-[#15345C]'
+                  }`}
+                >
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#E8D0A9]" />
+                  <span>بني مريح</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => updateReaderSetting('theme', 'white')}
+                  className={`flex-1 py-1.5 px-2 rounded-xl font-bold flex items-center justify-center gap-1 border transition-all cursor-pointer ${
+                    readerSettings.theme === 'white'
+                      ? 'bg-white text-slate-900 border-white ring-2 ring-emerald-400 shadow-sm'
+                      : 'bg-[#0E2440] text-slate-300 border-[#1B3658] hover:bg-[#15345C]'
+                  }`}
+                >
+                  <span className="w-2.5 h-2.5 rounded-full bg-white" />
+                  <span>أبيض</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => updateReaderSetting('theme', 'dark')}
+                  className={`flex-1 py-1.5 px-2 rounded-xl font-bold flex items-center justify-center gap-1 border transition-all cursor-pointer ${
+                    readerSettings.theme === 'dark'
+                      ? 'bg-[#071626] text-amber-300 border-amber-400/50 ring-2 ring-amber-400 shadow-sm'
+                      : 'bg-[#0E2440] text-slate-300 border-[#1B3658] hover:bg-[#15345C]'
+                  }`}
+                >
+                  <span className="w-2.5 h-2.5 rounded-full bg-slate-900 border border-slate-700" />
+                  <span>أسود</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Line Spacing */}
+            <div className="space-y-1.5">
+              <span className="block font-semibold text-slate-300">تباعد الأسطر:</span>
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => updateReaderSetting('lineHeight', 'normal')}
+                  className={`flex-1 py-1.5 rounded-xl font-semibold border transition-all cursor-pointer ${
+                    readerSettings.lineHeight === 'normal'
+                      ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm'
+                      : 'bg-[#0E2440] text-slate-300 border-[#1B3658] hover:bg-[#15345C]'
+                  }`}
+                >
+                  عادي
+                </button>
+                <button
+                  type="button"
+                  onClick={() => updateReaderSetting('lineHeight', 'relaxed')}
+                  className={`flex-1 py-1.5 rounded-xl font-semibold border transition-all cursor-pointer ${
+                    readerSettings.lineHeight === 'relaxed'
+                      ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm'
+                      : 'bg-[#0E2440] text-slate-300 border-[#1B3658] hover:bg-[#15345C]'
+                  }`}
+                >
+                  متوسط
+                </button>
+                <button
+                  type="button"
+                  onClick={() => updateReaderSetting('lineHeight', 'loose')}
+                  className={`flex-1 py-1.5 rounded-xl font-semibold border transition-all cursor-pointer ${
+                    readerSettings.lineHeight === 'loose'
+                      ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm'
+                      : 'bg-[#0E2440] text-slate-300 border-[#1B3658] hover:bg-[#15345C]'
+                  }`}
+                >
+                  واسع
+                </button>
+              </div>
+            </div>
+
+            {/* Font Size */}
+            <div className="space-y-1.5">
+              <span className="block font-semibold text-slate-300">حجم الخط:</span>
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => updateReaderSetting('fontSize', 'sm')}
+                  className={`flex-1 py-1.5 rounded-xl font-semibold border transition-all cursor-pointer ${
+                    readerSettings.fontSize === 'sm'
+                      ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm'
+                      : 'bg-[#0E2440] text-slate-300 border-[#1B3658] hover:bg-[#15345C]'
+                  }`}
+                  title="صغير"
+                >
+                  A-
+                </button>
+                <button
+                  type="button"
+                  onClick={() => updateReaderSetting('fontSize', 'base')}
+                  className={`flex-1 py-1.5 rounded-xl font-semibold border transition-all cursor-pointer ${
+                    readerSettings.fontSize === 'base'
+                      ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm'
+                      : 'bg-[#0E2440] text-slate-300 border-[#1B3658] hover:bg-[#15345C]'
+                  }`}
+                  title="متوسط"
+                >
+                  A
+                </button>
+                <button
+                  type="button"
+                  onClick={() => updateReaderSetting('fontSize', 'lg')}
+                  className={`flex-1 py-1.5 rounded-xl font-semibold border transition-all cursor-pointer ${
+                    readerSettings.fontSize === 'lg'
+                      ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm'
+                      : 'bg-[#0E2440] text-slate-300 border-[#1B3658] hover:bg-[#15345C]'
+                  }`}
+                  title="كبير"
+                >
+                  A+
+                </button>
+                <button
+                  type="button"
+                  onClick={() => updateReaderSetting('fontSize', 'xl')}
+                  className={`flex-1 py-1.5 rounded-xl font-semibold border transition-all cursor-pointer ${
+                    readerSettings.fontSize === 'xl'
+                      ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm'
+                      : 'bg-[#0E2440] text-slate-300 border-[#1B3658] hover:bg-[#15345C]'
+                  }`}
+                  title="كبير جداً"
+                >
+                  A++
+                </button>
+              </div>
+            </div>
+
+            {/* Auto Night Mode Toggle */}
+            <div className="space-y-1.5">
+              <span className="block font-semibold text-slate-300">القراءة الليلية الذكية:</span>
+              <button
+                type="button"
+                onClick={() => updateReaderSetting('autoNightMode', !readerSettings.autoNightMode)}
+                className={`w-full py-1.5 px-3 rounded-xl font-semibold border flex items-center justify-between transition-all cursor-pointer ${
+                  readerSettings.autoNightMode
+                    ? 'bg-indigo-600 text-white border-indigo-500 shadow-sm'
+                    : 'bg-[#0E2440] text-slate-300 border-[#1B3658] hover:bg-[#15345C]'
+                }`}
+              >
+                <span className="flex items-center gap-1.5">
+                  <Moon className="w-3.5 h-3.5" />
+                  <span>تلقائي (7م - 6ص)</span>
+                </span>
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-white/20">
+                  {readerSettings.autoNightMode ? 'مفعل' : 'معطل'}
+                </span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Tabs Navigation */}
-      <div className="flex items-center gap-1.5 p-1 bg-slate-200/60 dark:bg-[#122846] rounded-2xl overflow-x-auto text-xs font-semibold">
+      <div className="flex items-center gap-1.5 p-1 bg-slate-200/60 dark:bg-[#122846] rounded-2xl overflow-x-auto text-xs font-semibold print:hidden">
+
         <button
           onClick={() => setActiveTab('explanation')}
           className={`flex-1 py-3 px-4 rounded-xl transition-all whitespace-nowrap cursor-pointer text-center ${
@@ -516,30 +826,59 @@ export const LessonView: React.FC<LessonViewProps> = ({
       {/* Tab 1: Detailed Explanations */}
       {activeTab === 'explanation' && (
         <div className="space-y-6">
-          {lesson.sections.map((section, idx) => (
-            <div
-              key={idx}
-              className="bg-white dark:bg-[#0D1F35] rounded-2xl border border-slate-200 dark:border-[#1C3A62] p-6 sm:p-8 space-y-4 text-right shadow-sm"
-            >
-              <div className="flex items-center gap-2">
-                <span className="w-7 h-7 rounded-lg bg-blue-100 dark:bg-[#142D50] text-blue-900 dark:text-amber-300 flex items-center justify-center font-bold text-xs">
-                  {idx + 1}
-                </span>
-                <h3 className="text-lg font-bold text-slate-900 dark:text-white">
-                  {section.title}
-                </h3>
-              </div>
+          {lesson.sections.map((section, idx) => {
+            const containerStyle = effectiveTheme === 'comfort'
+              ? 'bg-[#FBF0D9] text-[#433422] border-[#EADCC3] shadow-md'
+              : effectiveTheme === 'white'
+              ? 'bg-white text-slate-900 border-slate-200 shadow-sm'
+              : 'bg-white dark:bg-[#0D1F35] text-slate-900 dark:text-white border-slate-200 dark:border-[#1C3A62] shadow-sm';
 
-              <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
-                {section.content}
-              </p>
+            const textStyle = effectiveTheme === 'comfort'
+              ? 'text-[#433422]'
+              : effectiveTheme === 'white'
+              ? 'text-slate-700'
+              : 'text-slate-700 dark:text-slate-300';
 
-              {/* Formula or Rule Callout */}
-              {section.formulaOrRule && (
-                <div className="p-4 rounded-xl bg-slate-900 text-amber-300 font-mono text-center text-sm sm:text-base border border-slate-800 shadow-inner">
-                  {section.formulaOrRule}
+            const fontSizeClass = readerSettings.fontSize === 'sm' ? 'text-xs sm:text-sm' :
+                                  readerSettings.fontSize === 'base' ? 'text-sm sm:text-base' :
+                                  readerSettings.fontSize === 'lg' ? 'text-base sm:text-lg' : 'text-lg sm:text-xl';
+
+            const lineHeightClass = readerSettings.lineHeight === 'normal' ? 'leading-normal' :
+                                    readerSettings.lineHeight === 'relaxed' ? 'leading-relaxed' : 'leading-loose';
+
+            return (
+              <div
+                key={idx}
+                className={`rounded-2xl border p-6 sm:p-8 space-y-4 text-right transition-colors lesson-content-container ${containerStyle}`}
+              >
+                <div className="flex items-center gap-2">
+                  <span className={`w-7 h-7 rounded-lg flex items-center justify-center font-bold text-xs ${
+                    effectiveTheme === 'comfort'
+                      ? 'bg-[#EBD8B8] text-[#433422]'
+                      : 'bg-blue-100 dark:bg-[#142D50] text-blue-900 dark:text-amber-300'
+                  }`}>
+                    {idx + 1}
+                  </span>
+                  <h3 className="text-lg font-bold">
+                    {section.title}
+                  </h3>
                 </div>
-              )}
+
+                <p className={`${fontSizeClass} ${lineHeightClass} ${textStyle}`}>
+                  {section.content}
+                </p>
+
+                {/* Formula or Rule Callout */}
+                {section.formulaOrRule && (
+                  <div className={`p-4 rounded-xl font-mono text-center text-sm sm:text-base border shadow-inner ${
+                    effectiveTheme === 'comfort'
+                      ? 'bg-[#EBD8B8] text-[#342410] border-[#DFC9A5]'
+                      : 'bg-slate-900 text-amber-300 border-slate-800'
+                  }`}>
+                    {section.formulaOrRule}
+                  </div>
+                )}
+            
 
               {/* Key points */}
               {section.keyPoints && (
@@ -573,9 +912,11 @@ export const LessonView: React.FC<LessonViewProps> = ({
                 </div>
               )}
             </div>
-          ))}
+          );
+        })}
         </div>
       )}
+
 
       {/* Tab 2: Summary & Exam Tips */}
       {activeTab === 'summary' && (
@@ -1024,6 +1365,14 @@ export const LessonView: React.FC<LessonViewProps> = ({
           </div>
         </div>
       )}
+
+      {/* Floating & Pop-up Gemini AI Chat Widget for this lesson */}
+      <ChatWidget 
+        lesson={lesson} 
+        subject={subject} 
+        isOpen={isChatOpen} 
+        onOpenChange={setIsChatOpen} 
+      />
     </div>
   );
 };

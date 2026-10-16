@@ -12,6 +12,8 @@ import {
   BookOpen,
   Share2
 } from 'lucide-react';
+import { PDFViewerModal } from '../components/PDFViewerModal';
+import { downloadResourcePDF } from '../utils/pdfDownloader';
 
 interface ResourcesViewProps {
   resources: ResourceItem[];
@@ -57,7 +59,8 @@ export const ResourcesView: React.FC<ResourcesViewProps> = ({
   });
 
   const triggerDownload = (item: ResourceItem) => {
-    setDownloadToast(`جاري تنزيل ملف "${item.title}" بصيغة ${item.fileType}...`);
+    downloadResourcePDF(item);
+    setDownloadToast(`تم بدء تنزيل ملف "${item.title}" بصيغة PDF بنجاح!`);
     setTimeout(() => {
       setDownloadToast(null);
     }, 4000);
@@ -234,19 +237,23 @@ export const ResourcesView: React.FC<ResourcesViewProps> = ({
               {/* Action Buttons */}
               <div className="pt-4 grid grid-cols-2 gap-2">
                 <button
+                  type="button"
                   onClick={() => setPreviewItem(item)}
-                  className="py-2.5 px-3 rounded-xl bg-slate-100 dark:bg-[#142A46] hover:bg-slate-200 dark:hover:bg-[#1C3960] text-slate-800 dark:text-slate-200 text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer min-h-[44px]"
+                  className="py-2.5 px-3 rounded-xl bg-blue-50 hover:bg-blue-100 dark:bg-[#142A46] dark:hover:bg-[#1C3960] text-blue-900 dark:text-blue-200 border border-blue-200 dark:border-[#21436F] text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer min-h-[44px]"
+                  title="معاينة وقراءة المذكرة مباشرة كملف PDF داخل المتصفح"
                 >
-                  <Eye className="w-4 h-4 text-slate-600 dark:text-slate-400" />
-                  <span>معاينة المذكرة</span>
+                  <Eye className="w-4 h-4 text-blue-600 dark:text-amber-400" />
+                  <span>معاينة PDF</span>
                 </button>
 
                 <button
+                  type="button"
                   onClick={() => triggerDownload(item)}
-                  className="py-2.5 px-3 rounded-xl bg-[#0B1E36] hover:bg-[#15345B] dark:bg-[#18365D] dark:hover:bg-[#204473] text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer min-h-[44px]"
+                  className="py-2.5 px-3 rounded-xl bg-[#0B1E36] hover:bg-[#15345B] dark:bg-amber-400 dark:hover:bg-amber-300 text-white dark:text-slate-950 text-xs font-black flex items-center justify-center gap-1.5 transition-colors cursor-pointer min-h-[44px] shadow-sm"
+                  title="تحميل ملف PDF إلى جهازك"
                 >
-                  <Download className="w-4 h-4 text-amber-400" />
-                  <span>تنزيل PDF</span>
+                  <Download className="w-4 h-4 text-amber-400 dark:text-slate-950" />
+                  <span>تحميل PDF</span>
                 </button>
               </div>
             </div>
@@ -254,94 +261,12 @@ export const ResourcesView: React.FC<ResourcesViewProps> = ({
         </div>
       )}
 
-      {/* Resource Direct Reading Preview Modal */}
+      {/* Dedicated Interactive In-Browser PDF Viewer Modal */}
       {previewItem && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-[#0D1F35] rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col shadow-2xl border border-slate-200 dark:border-[#1C3A62] animate-in zoom-in-95 duration-200">
-            {/* Modal Header */}
-            <div className="p-5 sm:p-6 bg-[#0B1E36] text-white flex items-center justify-between gap-4 text-right">
-              <div>
-                <span className="text-xs text-amber-300 font-bold block mb-1">
-                  معاينة مقتطفات المذكرة · {previewItem.subjectName}
-                </span>
-                <h3 className="text-base sm:text-lg font-bold leading-tight">
-                  {previewItem.title}
-                </h3>
-              </div>
-              <button
-                onClick={() => setPreviewItem(null)}
-                className="p-2 rounded-xl bg-[#173155] text-slate-300 hover:text-white cursor-pointer shrink-0"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Modal Scrollable Content */}
-            <div className="p-6 overflow-y-auto space-y-6 text-right">
-              <div className="bg-slate-50 dark:bg-[#122844] p-4 rounded-2xl border border-slate-200 dark:border-[#1E3A60] space-y-2 text-xs text-slate-700 dark:text-slate-300">
-                <div className="flex items-center justify-between">
-                  <span className="font-bold">المؤلف: {previewItem.author}</span>
-                  <span>الصفحات: {previewItem.pageCount} صفحة</span>
-                </div>
-                <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
-                  <span>العام الدراسي: {previewItem.publishYear}</span>
-                  <span>حجم الملف: {previewItem.fileSize}</span>
-                </div>
-              </div>
-
-              <div>
-                <h4 className="text-sm font-bold text-slate-900 dark:text-white mb-2">
-                  عن هذه المذكرة الدراسية:
-                </h4>
-                <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-                  {previewItem.description}
-                </p>
-              </div>
-
-              <div>
-                <h4 className="text-sm font-bold text-slate-900 dark:text-white mb-3">
-                  أبرز المحاور والموضوعات التي تتناولها المذكرة:
-                </h4>
-                <ul className="space-y-2 text-xs sm:text-sm text-slate-700 dark:text-slate-300">
-                  {previewItem.previewSummary.map((line, idx) => (
-                    <li
-                      key={idx}
-                      className="p-3 rounded-xl bg-blue-50/60 dark:bg-[#142C4D] border border-blue-100 dark:border-[#1F416E] flex items-start gap-2.5 text-slate-800 dark:text-slate-200"
-                    >
-                      <CheckCircle2 className="w-4 h-4 text-blue-900 dark:text-amber-400 mt-0.5 shrink-0" />
-                      <span>{line}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-amber-50 dark:bg-[#152B4A] border border-amber-200 dark:border-amber-400/30 text-amber-900 dark:text-amber-200 text-xs">
-                <span className="font-bold block mb-1">تنبيه الطالب:</span>
-                تم إعداد هذا المحتوى وتدقيقه ليتطابق تماماً مع امتحانات الشهادة المتوسطة في ولايات السودان المختلفة.
-              </div>
-            </div>
-
-            {/* Modal Actions Footer */}
-            <div className="p-4 sm:p-5 bg-slate-50 dark:bg-[#091524] border-t border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3">
-              <button
-                onClick={() => setPreviewItem(null)}
-                className="px-4 py-2.5 rounded-xl border border-slate-300 dark:border-[#1E3A60] text-slate-700 dark:text-slate-300 text-xs font-semibold hover:bg-slate-100 dark:hover:bg-[#142A46] transition-colors cursor-pointer"
-              >
-                إغلاق المعاينة
-              </button>
-              <button
-                onClick={() => {
-                  triggerDownload(previewItem);
-                  setPreviewItem(null);
-                }}
-                className="px-5 py-2.5 rounded-xl bg-blue-900 hover:bg-blue-800 dark:bg-amber-400 dark:hover:bg-amber-300 dark:text-slate-950 text-white text-xs font-bold flex items-center gap-2 transition-colors cursor-pointer shadow-md"
-              >
-                <Download className="w-4 h-4 text-amber-300 dark:text-slate-950" />
-                <span>تنزيل المذكرة كاملة (PDF)</span>
-              </button>
-            </div>
-          </div>
-        </div>
+        <PDFViewerModal
+          item={previewItem}
+          onClose={() => setPreviewItem(null)}
+        />
       )}
     </div>
   );

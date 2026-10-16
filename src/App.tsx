@@ -9,6 +9,9 @@ import { SUBJECTS_DATA, RESOURCES_DATA } from './data/curriculumData';
 import { Header } from './components/Header';
 import { MobileBottomNav } from './components/MobileBottomNav';
 import { Footer } from './components/Footer';
+import { AccountManagerModal } from './components/AccountManagerModal';
+import { LanguageProvider, useLanguage } from './context/LanguageContext';
+import { AccountProvider, useAccount } from './context/AccountContext';
 
 import { HomeView } from './views/HomeView';
 import { SubjectsView } from './views/SubjectsView';
@@ -19,17 +22,21 @@ import { ExamsView } from './views/ExamsView';
 import { AIAssistantView } from './views/AIAssistantView';
 import { StudentDashboardView } from './views/StudentDashboardView';
 import { AdminDashboardView } from './views/AdminDashboardView';
+import { LeaderboardView } from './views/LeaderboardView';
+import { AchievementsView } from './views/AchievementsView';
+import { StudyRoomsView } from './views/StudyRoomsView';
 
-export default function App() {
+function AppContent() {
   const [currentView, setCurrentView] = useState<ViewMode>('home');
   const [selectedSubjectId, setSelectedSubjectId] = useState<string>('math');
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
   const [selectedResourceId, setSelectedResourceId] = useState<string | null>(null);
-  const [completedLessonIds, setCompletedLessonIds] = useState<string[]>([
-    'math-l1',
-    'arb-l1',
-    'sci-l1',
-  ]);
+
+  const { activeAccount, toggleCompletedLesson, toggleBookmarkedLesson } = useAccount();
+  const { isRtl } = useLanguage();
+
+  const completedLessonIds = activeAccount.completedLessonIds || [];
+  const bookmarkedLessonIds = activeAccount.bookmarkedLessonIds || [];
 
   const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
@@ -81,14 +88,6 @@ export default function App() {
     setCurrentView('resources');
   };
 
-  const handleToggleCompleteLesson = (lessonId: string) => {
-    setCompletedLessonIds((prev) =>
-      prev.includes(lessonId)
-        ? prev.filter((id) => id !== lessonId)
-        : [...prev, lessonId]
-    );
-  };
-
   const currentSubject =
     SUBJECTS_DATA.find((s) => s.id === selectedSubjectId) || SUBJECTS_DATA[0];
 
@@ -97,16 +96,20 @@ export default function App() {
   );
 
   return (
-    <div className={`min-h-screen flex flex-col font-sans transition-colors duration-200 ${
-      isDarkMode 
-        ? 'dark bg-[#071322] text-slate-100 selection:bg-amber-900/60 selection:text-amber-200' 
-        : 'bg-slate-50 text-slate-900 selection:bg-amber-100 selection:text-amber-900'
-    }`}>
+    <div 
+      className={`min-h-screen flex flex-col font-sans transition-colors duration-200 ${
+        isDarkMode 
+          ? 'dark bg-[#071322] text-slate-100 selection:bg-amber-900/60 selection:text-amber-200' 
+          : 'bg-slate-50 text-slate-900 selection:bg-amber-100 selection:text-amber-900'
+      }`}
+      dir={isRtl ? 'rtl' : 'ltr'}
+    >
       {/* Platform Header */}
       <Header
         currentView={currentView}
         onNavigate={handleNavigate}
         completedCount={completedLessonIds.length}
+        bookmarkedCount={bookmarkedLessonIds.length}
         isDarkMode={isDarkMode}
         onToggleDarkMode={toggleDarkMode}
       />
@@ -136,6 +139,8 @@ export default function App() {
           <SubjectDetailView
             subject={currentSubject}
             completedLessonIds={completedLessonIds}
+            bookmarkedLessonIds={bookmarkedLessonIds}
+            onToggleBookmark={toggleBookmarkedLesson}
             onBack={() => setCurrentView('subjects')}
             onSelectLesson={handleSelectLesson}
           />
@@ -147,7 +152,9 @@ export default function App() {
             subject={currentSubject}
             allLessonsInSubject={allLessonsInCurrentSubject}
             isCompleted={completedLessonIds.includes(selectedLesson.id)}
-            onToggleComplete={handleToggleCompleteLesson}
+            onToggleComplete={toggleCompletedLesson}
+            isBookmarked={bookmarkedLessonIds.includes(selectedLesson.id)}
+            onToggleBookmark={toggleBookmarkedLesson}
             onSelectLesson={handleSelectLesson}
             onBackToSubject={() => setCurrentView('subject-detail')}
           />
@@ -169,9 +176,24 @@ export default function App() {
           <StudentDashboardView
             subjects={SUBJECTS_DATA}
             completedLessonIds={completedLessonIds}
+            bookmarkedLessonIds={bookmarkedLessonIds}
+            onToggleBookmark={toggleBookmarkedLesson}
             onNavigate={handleNavigate}
             onSelectSubject={handleSelectSubject}
+            onSelectLesson={handleSelectLesson}
           />
+        )}
+
+        {currentView === 'leaderboard' && (
+          <LeaderboardView onBack={() => setCurrentView('student-dashboard')} />
+        )}
+
+        {currentView === 'achievements' && (
+          <AchievementsView onBack={() => setCurrentView('student-dashboard')} />
+        )}
+
+        {currentView === 'study-rooms' && (
+          <StudyRoomsView onBackToDashboard={() => setCurrentView('student-dashboard')} />
         )}
 
         {currentView === 'admin-dashboard' && (
@@ -182,8 +204,21 @@ export default function App() {
       {/* Footer */}
       <Footer onNavigate={handleNavigate} />
 
-      {/* Mobile-first bottom navigation bar for Android phones */}
+      {/* Mobile-first bottom navigation bar for phones */}
       <MobileBottomNav currentView={currentView} onNavigate={handleNavigate} />
+
+      {/* Student Account Switcher and Creator Modal */}
+      <AccountManagerModal />
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <LanguageProvider>
+      <AccountProvider>
+        <AppContent />
+      </AccountProvider>
+    </LanguageProvider>
   );
 }

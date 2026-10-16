@@ -13,11 +13,15 @@ import {
   Download,
   FileCheck,
   ChevronLeft,
-  BookOpen
+  BookOpen,
+  Flame,
+  Sparkles,
+  Timer
 } from 'lucide-react';
+import { ExamSimulator } from '../components/ExamSimulator';
 
 export const ExamsView: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'practice-quiz' | 'past-papers'>('practice-quiz');
+  const [activeTab, setActiveTab] = useState<'simulator' | 'practice-quiz' | 'past-papers'>('simulator');
   
   // Interactive Quiz state
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -139,20 +143,37 @@ export const ExamsView: React.FC = () => {
         </div>
 
         {/* Tab switch */}
-        <div className="mt-6 flex items-center gap-2 p-1 bg-slate-100 dark:bg-[#142A46] rounded-xl w-full sm:w-fit">
+        <div className="mt-6 flex flex-wrap items-center gap-2 p-1.5 bg-slate-100 dark:bg-[#142A46] rounded-2xl w-full sm:w-fit">
           <button
+            type="button"
+            onClick={() => setActiveTab('simulator')}
+            className={`flex-1 sm:flex-initial px-5 py-2.5 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center justify-center gap-2 ${
+              activeTab === 'simulator'
+                ? 'bg-gradient-to-r from-blue-700 to-indigo-700 text-white shadow-md'
+                : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
+            }`}
+          >
+            <Clock className="w-4 h-4 text-amber-300" />
+            <span>محاكي الامتحانات التجريبي (موقوت)</span>
+            <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-amber-400 text-slate-950 font-bold">
+              جديد ⏱️
+            </span>
+          </button>
+          <button
+            type="button"
             onClick={() => setActiveTab('practice-quiz')}
-            className={`flex-1 sm:flex-initial px-5 py-2.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+            className={`flex-1 sm:flex-initial px-5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               activeTab === 'practice-quiz'
                 ? 'bg-white dark:bg-[#1F3E68] text-slate-900 dark:text-white shadow-sm'
                 : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
-            اختبار استرشادي تجريبي (5 أسئلة)
+            تدريبات سريعة (5 أسئلة)
           </button>
           <button
+            type="button"
             onClick={() => setActiveTab('past-papers')}
-            className={`flex-1 sm:flex-initial px-5 py-2.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+            className={`flex-1 sm:flex-initial px-5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               activeTab === 'past-papers'
                 ? 'bg-white dark:bg-[#1F3E68] text-slate-900 dark:text-white shadow-sm'
                 : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
@@ -174,7 +195,12 @@ export const ExamsView: React.FC = () => {
         </div>
       )}
 
-      {/* Mode 1: Interactive Practice Quiz */}
+      {/* Mode 1: Timed Full Exam Simulator */}
+      {activeTab === 'simulator' && (
+        <ExamSimulator />
+      )}
+
+      {/* Mode 2: Interactive Practice Quiz */}
       {activeTab === 'practice-quiz' && (
         <div className="bg-white dark:bg-[#0D1F35] rounded-3xl border border-slate-200 dark:border-[#1C3A62] p-6 sm:p-10 shadow-sm max-w-3xl mx-auto space-y-6 text-right">
           {!quizCompleted ? (
