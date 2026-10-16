@@ -1,743 +1,1446 @@
 {
-  "_meta": {
-    "title": "الهيكل الرسمي لمنهج الصف الثالث المتوسط — جمهورية السودان",
-    "extractedAt": "2026-10-16",
-    "method": "تحميل الكتب المدرسية الرسمية بصيغة PDF ثم استخراج فهارس المحتويات والمقدمات عبر OCR (tesseract: ara / eng). الكتب ذات الخطوط المعطوبة تُعالَج بنسخة بديلة أو تُعلَّم confidence=none.",
-    "publisher": "المركز القومي للمناهج والبحث التربوي — بخت الرضا · وزارة التربية والتعليم الاتحادية",
-    "indexPage": "https://www.sudanexams.com/2026/05/third-intermediate-sudan-books-pdf.html",
-    "warning": "العناوين منقولة حرفياً من فهارس الكتب الرسمية. شروح الدروس في هذا المشروع من كتابتنا وليست نصاً رسمياً، وتبقى موسومة sample حتى تُراجَع.",
-    "sourceSites": [
-      {
-        "site": "sudanexams.com",
-        "url": "https://www.sudanexams.com/2026/05/third-intermediate-sudan-books-pdf.html",
-        "note": "حزمة الكتب التسعة بروابط Google Drive"
-      },
-      {
-        "site": "almualm.com (المعلم التعليمي)",
-        "url": "https://www.almualm.com/2025/06/...كتاب-اللغة-الانجليزية-الصف-الثالث-المتوسط.html",
-        "note": "نسخة سليمة من كتاب الإنجليزية + نماذج امتحانات + أوراق عمل"
-      },
-      {
-        "site": "al-amgaad.com (الامجاد التعليمي)",
-        "url": "https://www.al-amgaad.com/...الصف-الثالث-المتوسط-السودان",
-        "note": "كتب + امتحانات ٢٠٢٦ لكل مادة + أوراق عمل لكل وحدة"
-      }
-    ]
+ "_meta": {
+  "title": "الهيكل الرسمي لمنهج الصف الثالث المتوسط — جمهورية السودان",
+  "extractedAt": "2026-10-16",
+  "method": "تحميل الكتب المدرسية الرسمية بصيغة PDF ثم استخراج فهارس المحتويات والمقدمات عبر OCR (tesseract: ara / eng). الكتب ذات الخطوط المعطوبة تُعالَج بنسخة بديلة أو تُعلَّم confidence=none.",
+  "publisher": "المركز القومي للمناهج والبحث التربوي — بخت الرضا · وزارة التربية والتعليم الاتحادية",
+  "indexPage": "https://www.sudanexams.com/2026/05/third-intermediate-sudan-books-pdf.html",
+  "warning": "العناوين منقولة حرفياً من فهارس الكتب الرسمية. شروح الدروس في هذا المشروع من كتابتنا وليست نصاً رسمياً، وتبقى موسومة sample حتى تُراجَع.",
+  "sourceSites": [
+   {
+    "site": "mdl.edu.sd — مكتبة الميزاب الرقمية · المركز القومي للمناهج والبحث التربوي بخت الرضا (المصدر الرسمي الأول)",
+    "url": "https://www.mdl.edu.sd/SudaneseCurriculum",
+    "note": "مكتبة الكتب المدرسية الرسمية لوزارة التربية والتعليم. قسم «المرحلة المتوسطة ← الصف الثالث» يضم ٨ ملفات. لا توجد اللغة العربية ولا العلوم ولا التربية الوطنية للثالث المتوسط.",
+    "authority": "ministry"
+   },
+   {
+    "site": "sudanexams.com",
+    "url": "https://www.sudanexams.com/2026/05/third-intermediate-sudan-books-pdf.html",
+    "note": "حزمة الكتب التسعة بروابط Google Drive"
+   },
+   {
+    "site": "almualm.com (المعلم التعليمي)",
+    "url": "https://www.almualm.com/2025/06/...كتاب-اللغة-الانجليزية-الصف-الثالث-المتوسط.html",
+    "note": "نسخة سليمة من كتاب الإنجليزية + نماذج امتحانات + أوراق عمل"
+   },
+   {
+    "site": "al-amgaad.com (الامجاد التعليمي)",
+    "url": "https://www.al-amgaad.com/...الصف-الثالث-المتوسط-السودان",
+    "note": "كتب + امتحانات ٢٠٢٦ لكل مادة + أوراق عمل لكل وحدة"
+   }
+  ]
+ },
+ "books": [
+  {
+   "key": "arabic",
+   "subjectId": "arabic",
+   "book": "كتاب اللغة العربية — الصف الثالث المتوسط",
+   "pages": 236,
+   "url": "https://docs.google.com/uc?export=download&id=1ngFzvBjVLGW3xMt8GUJp6tqrGVl0o9He",
+   "confidence": "high",
+   "unitsCount": 15,
+   "lessonsCount": null,
+   "structureNote": "⚠️ اكتشاف حاسم: **الكتاب لا يسمّي وحداته أصلاً**. لا الفهرس (ص٣) يذكر عنواناً، ولا الصفحة الافتتاحية للوحدة — كل ما فيها «الوحدة الأولى» … «الوحدة الخامسة عشرة» ثم قائمة «مُكوّنات الوحدة». فالمشكلة لم تكن عطلاً في القراءة الضوئية بل **غياب العناوين في الأصل المطبوع**.",
+   "url2": "https://drive.usercontent.google.com/u/0/uc?id=1gtTSdokjnLbpTIWoAXe17xGgbyNmKUKX&export=download",
+   "url2Note": "نسخة «للطباعة» (لغة_عربية_ثالث_متوسط_للطباعة_FINALL_18_2_2024.pdf) — مطابقة تماماً للنسخة الأولى",
+   "verifiedAt": "2026-10-16",
+   "hasUnitTitles": false,
+   "units": [
+    {
+     "n": 1,
+     "page": 5,
+     "components": {
+      "القراءة": "من آيات الله الكريم (عباد الرحمن)",
+      "النص الأدبي": "كن عظيماً",
+      "النحو": "مراجعة المبني والمعرب",
+      "الإملاء": "مواطن همزة الوصل",
+      "التعبير": "صفات عباد الرحمن"
+     }
+    },
+    {
+     "n": 2,
+     "page": 22,
+     "components": {
+      "القراءة": "السلطة الزرقاء",
+      "الأدب": "خطبة لسيدنا علي",
+      "النحو": "مراجعة الأسماء الخمسة",
+      "الإملاء": "بعض من علامات الترقيم",
+      "التعبير": "أهمية محو الأمية"
+     }
+    },
+    {
+     "n": 3,
+     "page": 36,
+     "components": {
+      "القراءة": "كرم امرأة",
+      "النصوص": "فريتي للهادي آدم",
+      "النحو": "مراجعة النكرة والمعرفة",
+      "الإملاء": "همزة القطع"
+     }
+    },
+    {
+     "n": 4,
+     "page": 46,
+     "components": {
+      "القراءة": "وصف أم معبد لرسول الله ﷺ",
+      "الأدب": "أنا الجار — لأبي فراس الحمداني",
+      "النحو": "مراجعة إنَّ وأخواتها",
+      "الإملاء": "الحذف وسط الكلمة",
+      "التعبير": "أكتب عن هجرة النبي ﷺ إلى المدينة"
+     }
+    },
+    {
+     "n": 5,
+     "page": 58,
+     "components": {
+      "القراءة": "من أدب الخيال العلمي (الإنسان الآلي)",
+      "الأدب": "قصيدة النيل — للشاعر إدريس جماع",
+      "النحو": "الفعل المضارع المرفوع / المبتدأ والخبر",
+      "الإملاء": "الهمزة وفق الحركة الإعرابية"
+     }
+    },
+    {
+     "n": 6,
+     "page": 70,
+     "components": {
+      "القراءة": "الأمن الغذائي",
+      "الأدب": "من رواية (غير واضح في المسح)",
+      "النحو": "المجرد والمزيد (أبواب المجرد) — مزيد الثلاثي",
+      "الإملاء": "(غير واضح في المسح)",
+      "التعبير": "السودان سلة غذاء العالم"
+     }
+    },
+    {
+     "n": 7,
+     "page": 89,
+     "components": {
+      "القراءة": "الرياضة والصحة",
+      "الأدب": "مرارة أب — لأمية بن أبي الصلت",
+      "الإملاء": "علامات الترقيم",
+      "النحو": "مزيد الرباعي",
+      "التعبير": "أهمية الرياضة في بناء الجسم السليم"
+     }
+    },
+    {
+     "n": 8,
+     "page": 107,
+     "components": {
+      "القراءة": "أيتها الأرض",
+      "الأدب": "في الريف",
+      "النحو": "البحث في المعاجم",
+      "الإملاء": "الأفعال معتلة الآخر",
+      "التعبير": "إجازة قضيتها في الريف"
+     }
+    },
+    {
+     "n": 9,
+     "page": 120,
+     "components": {
+      "الأدب": "دنيا الصبا — للتيجان يوسف بشير",
+      "الإملاء": "الألف اللينة",
+      "التعبير": "مواقع التواصل الاجتماعي سلاح ذو حدين"
+     }
+    },
+    {
+     "n": 10,
+     "page": 138,
+     "components": {
+      "القراءة": "الكوارث الطبيعية",
+      "الأدب": "تغريبة المطر (قصيدة)",
+      "النحو": "أدوات الشرط الجازمة",
+      "الإملاء": "اتصال الظروف بإذ",
+      "التعبير": "دور الشباب في الكوارث الطبيعية"
+     }
+    },
+    {
+     "n": 11,
+     "page": 155,
+     "components": {
+      "القراءة": "ثورة المعلومات",
+      "الأدب": "يا رفاق الأمنيات الخالدة — للشاعر محمد عثمان كجراي",
+      "النحو": "الإعراب التقديري للفعل المضارع",
+      "الإملاء": "(سقط في المسح)",
+      "التعبير": "ثورة المعلومات"
+     }
+    },
+    {
+     "n": 12,
+     "page": 171,
+     "components": {
+      "القراءة": "من عجائب الكائنات الحية",
+      "الأدب": "دع الأيام تفعل ما تشاء",
+      "النحو": "المبتدأ النكرة",
+      "الإملاء": "من علامات الترقيم"
+     }
+    },
+    {
+     "n": 13,
+     "page": 183,
+     "components": {
+      "الأدب": "الناس للناس",
+      "النحو": "مواضع تقديم المبتدأ على الخبر وجوباً",
+      "الإملاء": "حذف ألف «ما» الاستفهامية عند اتصالها بحروف الجر"
+     }
+    },
+    {
+     "n": 14,
+     "page": 199,
+     "components": {
+      "القراءة": "طيور السلام",
+      "الأدب": "وقفة على طلل",
+      "النحو": "تقديم الخبر وجوباً",
+      "الإملاء": "الحذف في آخر الكلمة"
+     }
+    },
+    {
+     "n": 15,
+     "page": 214,
+     "components": {
+      "القراءة": "في أدب المجالسة",
+      "الأدب": "من أمثال العرب",
+      "النحو": "المجرورات",
+      "الإملاء": "مراجعة عامة"
+     }
+    }
+   ],
+   "extraction": "مسح ضوئي لـ٢٣٦ صفحة بدقة ٢٥٠–٥٠٠ نقطة/بوصة (tesseract ara)، ثم استخراج الصفحة الافتتاحية لكل وحدة.",
+   "confidenceNote": "الوحدات بأرقامها وصفحاتها مؤكدة. بعض مكوّنات الوحدات ٦ و ٩ و ١١ و ١٣ غير واضحة في المسح وموسومة بذلك."
   },
-  "books": [
+  {
+   "key": "math",
+   "subjectId": "math",
+   "book": "كتاب الرياضيات — الصف الثالث من مرحلة التعليم المتوسط",
+   "edition": "الطبعة الأولى",
+   "pages": 304,
+   "url": "https://docs.google.com/uc?export=download&id=1N8PjB61itGALhOPTl32tiM1PV1w4Iy7t",
+   "confidence": "high",
+   "unitsCount": 8,
+   "lessonsCount": null,
+   "unitTitles": [
+    "الوحدة الأولى: الدالة (التطبيق)",
+    "الوحدة الثانية: الأسس واللوغاريتمات",
+    "الوحدة الثالثة: المستوى الديكارتي والمعادلات الآنية",
+    "الوحدة الرابعة: الدائرة",
+    "الوحدة الخامسة: ضرب وتحليل المقادير الجبرية",
+    "الوحدة السادسة: معادلات الدرجة الثانية",
+    "الوحدة السابعة: الإحصاء",
+    "الوحدة الثامنة: الحجوم"
+   ],
+   "structureNote": "أرقام الصفحات في الفهرس لم تُقرأ بدقة كافية، فاكتفينا بعناوين الوحدات وترتيبها."
+  },
+  {
+   "key": "islamic",
+   "subjectId": "islamic",
+   "book": "كتاب التربية الإسلامية — مقرر الصف الثالث المتوسط بجمهورية السودان",
+   "pages": 184,
+   "url": "https://docs.google.com/uc?export=download&id=1JwSQRydSCbJnhQoyRW0ntOyBmgIySDqd",
+   "confidence": "partial",
+   "unitsCount": 6,
+   "lessonsCount": null,
+   "unitTitles": [
+    "الوحدة الأولى: التجويد",
+    "الوحدة الثانية: القرآن الكريم",
+    "الوحدة الثالثة: الحديث الشريف",
+    "الوحدة الرابعة: العقيدة",
+    "الوحدة الخامسة: الزكاة (الفقه)",
+    "الوحدة السادسة: السيرة النبوية"
+   ],
+   "structureNote": "المقدمة تحدد مكوّنات الكتاب: «الحديث الشريف - العقيدة - السيرة النبوية - الدراسات الإسلامية (الفقه)». عناوين الوحدتين الأولى والثانية مؤكدة من الفهرس؛ أسماء الوحدات ٣-٦ مستنتجة من عناوين دروس الفهرس (الأحاديث، العقيدة، الزكاة، السيرة) وتحتاج تأكيداً.",
+   "sampleLessons": [
+    "المد اللازم الحرفي",
+    "خلاصة المد اللازم الحرفي",
+    "التفخيم والترقيق",
+    "أحكام الراء",
+    "الراء المرققة",
+    "سورة يس",
+    "قصة أصحاب القرية",
+    "صفة الرسالة النبوية والرد على منكري البعث",
+    "أهمية الرفق في الأمور",
+    "من جوامع الكلم لرسول الله (ص)",
+    "فضل العلم والحث على طلب العلم",
+    "التفكر في الآفاق",
+    "التفكر في الأنفس",
+    "فضل الزكاة في الإسلام وحكمتها",
+    "شروط وجوب الزكاة",
+    "زكاة الذهب والفضة",
+    "غزوة الأحزاب",
+    "صلح الحديبية"
+   ]
+  },
+  {
+   "key": "science",
+   "subjectId": "science",
+   "book": "كتاب العلوم الطبيعية — «تساءل واستقص وتعلم» — النسخة الثالثة، الصف الثالث (المرحلة المتوسطة)",
+   "pages": 192,
+   "url": "https://docs.google.com/uc?export=download&id=1yznDxApGjvdfXx3Ro6nJe-0Bok7aslGK",
+   "confidence": "partial",
+   "unitsCount": 6,
+   "lessonsCount": null,
+   "unitTitles": [
+    "النماذج العلمية",
+    "التيار الكهربائي والقوى الكهربائية",
+    "التغيرات الكيميائية",
+    "التكاثر",
+    "الكائنات الحية الدقيقة",
+    "الأرض"
+   ],
+   "structureNote": "المقدمة تذكر الموضوعات: «التيار الكهربائي، التغيرات الكيميائية، التكاثر، الكائنات الحية الدقيقة، والأرض»، والوحدة الأولى في الكتاب بعنوان «النماذج العلمية». صفحة الفهرس كانت رديئة المسح، لذا العناوين مرجّحة لا مؤكدة."
+  },
+  {
+   "key": "history",
+   "subjectId": "social",
+   "book": "كتاب التاريخ — الصف الثالث المتوسط",
+   "publisher": "المركز القومي للمناهج والبحث التربوي — بخت الرضا · وزارة التربية والتعليم الاتحادية",
+   "pages": 120,
+   "source": "https://www.mdl.edu.sd/img/bookpdf/qq1_1724911518.pdf",
+   "listingPage": "https://www.mdl.edu.sd/SudaneseCurriculum#moyen-eco2",
+   "url": "https://docs.google.com/uc?export=download&id=1Ohxm-OBbcam5GrVQLy1hQnUDCXeg926H",
+   "url2": "https://www.al-amgaad.com/2024/04/2024-pdf.html",
+   "authority": "ministry — ملف منشور على موقع المركز القومي للمناهج نفسه",
+   "confidence": "high",
+   "verifiedAt": "2026-10-16",
+   "unitsCount": 4,
+   "lessonsCount": 25,
+   "extraction": "فهرس المحتويات (ص٣–٤) + العناوين الفعلية لرؤوس الدروس داخل الكتاب (OCR)؛ العناوين المعتمدة هي عناوين الصفحات لأنها الأصل عند الاختلاف مع الفهرس.",
+   "units": [
     {
-      "key": "arabic",
-      "subjectId": "arabic",
-      "book": "كتاب اللغة العربية — الصف الثالث المتوسط",
-      "pages": 236,
-      "url": "https://docs.google.com/uc?export=download&id=1ngFzvBjVLGW3xMt8GUJp6tqrGVl0o9He",
-      "confidence": "high",
-      "unitsCount": 15,
-      "lessonsCount": null,
-      "unitTitles": [],
-      "structureNote": "نص المقدمة: «يتكوّن كتاب اللغة العربية من خمس عشرة وحدة، كل وحدةٍ من وحداته جاءت متكاملة في بنائها من نصوص قرائية ونصوص أدبية وأناط نحوية وإملائية وتعبير». فهرس المحتويات يذكر أرقام الوحدات (الأولى…الخامسة عشرة) دون عناوين. ⚠️ فهرس المحتويات (ص٣) يذكر أرقام الوحدات (الأولى…الخامسة عشرة) دون عناوين — جرّبنا القراءة مرتين بدقة ٤٠٠ نقطة/بوصة وتأكدنا أن العمود فارغ في الأصل. عناوين الوحدات تُستخرج من صفحات افتتاحية كل وحدة (مكوّنات الوحدة).",
-      "unit1Components": [
-        "القراءة: من آيات الله الكريم (عباد الرحمن)",
-        "النص الأدبي: كن عظيماً",
-        "النحو: مراجعة المبني والمعرب",
-        "الإملاء: مواطن همزة الوصل",
-        "التعبير: صفات عباد الرحمن"
-      ],
-      "url2": "https://drive.usercontent.google.com/u/0/uc?id=1gtTSdokjnLbpTIWoAXe17xGgbyNmKUKX&export=download",
-      "url2Note": "نسخة «للطباعة» (لغة_عربية_ثالث_متوسط_للطباعة_FINALL_18_2_2024.pdf) — مطابقة تماماً للنسخة الأولى"
+     "n": 1,
+     "title": "من تاريخ السودان",
+     "page": 6,
+     "divider": "الثورة والدولة المهدية",
+     "lessons": [
+      {
+       "n": 1,
+       "title": "أسباب قيام ونجاح الثورة المهدية",
+       "page": 8
+      },
+      {
+       "n": 2,
+       "title": "المواجهات العسكرية بين الثوار والاستعمار التركي المصري (١)",
+       "page": 12
+      },
+      {
+       "n": 3,
+       "title": "المواجهات العسكرية بين الثوار والاستعمار التركي المصري (٢)",
+       "page": 15
+      },
+      {
+       "n": 4,
+       "title": "المواجهات العسكرية بين الثوار والاستعمار التركي المصري (٣)",
+       "page": 17
+      },
+      {
+       "n": 5,
+       "title": "نظم الحكم والإدارة في الدولة المهدية",
+       "page": 21
+      },
+      {
+       "n": 6,
+       "title": "الحكم الثنائي: نظم الحكم والإدارة في فترة الحكم الثنائي",
+       "page": 24,
+       "dateRangeUncertain": "١٨٩٩–١٩٥٥م — أرقام المسح غير واضحة"
+      },
+      {
+       "n": 7,
+       "title": "التطورات الاقتصادية والاجتماعية في فترة الحكم الثنائي",
+       "page": 28
+      },
+      {
+       "n": 8,
+       "title": "مقاومة السودانيين للحكم الثنائي",
+       "page": 33
+      },
+      {
+       "n": 9,
+       "title": "الحركة الوطنية السودانية الحديثة",
+       "page": 37,
+       "dateRangeUncertain": "فترة ممتدة من مطلع القرن العشرين حتى الاستقلال؛ أرقام المسح غير واضحة"
+      },
+      {
+       "n": 10,
+       "title": "التطورات السياسية والاجتماعية في السودان",
+       "page": 42,
+       "dateRangeUncertain": "ما بعد الاستقلال؛ أرقام المسح غير واضحة"
+      }
+     ]
     },
     {
-      "key": "math",
-      "subjectId": "math",
-      "book": "كتاب الرياضيات — الصف الثالث من مرحلة التعليم المتوسط",
-      "edition": "الطبعة الأولى",
-      "pages": 304,
-      "url": "https://docs.google.com/uc?export=download&id=1N8PjB61itGALhOPTl32tiM1PV1w4Iy7t",
-      "confidence": "high",
-      "unitsCount": 8,
-      "lessonsCount": null,
-      "unitTitles": [
-        "الوحدة الأولى: الدالة (التطبيق)",
-        "الوحدة الثانية: الأسس واللوغاريتمات",
-        "الوحدة الثالثة: المستوى الديكارتي والمعادلات الآنية",
-        "الوحدة الرابعة: الدائرة",
-        "الوحدة الخامسة: ضرب وتحليل المقادير الجبرية",
-        "الوحدة السادسة: معادلات الدرجة الثانية",
-        "الوحدة السابعة: الإحصاء",
-        "الوحدة الثامنة: الحجوم"
-      ],
-      "structureNote": "أرقام الصفحات في الفهرس لم تُقرأ بدقة كافية، فاكتفينا بعناوين الوحدات وترتيبها."
+     "n": 2,
+     "title": "تطور الدولة الإسلامية في العهد العثماني",
+     "page": 49,
+     "divider": "الدولة العثمانية",
+     "lessons": [
+      {
+       "n": 1,
+       "title": "نشأة الدولة العثمانية",
+       "page": 51
+      },
+      {
+       "n": 2,
+       "title": "اتساع الإمارة العثمانية وفتوحاتها في أوربا",
+       "page": 54,
+       "dateRangeUncertain": "الفهرس يختصرها: «اتساع وفتوحات الإمارة العثمانية»"
+      },
+      {
+       "n": 3,
+       "title": "امتداد الدولة العثمانية في البلاد العربية",
+       "page": 57
+      },
+      {
+       "n": 4,
+       "title": "نظم الحكم العثماني للولايات العربية ونتائجها",
+       "page": 62
+      },
+      {
+       "n": 5,
+       "title": "تدهور الدولة العثمانية",
+       "page": 64
+      }
+     ]
     },
     {
-      "key": "islamic",
-      "subjectId": "islamic",
-      "book": "كتاب التربية الإسلامية — مقرر الصف الثالث المتوسط بجمهورية السودان",
-      "pages": 184,
-      "url": "https://docs.google.com/uc?export=download&id=1JwSQRydSCbJnhQoyRW0ntOyBmgIySDqd",
-      "confidence": "partial",
-      "unitsCount": 6,
-      "lessonsCount": null,
-      "unitTitles": [
-        "الوحدة الأولى: التجويد",
-        "الوحدة الثانية: القرآن الكريم",
-        "الوحدة الثالثة: الحديث الشريف",
-        "الوحدة الرابعة: العقيدة",
-        "الوحدة الخامسة: الزكاة (الفقه)",
-        "الوحدة السادسة: السيرة النبوية"
-      ],
-      "structureNote": "المقدمة تحدد مكوّنات الكتاب: «الحديث الشريف - العقيدة - السيرة النبوية - الدراسات الإسلامية (الفقه)». عناوين الوحدتين الأولى والثانية مؤكدة من الفهرس؛ أسماء الوحدات ٣-٦ مستنتجة من عناوين دروس الفهرس (الأحاديث، العقيدة، الزكاة، السيرة) وتحتاج تأكيداً.",
-      "sampleLessons": [
-        "المد اللازم الحرفي",
-        "خلاصة المد اللازم الحرفي",
-        "التفخيم والترقيق",
-        "أحكام الراء",
-        "الراء المرققة",
-        "سورة يس",
-        "قصة أصحاب القرية",
-        "صفة الرسالة النبوية والرد على منكري البعث",
-        "أهمية الرفق في الأمور",
-        "من جوامع الكلم لرسول الله (ص)",
-        "فضل العلم والحث على طلب العلم",
-        "التفكر في الآفاق",
-        "التفكر في الأنفس",
-        "فضل الزكاة في الإسلام وحكمتها",
-        "شروط وجوب الزكاة",
-        "زكاة الذهب والفضة",
-        "غزوة الأحزاب",
-        "صلح الحديبية"
-      ]
+     "n": 3,
+     "title": "من تاريخ أفريقيا",
+     "page": 70,
+     "lessons": [
+      {
+       "n": 1,
+       "title": "دوافع الاستعمار الأوربي لأفريقيا",
+       "page": 72
+      },
+      {
+       "n": 2,
+       "title": "أنواع الاستعمار الأوربي في أفريقيا",
+       "page": 74
+      },
+      {
+       "n": 3,
+       "title": "آثار الاستعمار الأوربي على القارة الأفريقية",
+       "page": 76
+      },
+      {
+       "n": 4,
+       "title": "تقسيم القارة الأفريقية بين الدول الأوربية",
+       "page": 78
+      },
+      {
+       "n": 5,
+       "title": "حركات التحرر الوطني في أفريقيا",
+       "page": 80
+      },
+      {
+       "n": 6,
+       "title": "منظمة الوحدة الأفريقية",
+       "page": 86
+      }
+     ]
     },
     {
-      "key": "science",
-      "subjectId": "science",
-      "book": "كتاب العلوم الطبيعية — «تساءل واستقص وتعلم» — النسخة الثالثة، الصف الثالث (المرحلة المتوسطة)",
-      "pages": 192,
-      "url": "https://docs.google.com/uc?export=download&id=1yznDxApGjvdfXx3Ro6nJe-0Bok7aslGK",
-      "confidence": "partial",
-      "unitsCount": 6,
-      "lessonsCount": null,
-      "unitTitles": [
-        "النماذج العلمية",
-        "التيار الكهربائي والقوى الكهربائية",
-        "التغيرات الكيميائية",
-        "التكاثر",
-        "الكائنات الحية الدقيقة",
-        "الأرض"
-      ],
-      "structureNote": "المقدمة تذكر الموضوعات: «التيار الكهربائي، التغيرات الكيميائية، التكاثر، الكائنات الحية الدقيقة، والأرض»، والوحدة الأولى في الكتاب بعنوان «النماذج العلمية». صفحة الفهرس كانت رديئة المسح، لذا العناوين مرجّحة لا مؤكدة."
-    },
-    {
-      "key": "history",
-      "subjectId": "social",
-      "book": "كتاب التاريخ — الصف الثالث المتوسط",
-      "pages": 120,
-      "url": "https://docs.google.com/uc?export=download&id=1Ohxm-OBbcam5GrVQLy1hQnUDCXeg926H",
-      "confidence": "high",
-      "unitsCount": 4,
-      "lessonsCount": null,
-      "unitTitles": [
-        "الوحدة الأولى: من تاريخ السودان",
-        "الوحدة الثانية: تطور الدولة الإسلامية في العهد العثماني",
-        "الوحدة الثالثة: من تاريخ أفريقيا",
-        "الوحدة الرابعة: من تاريخ العالم"
-      ],
-      "structureNote": "المقدمة: «في أربع وحدات… نقدم الوحدة الأساسية من تاريخ السودان، ثم نعرج على التاريخ العربي والأفريقي والعالمي». الوحدة الأولى تضم ١٠ دروس. ✅ تأكيد مستقل: موقع «الامجاد التعليمي» ينشر أوراق عمل منفصلة بعناوين «الثورة والدولة المهدية» · «الدولة العثمانية» · «من تاريخ أفريقيا» · «من تاريخ العالم» — مطابقة تماماً لما استُخرج من الكتاب.",
-      "sampleLessons": [
-        "أسباب قيام ونجاح الثورة المهدية",
-        "المواجهات العسكرية بين الثوار والاستعمار التركي المصري",
-        "نظم الحكم والإدارة في الدولة المهدية",
-        "نظم الحكم والإدارة في فترة الحكم الثنائي",
-        "التطورات الاقتصادية والاجتماعية في العهد الثنائي",
-        "مقاومة السودانيين للحكم الثنائي: حركات المقاومة الدينية والقبلية",
-        "الحركة الوطنية السودانية الحديثة",
-        "نشأة الدولة العثمانية",
-        "اتساع وفتوحات الإمارة العثمانية",
-        "امتداد الدولة العثمانية في البلاد العربية",
-        "تدهور الدولة العثمانية",
-        "دوافع الاستعمار الأوربي لأفريقيا",
-        "أنواع الاستعمار الأوربي لأفريقيا",
-        "آثار الاستعمار الأوربي على القارة الأفريقية",
-        "تقسيم القارة الأفريقية بين الدول الأوربية",
-        "حركات التحرر الوطني في أفريقيا"
-      ],
-      "url2": "https://www.al-amgaad.com/2024/04/2024-pdf.html"
-    },
-    {
-      "key": "geography",
-      "subjectId": "social",
-      "book": "كتاب الجغرافيا — الصف الثالث المتوسط",
-      "pages": 160,
-      "url": "https://docs.google.com/uc?export=download&id=1bT1KBgpJ0gHU569K5eMeWFOTcgNlIOOw",
-      "confidence": "high",
-      "unitsCount": 3,
-      "lessonsCount": null,
-      "unitTitles": [
-        "الوحدة الأولى: جغرافية السودان الطبيعية",
-        "الوحدة الثانية: جغرافية السودان البشرية",
-        "الوحدة الثالثة: المشكلات البيئية في السودان"
-      ],
-      "structureNote": "المقدمة: «اشتمل الكتاب على ثلاث وحدات: جغرافية السودان الطبيعية، جغرافية السودان البشرية، المشكلات البيئية في السودان». ✅ تأكيد مستقل: أوراق عمل منشورة للوحدة الأولى والثانية والثالثة (المشكلات البيئية) — مطابقة للوحدات الثلاث المستخرجة من الكتاب.",
-      "url2": "https://www.al-amgaad.com/2024/04/blog-post_315.html"
-    },
-    {
-      "key": "ict",
-      "subjectId": "ict",
-      "book": "كتاب تكنولوجيا المعلومات والاتصالات — الصف الثالث المتوسط",
-      "pages": 92,
-      "url": "https://docs.google.com/uc?export=download&id=1M5ChXQYgvWHGkxQ1lm-Yom02hTgz7lcr",
-      "confidence": "high",
-      "unitsCount": 4,
-      "lessonsCount": 10,
-      "unitTitles": [
-        "الوحدة الأولى: أساسيات البرمجة",
-        "الوحدة الثانية: مدخل إلى لغات البرمجة",
-        "الوحدة الثالثة: الخوارزميات والمخططات الانسيابية",
-        "الوحدة الرابعة: مبادئ البرمجة بلغة سكراتش"
-      ],
-      "lessons": [
-        "مفاهيم في البرمجة",
-        "أهمية البرمجة",
-        "مراحل البرمجة",
-        "أجيال لغات البرمجة",
-        "ترجمة البرنامج",
-        "مفاهيم مشتركة في لغات البرمجة",
-        "المشكلات البرمجية",
-        "الخوارزميات",
-        "المخططات الانسيابية",
-        "تطبيقات على الخوارزميات"
-      ],
-      "structureNote": "المقدمة: «جاء هذا الكتاب في أربع وحدات». دروس الوحدات ١-٣ مؤكدة (١٠ دروس) ودروس الوحدة الرابعة (سكراتش) لم تُقرأ من الفهرس. كل وحدة تُنهي بـ «اختبار نهاية الوحدة»."
-    },
-    {
-      "key": "technical",
-      "subjectId": null,
-      "book": "كتاب أساسيات التربية التقنية (الكتاب الثاني) — الصف الثالث، المرحلة المتوسطة",
-      "pages": 160,
-      "url": "https://docs.google.com/uc?export=download&id=1cna9TBD6OZXYB4GMq6SJNzZtjpuJDwpG",
-      "confidence": "partial",
-      "unitsCount": 3,
-      "lessonsCount": null,
-      "unitTitles": [
-        "المجال الهندسي (تقنيات الطاقة الشمسية)",
-        "المجال الزراعي",
-        "مجال ريادة الأعمال"
-      ],
-      "structureNote": "ليست من مواد تطبيقنا الثمانية حالياً — أُدرجت للأمانة ولإمكان إضافتها لاحقاً. المقدمة: «يشتمل المقرر على ثلاثة مجالات رئيسة هي: المجال الهندسي، المجال الزراعي، ومجال ريادة الأعمال»."
-    },
-    {
-      "key": "english",
-      "subjectId": "english",
-      "book": "SMILE Series: Book 9 — Pupil's Book (Sudan Modern Integrated Learning of English)",
-      "bookAr": "سلسلة سمايل (SMILE) — الكتاب التاسع: كتاب التلميذ — الإنجليزية المدمجة الحديثة للسودان",
-      "publisher": "المركز القومي للمناهج والبحث التربوي (NCCER) — بخت الرضا · وزارة التربية والتعليم الاتحادية · جمهورية السودان",
-      "edition": "المنهج الجديد — يحل محل منهج SPINE",
-      "pages": 72,
-      "url": "https://www.almualm.com/wp-content/uploads/2025/06/%D9%83%D8%AA%D8%A7%D8%A8-%D8%A7%D9%84%D8%A7%D9%86%D8%AC%D9%84%D9%8A%D8%B2%D9%8A-%D8%A7%D9%84%D8%AB%D8%A7%D9%84%D8%AB-%D8%A7%D9%84%D9%85%D8%AA%D9%88%D8%B3%D8%B7-%D8%A7%D9%84%D8%B3%D9%88%D8%AF%D8%A7%D9%86.pdf",
-      "indexUrl": "https://www.almualm.com/2025/06/...كتاب-اللغة-الانجليزية-الصف-الثالث-ال",
-      "confidence": "high",
-      "unitsCount": 8,
-      "lessonsCount": 64,
-      "unitTitles": [
-        "Unit 1: People and Science",
-        "Unit 2: Arts and Literature",
-        "Unit 3: Around the World",
-        "Unit 4: Work and Play",
-        "Unit 5: Food and Health",
-        "Unit 6: Money and Shopping",
-        "Unit 7: Learning",
-        "Unit 8: Looking Back"
-      ],
-      "lessons": [
-        {
-          "unit": 1,
-          "unitTitle": "People and Science",
-          "number": 1,
-          "title": "What is Science?"
-        },
-        {
-          "unit": 1,
-          "unitTitle": "People and Science",
-          "number": 2,
-          "title": "Famous Scientists"
-        },
-        {
-          "unit": 1,
-          "unitTitle": "People and Science",
-          "number": 3,
-          "title": "BONES"
-        },
-        {
-          "unit": 1,
-          "unitTitle": "People and Science",
-          "number": 4,
-          "title": "How to Measure"
-        },
-        {
-          "unit": 1,
-          "unitTitle": "People and Science",
-          "number": 5,
-          "title": "Traditional Medicine"
-        },
-        {
-          "unit": 1,
-          "unitTitle": "People and Science",
-          "number": 6,
-          "title": "Wonders of Engineering"
-        },
-        {
-          "unit": 1,
-          "unitTitle": "People and Science",
-          "number": 7,
-          "title": "Puzzles and Games"
-        },
-        {
-          "unit": 1,
-          "unitTitle": "People and Science",
-          "number": 8,
-          "title": "Revision: Science"
-        },
-        {
-          "unit": 2,
-          "unitTitle": "Arts and Literature",
-          "number": 1,
-          "title": "A Traditional Story"
-        },
-        {
-          "unit": 2,
-          "unitTitle": "Arts and Literature",
-          "number": 2,
-          "title": "National Dress"
-        },
-        {
-          "unit": 2,
-          "unitTitle": "Arts and Literature",
-          "number": 3,
-          "title": "Famous Sudanese Writers"
-        },
-        {
-          "unit": 2,
-          "unitTitle": "Arts and Literature",
-          "number": 4,
-          "title": "Sand Art"
-        },
-        {
-          "unit": 2,
-          "unitTitle": "Arts and Literature",
-          "number": 5,
-          "title": "Robinson Crusoe"
-        },
-        {
-          "unit": 2,
-          "unitTitle": "Arts and Literature",
-          "number": 6,
-          "title": "Calligraphy"
-        },
-        {
-          "unit": 2,
-          "unitTitle": "Arts and Literature",
-          "number": 7,
-          "title": "A Sudanese Artist"
-        },
-        {
-          "unit": 2,
-          "unitTitle": "Arts and Literature",
-          "number": 8,
-          "title": "Revision: Words and Pictures"
-        },
-        {
-          "unit": 3,
-          "unitTitle": "Around the World",
-          "number": 1,
-          "title": "Where is Sudan?"
-        },
-        {
-          "unit": 3,
-          "unitTitle": "Around the World",
-          "number": 2,
-          "title": "Countries Quiz"
-        },
-        {
-          "unit": 3,
-          "unitTitle": "Around the World",
-          "number": 3,
-          "title": "Two Interesting Places"
-        },
-        {
-          "unit": 3,
-          "unitTitle": "Around the World",
-          "number": 4,
-          "title": "Saudi Arabia"
-        },
-        {
-          "unit": 3,
-          "unitTitle": "Around the World",
-          "number": 5,
-          "title": "Marco Polo"
-        },
-        {
-          "unit": 3,
-          "unitTitle": "Around the World",
-          "number": 6,
-          "title": "A Trip of a Lifetime"
-        },
-        {
-          "unit": 3,
-          "unitTitle": "Around the World",
-          "number": 7,
-          "title": "Friendly People"
-        },
-        {
-          "unit": 3,
-          "unitTitle": "Around the World",
-          "number": 8,
-          "title": "Revision: An Arab Adventure"
-        },
-        {
-          "unit": 4,
-          "unitTitle": "Work and Play",
-          "number": 1,
-          "title": "Jobs, Jobs, Jobs"
-        },
-        {
-          "unit": 4,
-          "unitTitle": "Work and Play",
-          "number": 2,
-          "title": "Teachers"
-        },
-        {
-          "unit": 4,
-          "unitTitle": "Work and Play",
-          "number": 3,
-          "title": "Children and Work"
-        },
-        {
-          "unit": 4,
-          "unitTitle": "Work and Play",
-          "number": 4,
-          "title": "Learning for a Job"
-        },
-        {
-          "unit": 4,
-          "unitTitle": "Work and Play",
-          "number": 6,
-          "title": "Who Gets Paid the Most?"
-        },
-        {
-          "unit": 4,
-          "unitTitle": "Work and Play",
-          "number": 7,
-          "title": "Work in the Future"
-        },
-        {
-          "unit": 4,
-          "unitTitle": "Work and Play",
-          "number": 8,
-          "title": "Revision: Hard Work"
-        },
-        {
-          "unit": 5,
-          "unitTitle": "Food and Health",
-          "number": 1,
-          "title": "Chocolate"
-        },
-        {
-          "unit": 5,
-          "unitTitle": "Food and Health",
-          "number": 2,
-          "title": "Growing Food"
-        },
-        {
-          "unit": 5,
-          "unitTitle": "Food and Health",
-          "number": 3,
-          "title": "Sudanese Crops"
-        },
-        {
-          "unit": 5,
-          "unitTitle": "Food and Health",
-          "number": 4,
-          "title": "A Healthy Diet"
-        },
-        {
-          "unit": 5,
-          "unitTitle": "Food and Health",
-          "number": 5,
-          "title": "The Greenhouse"
-        },
-        {
-          "unit": 5,
-          "unitTitle": "Food and Health",
-          "number": 6,
-          "title": "Honey"
-        },
-        {
-          "unit": 5,
-          "unitTitle": "Food and Health",
-          "number": 7,
-          "title": "Healthy Habits"
-        },
-        {
-          "unit": 5,
-          "unitTitle": "Food and Health",
-          "number": 8,
-          "title": "Revision: Food Facts"
-        },
-        {
-          "unit": 6,
-          "unitTitle": "Money and Shopping",
-          "number": 2,
-          "title": "Adverts"
-        },
-        {
-          "unit": 6,
-          "unitTitle": "Money and Shopping",
-          "number": 3,
-          "title": "Saving for a Rainy Day!"
-        },
-        {
-          "unit": 6,
-          "unitTitle": "Money and Shopping",
-          "number": 4,
-          "title": "Young Business People"
-        },
-        {
-          "unit": 6,
-          "unitTitle": "Money and Shopping",
-          "number": 5,
-          "title": "The Gold Rush"
-        },
-        {
-          "unit": 6,
-          "unitTitle": "Money and Shopping",
-          "number": 7,
-          "title": "Paying for it!"
-        },
-        {
-          "unit": 6,
-          "unitTitle": "Money and Shopping",
-          "number": 8,
-          "title": "Revision: The Cost of Shopping"
-        },
-        {
-          "unit": 7,
-          "unitTitle": "Learning",
-          "number": 1,
-          "title": "Learning a Lesson"
-        },
-        {
-          "unit": 7,
-          "unitTitle": "Learning",
-          "number": 2,
-          "title": "Learning for a Competition"
-        },
-        {
-          "unit": 7,
-          "unitTitle": "Learning",
-          "number": 3,
-          "title": "The History of the University of Khartoum"
-        },
-        {
-          "unit": 7,
-          "unitTitle": "Learning",
-          "number": 4,
-          "title": "Learning to Do Things Yourself"
-        },
-        {
-          "unit": 7,
-          "unitTitle": "Learning",
-          "number": 5,
-          "title": "Learning isn’t Easy"
-        },
-        {
-          "unit": 7,
-          "unitTitle": "Learning",
-          "number": 6,
-          "title": "The Brain"
-        },
-        {
-          "unit": 7,
-          "unitTitle": "Learning",
-          "number": 7,
-          "title": "Test Your Knowledge"
-        },
-        {
-          "unit": 7,
-          "unitTitle": "Learning",
-          "number": 8,
-          "title": "Revision: Test Your Learning"
-        },
-        {
-          "unit": 8,
-          "unitTitle": "Looking Back",
-          "number": 1,
-          "title": "Protecting Animals"
-        },
-        {
-          "unit": 8,
-          "unitTitle": "Looking Back",
-          "number": 2,
-          "title": "Sports Time"
-        },
-        {
-          "unit": 8,
-          "unitTitle": "Looking Back",
-          "number": 3,
-          "title": "A Matter of Science"
-        },
-        {
-          "unit": 8,
-          "unitTitle": "Looking Back",
-          "number": 4,
-          "title": "Stories"
-        },
-        {
-          "unit": 8,
-          "unitTitle": "Looking Back",
-          "number": 5,
-          "title": "Discovering the World"
-        },
-        {
-          "unit": 8,
-          "unitTitle": "Looking Back",
-          "number": 6,
-          "title": "A Time for Tea"
-        },
-        {
-          "unit": 8,
-          "unitTitle": "Looking Back",
-          "number": 7,
-          "title": "Food and Health"
-        },
-        {
-          "unit": 8,
-          "unitTitle": "Looking Back",
-          "number": 8,
-          "title": "Learning for Life"
-        }
-      ],
-      "missingLessons": [
-        "الوحدة 4 — الدرس 5",
-        "الوحدة 6 — الدرس 1",
-        "الوحدة 6 — الدرس 6"
-      ],
-      "structureNote": "جدول المحتويات (ص٧) يذكر ٨ وحدات، وكل وحدة ٨ صفحات بداخلها ٨ دروس. استُخرجت عناوين ٦١ درساً من أصل ٦٤؛ الثلاثة الناقصة لم تُقرأ بوضوح في المسح. مكوّنات السلسلة: كتاب التلميذ، كتاب النشاط، كتاب المعلم، تسجيلات، وبطاقات مصوّرة."
+     "n": 4,
+     "title": "من تاريخ العالم",
+     "page": 93,
+     "lessons": [
+      {
+       "n": 1,
+       "title": "الحرب العالمية الأولى (١٩١٤–١٩١٨م)",
+       "page": 95
+      },
+      {
+       "n": 2,
+       "title": "الحرب العالمية الثانية (١٩٣٩–١٩٤٥م)",
+       "page": 98
+      },
+      {
+       "n": 3,
+       "title": "هيأة الأمم المتحدة",
+       "page": 103
+      },
+      {
+       "n": 4,
+       "title": "التطورات العالمية بعد الحرب العالمية الثانية",
+       "page": 109
+      }
+     ]
     }
-  ],
-  "gaps": [
-    "التربية الوطنية والحياتية (civics): لا كتاب ولا امتحان لها في أي مصدر من المصادر الثلاثة — تحتاج قراراً (إزالة أو وسْم تجريبي).",
-    "اللغة العربية: ١٥ وحدة مؤكدة، لكن عناوينها غير موجودة في فهرس الكتاب — تحتاج استخراجاً من الصفحات الافتتاحية لكل وحدة.",
-    "الإنجليزية: ٣ دروس لم تُقرأ (الوحدة ٤ الدرس ٥، الوحدة ٦ الدرسان ١ و٦).",
-    "The Black Tulip: القصة المقررة الثانية مؤكدة، ولم نحصل على نسختها.",
-    "التربية الإسلامية: أسماء الوحدات ٣–٦ مرجّحة.",
-    "العلوم: عناوين الوحدات مرجّحة (صفحة الفهرس رديئة المسح).",
-    "امتحانات ٢٠٢٦ المنشورة لبقية المواد (عربية، رياضيات، علوم، إسلامية، تاريخ، جغرافيا، تكنولوجيا، تقنية) متاحة ولم تُستخرج بعد."
-  ],
-  "supplements": [
+   ],
+   "structureNote": "المقدمة (ص٥): «نقدم الوحدة الأساسية من تاريخ السودان، ثم نعرج على التاريخ العربي والأفريقي والعالمي، في أربع وحدات… تغطي موضوعات من التاريخ الحديث والمعاصر». لكل وحدة «أهداف الوحدة» و«اختبار الوحدة» — لا تُحسب درساً.",
+   "upgradeFrom": "كان عدد الدروس مجهولاً (lessonsCount=null) ووحدة واحدة فقط معنونة؛ أصبح الهيكل كاملاً: ٤ وحدات · ٢٥ درساً · عناوين حرفية."
+  },
+  {
+   "key": "geography",
+   "subjectId": "social",
+   "book": "كتاب الجغرافيا — الصف الثالث المتوسط",
+   "pages": 160,
+   "url": "https://docs.google.com/uc?export=download&id=1bT1KBgpJ0gHU569K5eMeWFOTcgNlIOOw",
+   "confidence": "high",
+   "unitsCount": 3,
+   "lessonsCount": null,
+   "structureNote": "المقدمة (ص٤): «اشتمل الكتاب على ثلاث وحدات: جغرافية السودان الطبيعية، جغرافية السودان البشرية، المشكلات البيئية في السودان». ⚠️ **الكتاب لا يرقّم دروسه** — لا يوجد «الدرس الأول/الثاني». لذلك سمّيناها **محاور** (٣٠ محوراً) مستخرجة من عناوين الكتاب وأهداف وحداته، ولم نخترع ترقيماً للدروس.",
+   "url2": "https://www.mdl.edu.sd/SudaneseCurriculum#moyen-eco2",
+   "source": "https://www.mdl.edu.sd/img/bookpdf/الجغرافيا%20ثالث%20متوسط_1724918346.pdf",
+   "note": "نسخة رسمية على موقع المركز القومي للمناهج (١٦٠ صفحة، طبقة نص سليمة) — جاهزة لاستخراج عناوين الدروس.",
+   "listingPage": "https://www.mdl.edu.sd/SudaneseCurriculum#moyen-eco2",
+   "authority": "ministry",
+   "verifiedAt": "2026-10-16",
+   "themesCount": 30,
+   "units": [
     {
-      "key": "set-book-tale-of-two-cities",
-      "type": "set_book",
-      "subjectId": "english",
-      "title": "A Tale of Two Cities",
-      "titleAr": "قصة مدينتين",
-      "author": "Charles Dickens (رواية مُعاد صياغتها: Stephen Colbourn)",
-      "series": "Macmillan Readers — Beginner Level",
-      "pages": 65,
-      "source": "ملف مرفوع من المستخدم — كتاب الأدب الإنجليزي للصف الثالث المتوسط (منشور على almualm.com)",
-      "confidence": "high",
-      "chapters": [
-        "To Dover",
-        "A Wine Shop in Paris",
-        "The Old Bailey",
-        "New Friends",
-        "The Aristocrat",
-        "A Wedding",
-        "Revolution",
-        "To Paris",
-        "An Enemy of the Republic",
-        "Citizen Barsad",
-        "Doctor Manette's Letter",
-        "Sydney Carton's Plan",
-        "The Escape",
-        "The Guillotine"
-      ],
-      "frontMatter": [
-        "A Note About the Author",
-        "A Note About This Story",
-        "The People in This Story"
-      ],
-      "note": "١٤ فصلاً + ثلاث صفحات تمهيدية + مسرد (Glossary) في آخر الكتاب. هذا هو «كتاب الأدب» المقرر للمادة."
+     "n": 1,
+     "title": "جغرافية السودان الطبيعية",
+     "page": 5,
+     "objectives": [
+      "يتعرّف موقع السودان ومساحته",
+      "يتعرّف أهم معالم السطح والتضاريس",
+      "يتعرّف مناخ السودان وأهم عناصره",
+      "يعدد أنواع التربة في السودان",
+      "يصنف النباتات الطبيعية في السودان",
+      "يبيّن مصادر المياه في السودان"
+     ],
+     "themes": [
+      {
+       "t": "موقع السودان ومساحته (الفلكي والجغرافي) والحدود السياسية",
+       "pages": "٦–١٠، ٢٣"
+      },
+      {
+       "t": "معالم السطح والتضاريس",
+       "pages": "١١"
+      },
+      {
+       "t": "مناخ السودان والأقاليم المناخية",
+       "pages": "١٢–١٤"
+      },
+      {
+       "t": "النباتات الطبيعية",
+       "pages": "١٥–١٧"
+      },
+      {
+       "t": "أنواع التربة في السودان",
+       "pages": "—"
+      },
+      {
+       "t": "مصادر المياه: حوض النيل، الأنهار الرئيسية، المجاري الموسمية، البحيرات",
+       "pages": "١٨–٣١"
+      }
+     ]
     },
     {
-      "key": "set-book-black-tulip",
-      "type": "set_book",
-      "subjectId": "english",
-      "title": "The Black Tulip",
-      "titleAr": "التوليب الأسود",
-      "author": "Alexandre Dumas",
-      "confidence": "high",
-      "chapters": [],
-      "note": "القصة المقررة الثانية — مؤكدة من نص الامتحان: «اختر السؤال (١) A Tale of Two Cities أو السؤال (٢) The Black Tulip». لم نحصل على نسختها بعد."
+     "n": 2,
+     "title": "جغرافية السودان البشرية",
+     "page": 32,
+     "objectives": [
+      "يبين أصول سكان السودان",
+      "يقارن بين التعدادات السكانية المختلفة",
+      "يوضح أهمية النشاط الزراعي",
+      "يبيّن المشاريع الزراعية المروية",
+      "يصنف أنماط تربية الحيوان",
+      "يذكر أنواع الصناعة",
+      "يتعرّف مصادر الطاقة والتعدين",
+      "يبيّن طرق النقل المختلفة",
+      "يطور مهارة قراءة وتحليل الخرائط والأشكال البيانية",
+      "يتعرّف على أهم المناطق السياحية في السودان"
+     ],
+     "themes": [
+      {
+       "t": "السكان: النمو، الأنماط، الكثافة، التركيب العمري والنوعي",
+       "pages": "٣٤–٤٥"
+      },
+      {
+       "t": "النشاط الزراعي: طرق الري، ملكية الأراضي، الزراعة المطرية والمروية والآلية، المحاصيل",
+       "pages": "٤٦–٦٧"
+      },
+      {
+       "t": "الإنتاج الحيواني وأنماط تربية الحيوان",
+       "pages": "٦٨–٧٠"
+      },
+      {
+       "t": "الثروة السمكية والموارد البحرية",
+       "pages": "٧١–٧٣"
+      },
+      {
+       "t": "الإنتاج الغابي (الصمغ العربي)",
+       "pages": "٧٤–٧٨"
+      },
+      {
+       "t": "الطاقة والتوليد الكهربائي",
+       "pages": "٧٩–٨٣"
+      },
+      {
+       "t": "البترول والتعدين",
+       "pages": "٨٤–٩٠"
+      },
+      {
+       "t": "الصناعة: الكيميائية، مواد البناء، التصنيع الحربي",
+       "pages": "٩١–١٠٢"
+      },
+      {
+       "t": "النقل: الطرق، السكك الحديدية، النقل الجوي",
+       "pages": "١٠٣–١٠٩"
+      },
+      {
+       "t": "الاتصالات",
+       "pages": "١١٠"
+      },
+      {
+       "t": "السياحة والمعالم الأثرية",
+       "pages": "١١١–١٢٠"
+      },
+      {
+       "t": "التجارة الخارجية والأمن الغذائي",
+       "pages": "١٢١–١٢٤"
+      }
+     ]
     },
     {
-      "key": "exam-english-2026",
-      "type": "exam_paper",
-      "subjectId": "english",
-      "title": "نماذج امتحان الشهادة المتوسطة — اللغة الإنجليزية (نموذج الدليل)، يوليو ٢٠٢٦",
-      "publisher": "أكاديمية (TiT) التعليمية — إدارة الامتحانات والتقويم · أ. توفيق إسماعيل توفيق (نهر النيل والخارج)",
-      "pages": 21,
-      "confidence": "high",
-      "duration": "ساعتان",
-      "isOfficialMinistry": false,
-      "note": "نموذج امتحان منشور من أكاديمية تعليمية — مصدر واقعي لبنية الامتحان وأنواع أسئلته، وليس ورقة وزارية رسمية.",
-      "blueprint": [
-        {
-          "part": "الجزء الأول: اللغة (Language)",
-          "sections": [
-            "A. وضع الأفعال بين قوسين في صورتها الصحيحة (٢ درجة)",
-            "B. وصل الأسئلة بإجاباتها (٢ درجة)",
-            "C. تكوين جمل وأسئلة من كلمات (٢ درجة)",
-            "D. وضع خط تحت الإجابة الصحيحة (٣ درجات)",
-            "E. إكمال الجمل بكلمات من الصندوق (٢ درجة)",
-            "F. وصل الكلمات بتعريفاتها (٥ درجات)"
-          ]
-        },
-        {
-          "part": "الجزء الثاني: الاستيعاب (Comprehension)",
-          "sections": [
-            "نص قرائي (مثال: الفنان السوداني إبراهيم الصلحي)",
-            "(A) إجابات قصيرة (٤ درجات)",
-            "(B) صح أو خطأ (٤ درجات)",
-            "(C) اختيار من متعدد (٤ درجات)"
-          ]
-        },
-        {
-          "part": "الجزء الثالث: التعبير (Composition)",
-          "sections": [
-            "مقال من ١٠٠–١٢٠ كلمة عن موضوع محدد",
-            "أو فقرة تُبنى على معلومات جدول (مثال: الطيب صالح: الميلاد، الوفاة، أشهر كتبه، الجوائز)"
-          ]
-        },
-        {
-          "part": "الجزء الرابع: القراءات المقررة (Supplementary Readers)",
-          "sections": [
-            "اختيار بين قصتين: A Tale of Two Cities أو The Black Tulip (٨ درجات)",
-            "(A) الإجابة عن أسئلة (٣ درجات)",
-            "(B) اختيار من متعدد (٥ درجات)"
-          ]
-        }
-      ]
+     "n": 3,
+     "title": "المشكلات البيئية في السودان",
+     "page": 125,
+     "objectives": [
+      "يتعرف على المشكلات البيئية في السودان",
+      "يوضح الآثار الناتجة عن المشكلات البيئية",
+      "يتعرف على عناصر البيئة ومدى ترابطها",
+      "يتعرف على كيفية المحافظة على البيئة",
+      "يلعب دوراً في التوعية البيئية في مجتمعه المحلي والقومي",
+      "يشارك في العمل الجماعي عبر الجمعيات البيئية"
+     ],
+     "themes": [
+      {
+       "t": "مكونات النظام البيئي",
+       "pages": "١٢٨"
+      },
+      {
+       "t": "تلوث الهواء وآثاره",
+       "pages": "١٢٩–١٣٢"
+      },
+      {
+       "t": "تلوث المياه (نهر النيل وساحل البحر الأحمر)",
+       "pages": "١٣٣–١٣٥"
+      },
+      {
+       "t": "تلوث التربة",
+       "pages": "١٣٦–١٣٧"
+      },
+      {
+       "t": "مشكلة التصحر",
+       "pages": "١٣٨–١٤١"
+      },
+      {
+       "t": "مشكلات القطاع الغابي",
+       "pages": "١٤٢–١٤٣"
+      },
+      {
+       "t": "مشكلة النفايات (الإلكترونية والطبية)",
+       "pages": "١٤٤–١٥٠"
+      },
+      {
+       "t": "التعدين الأهلي وأثره على البيئة",
+       "pages": "١٥١–١٥٣"
+      },
+      {
+       "t": "الحرب وأثرها على البيئة",
+       "pages": "١٥٤"
+      },
+      {
+       "t": "الفقر وأثره على البيئة",
+       "pages": "١٥٥–١٥٦"
+      },
+      {
+       "t": "دور الثقافة والتوعية البيئية في المحافظة على البيئة",
+       "pages": "١٥٧–١٥٨"
+      },
+      {
+       "t": "دور المجتمع المدني المحلي",
+       "pages": "١٥٩–١٦٠"
+      }
+     ]
     }
-  ],
-  "civicsFinding": {
-    "subjectId": "civics",
-    "status": "no_official_book_found",
-    "checkedAt": "2026-10-16",
-    "searched": [
-      "حزمة sudanexams للكتب التسعة (لا توجد)",
-      "almualm.com — مادة اللغة الانجليزية ومواد أخرى (لا توجد)",
-      "al-amgaad.com — الصف الثالث المتوسط: كتب + امتحانات ٢٠٢٦ لكل المواد (لا توجد)"
-    ],
-    "conclusion": "لا يوجد كتاب مدرسي لـ«التربية الوطنية والحياتية» للصف الثالث المتوسط في أي من المجموعات الثلاث. كذلك لا يوجد لها امتحان ضمن نماذج امتحانات الشهادة المتوسطة ٢٠٢٦ المنشورة. يُرجَّح أنها ليست مادة امتحانية مستقلة في الشهادة المتوسطة، أو أنها مُدمجة في مادة أخرى.",
-    "recommendation": "قرار مطلوب من صاحب المشروع: إما (أ) إزالة المادة من التطبيق، أو (ب) الإبقاء عليها مع وسْم كل محتواها «تجريبي — بلا مصدر رسمي»."
+   ],
+   "extraction": "مسح ضوئي لـ١٦٠ صفحة بدقة ٣٠٠–٤٠٠ نقطة/بوصة؛ العناوين من رؤوس الصفحات وأهداف الوحدات."
+  },
+  {
+   "key": "ict",
+   "subjectId": "ict",
+   "book": "كتاب تكنولوجيا المعلومات والاتصالات — الصف الثالث المتوسط",
+   "pages": 92,
+   "url": "https://docs.google.com/uc?export=download&id=1M5ChXQYgvWHGkxQ1lm-Yom02hTgz7lcr",
+   "confidence": "high",
+   "unitsCount": 4,
+   "lessonsCount": 10,
+   "unitTitles": [
+    "الوحدة الأولى: أساسيات البرمجة",
+    "الوحدة الثانية: مدخل إلى لغات البرمجة",
+    "الوحدة الثالثة: الخوارزميات والمخططات الانسيابية",
+    "الوحدة الرابعة: مبادئ البرمجة بلغة سكراتش"
+   ],
+   "lessons": [
+    "مفاهيم في البرمجة",
+    "أهمية البرمجة",
+    "مراحل البرمجة",
+    "أجيال لغات البرمجة",
+    "ترجمة البرنامج",
+    "مفاهيم مشتركة في لغات البرمجة",
+    "المشكلات البرمجية",
+    "الخوارزميات",
+    "المخططات الانسيابية",
+    "تطبيقات على الخوارزميات"
+   ],
+   "structureNote": "المقدمة: «جاء هذا الكتاب في أربع وحدات». دروس الوحدات ١-٣ مؤكدة (١٠ دروس) ودروس الوحدة الرابعة (سكراتش) لم تُقرأ من الفهرس. كل وحدة تُنهي بـ «اختبار نهاية الوحدة»."
+  },
+  {
+   "key": "technical",
+   "subjectId": null,
+   "book": "أساسيات التربية التقنية (الكتاب الثاني من السلسلة) — الصف الثالث، المرحلة المتوسطة",
+   "pages": 160,
+   "url": "https://docs.google.com/uc?export=download&id=1cna9TBD6OZXYB4GMq6SJNzZtjpuJDwpG",
+   "confidence": "high",
+   "unitsCount": 5,
+   "lessonsCount": null,
+   "unitTitles": [
+    "الوحدة الأولى: المجال الهندسي",
+    "الوحدة الثانية: تقنيات الطاقة الشمسية",
+    "الوحدة الثالثة: المجال الزراعي",
+    "الوحدة الرابعة: مجال ريادة الأعمال",
+    "الوحدة الخامسة: تجارب ريادية ملهمة"
+   ],
+   "structureNote": "تصحيح جوهري: كنا سجّلنا ٣ وحدات اعتماداً على عبارة المقدمة «يشتمل المقرر على ثلاثة مجالات رئيسة». لكن المجالات الثلاثة تُقسَّم في الكتاب إلى **٥ وحدات** وفق فهرس المحتويات (ص٣). المقدمة: «الكتاب الثاني لسلسلة أساسيات التربية التقنية… يشتمل المقرر على ثلاثة مجالات رئيسة هي: المجال الهندسي، المجال الزراعي، ومجال ريادة الأعمال». ليست من مواد تطبيقنا الثمانية حالياً — أُدرجت للأمانة ولإمكان إضافتها لاحقاً.",
+   "source": "https://www.mdl.edu.sd/img/bookpdf/أساسيات%20التربية%20التقنية%20نهائية%20ثالث%20متوسط_compressed_1724916454_1725099268.pdf",
+   "listingPage": "https://www.mdl.edu.sd/SudaneseCurriculum#moyen-eco2",
+   "url2": "https://www.alkab24.com/books/%D9%83%D8%AA%D8%A7%D8%A8-%D8%A7%D9%84%D8%AA%D8%B1%D8%A8%D9%8A%D8%A9-%D8%A7%D9%84%D8%AA%D9%82%D9%86%D9%8A%D8%A9-%D8%A7%D9%84%D8%B5%D9%81-%D8%A7%D9%84%D8%AB%D8%A7%D9%84%D8%AB-%D8%A7%D9%84%D9%85%D8%AA/",
+   "edition": "الطبعة الأولى ٢٠٢١م",
+   "authority": "ministry",
+   "verifiedAt": "2026-10-16"
+  },
+  {
+   "key": "english",
+   "subjectId": "english",
+   "book": "SMILE Series: Book 9 — Pupil's Book (Sudan Modern Integrated Learning of English)",
+   "bookAr": "سلسلة سمايل (SMILE) — الكتاب التاسع: كتاب التلميذ — الإنجليزية المدمجة الحديثة للسودان",
+   "publisher": "المركز القومي للمناهج والبحث التربوي (NCCER) — بخت الرضا · وزارة التربية والتعليم الاتحادية · جمهورية السودان",
+   "edition": "المنهج الجديد — يحل محل منهج SPINE",
+   "pages": 72,
+   "url": "https://www.almualm.com/wp-content/uploads/2025/06/%D9%83%D8%AA%D8%A7%D8%A8-%D8%A7%D9%84%D8%A7%D9%86%D8%AC%D9%84%D9%8A%D8%B2%D9%8A-%D8%A7%D9%84%D8%AB%D8%A7%D9%84%D8%AB-%D8%A7%D9%84%D9%85%D8%AA%D9%88%D8%B3%D8%B7-%D8%A7%D9%84%D8%B3%D9%88%D8%AF%D8%A7%D9%86.pdf",
+   "indexUrl": "https://www.almualm.com/2025/06/...كتاب-اللغة-الانجليزية-الصف-الثالث-ال",
+   "confidence": "high",
+   "unitsCount": 8,
+   "lessonsCount": 64,
+   "unitTitles": [
+    "Unit 1: People and Science",
+    "Unit 2: Arts and Literature",
+    "Unit 3: Around the World",
+    "Unit 4: Work and Play",
+    "Unit 5: Food and Health",
+    "Unit 6: Money and Shopping",
+    "Unit 7: Learning",
+    "Unit 8: Looking Back"
+   ],
+   "lessons": [
+    {
+     "unit": 1,
+     "unitTitle": "People and Science",
+     "number": 1,
+     "title": "What is Science?"
+    },
+    {
+     "unit": 1,
+     "unitTitle": "People and Science",
+     "number": 2,
+     "title": "Famous Scientists"
+    },
+    {
+     "unit": 1,
+     "unitTitle": "People and Science",
+     "number": 3,
+     "title": "BONES"
+    },
+    {
+     "unit": 1,
+     "unitTitle": "People and Science",
+     "number": 4,
+     "title": "How to Measure"
+    },
+    {
+     "unit": 1,
+     "unitTitle": "People and Science",
+     "number": 5,
+     "title": "Traditional Medicine"
+    },
+    {
+     "unit": 1,
+     "unitTitle": "People and Science",
+     "number": 6,
+     "title": "Wonders of Engineering"
+    },
+    {
+     "unit": 1,
+     "unitTitle": "People and Science",
+     "number": 7,
+     "title": "Puzzles and Games"
+    },
+    {
+     "unit": 1,
+     "unitTitle": "People and Science",
+     "number": 8,
+     "title": "Revision: Science"
+    },
+    {
+     "unit": 2,
+     "unitTitle": "Arts and Literature",
+     "number": 1,
+     "title": "A Traditional Story"
+    },
+    {
+     "unit": 2,
+     "unitTitle": "Arts and Literature",
+     "number": 2,
+     "title": "National Dress"
+    },
+    {
+     "unit": 2,
+     "unitTitle": "Arts and Literature",
+     "number": 3,
+     "title": "Famous Sudanese Writers"
+    },
+    {
+     "unit": 2,
+     "unitTitle": "Arts and Literature",
+     "number": 4,
+     "title": "Sand Art"
+    },
+    {
+     "unit": 2,
+     "unitTitle": "Arts and Literature",
+     "number": 5,
+     "title": "Robinson Crusoe"
+    },
+    {
+     "unit": 2,
+     "unitTitle": "Arts and Literature",
+     "number": 6,
+     "title": "Calligraphy"
+    },
+    {
+     "unit": 2,
+     "unitTitle": "Arts and Literature",
+     "number": 7,
+     "title": "A Sudanese Artist"
+    },
+    {
+     "unit": 2,
+     "unitTitle": "Arts and Literature",
+     "number": 8,
+     "title": "Revision: Words and Pictures"
+    },
+    {
+     "unit": 3,
+     "unitTitle": "Around the World",
+     "number": 1,
+     "title": "Where is Sudan?"
+    },
+    {
+     "unit": 3,
+     "unitTitle": "Around the World",
+     "number": 2,
+     "title": "Countries Quiz"
+    },
+    {
+     "unit": 3,
+     "unitTitle": "Around the World",
+     "number": 3,
+     "title": "Two Interesting Places"
+    },
+    {
+     "unit": 3,
+     "unitTitle": "Around the World",
+     "number": 4,
+     "title": "Saudi Arabia"
+    },
+    {
+     "unit": 3,
+     "unitTitle": "Around the World",
+     "number": 5,
+     "title": "Marco Polo"
+    },
+    {
+     "unit": 3,
+     "unitTitle": "Around the World",
+     "number": 6,
+     "title": "A Trip of a Lifetime"
+    },
+    {
+     "unit": 3,
+     "unitTitle": "Around the World",
+     "number": 7,
+     "title": "Friendly People"
+    },
+    {
+     "unit": 3,
+     "unitTitle": "Around the World",
+     "number": 8,
+     "title": "Revision: An Arab Adventure"
+    },
+    {
+     "unit": 4,
+     "unitTitle": "Work and Play",
+     "number": 1,
+     "title": "Jobs, Jobs, Jobs"
+    },
+    {
+     "unit": 4,
+     "unitTitle": "Work and Play",
+     "number": 2,
+     "title": "Teachers"
+    },
+    {
+     "unit": 4,
+     "unitTitle": "Work and Play",
+     "number": 3,
+     "title": "Children and Work"
+    },
+    {
+     "unit": 4,
+     "unitTitle": "Work and Play",
+     "number": 4,
+     "title": "Learning for a Job"
+    },
+    {
+     "unit": 4,
+     "unitTitle": "Work and Play",
+     "number": 6,
+     "title": "Who Gets Paid the Most?"
+    },
+    {
+     "unit": 4,
+     "unitTitle": "Work and Play",
+     "number": 7,
+     "title": "Work in the Future"
+    },
+    {
+     "unit": 4,
+     "unitTitle": "Work and Play",
+     "number": 8,
+     "title": "Revision: Hard Work"
+    },
+    {
+     "unit": 5,
+     "unitTitle": "Food and Health",
+     "number": 1,
+     "title": "Chocolate"
+    },
+    {
+     "unit": 5,
+     "unitTitle": "Food and Health",
+     "number": 2,
+     "title": "Growing Food"
+    },
+    {
+     "unit": 5,
+     "unitTitle": "Food and Health",
+     "number": 3,
+     "title": "Sudanese Crops"
+    },
+    {
+     "unit": 5,
+     "unitTitle": "Food and Health",
+     "number": 4,
+     "title": "A Healthy Diet"
+    },
+    {
+     "unit": 5,
+     "unitTitle": "Food and Health",
+     "number": 5,
+     "title": "The Greenhouse"
+    },
+    {
+     "unit": 5,
+     "unitTitle": "Food and Health",
+     "number": 6,
+     "title": "Honey"
+    },
+    {
+     "unit": 5,
+     "unitTitle": "Food and Health",
+     "number": 7,
+     "title": "Healthy Habits"
+    },
+    {
+     "unit": 5,
+     "unitTitle": "Food and Health",
+     "number": 8,
+     "title": "Revision: Food Facts"
+    },
+    {
+     "unit": 6,
+     "unitTitle": "Money and Shopping",
+     "number": 2,
+     "title": "Adverts"
+    },
+    {
+     "unit": 6,
+     "unitTitle": "Money and Shopping",
+     "number": 3,
+     "title": "Saving for a Rainy Day!"
+    },
+    {
+     "unit": 6,
+     "unitTitle": "Money and Shopping",
+     "number": 4,
+     "title": "Young Business People"
+    },
+    {
+     "unit": 6,
+     "unitTitle": "Money and Shopping",
+     "number": 5,
+     "title": "The Gold Rush"
+    },
+    {
+     "unit": 6,
+     "unitTitle": "Money and Shopping",
+     "number": 7,
+     "title": "Paying for it!"
+    },
+    {
+     "unit": 6,
+     "unitTitle": "Money and Shopping",
+     "number": 8,
+     "title": "Revision: The Cost of Shopping"
+    },
+    {
+     "unit": 7,
+     "unitTitle": "Learning",
+     "number": 1,
+     "title": "Learning a Lesson"
+    },
+    {
+     "unit": 7,
+     "unitTitle": "Learning",
+     "number": 2,
+     "title": "Learning for a Competition"
+    },
+    {
+     "unit": 7,
+     "unitTitle": "Learning",
+     "number": 3,
+     "title": "The History of the University of Khartoum"
+    },
+    {
+     "unit": 7,
+     "unitTitle": "Learning",
+     "number": 4,
+     "title": "Learning to Do Things Yourself"
+    },
+    {
+     "unit": 7,
+     "unitTitle": "Learning",
+     "number": 5,
+     "title": "Learning isn’t Easy"
+    },
+    {
+     "unit": 7,
+     "unitTitle": "Learning",
+     "number": 6,
+     "title": "The Brain"
+    },
+    {
+     "unit": 7,
+     "unitTitle": "Learning",
+     "number": 7,
+     "title": "Test Your Knowledge"
+    },
+    {
+     "unit": 7,
+     "unitTitle": "Learning",
+     "number": 8,
+     "title": "Revision: Test Your Learning"
+    },
+    {
+     "unit": 8,
+     "unitTitle": "Looking Back",
+     "number": 1,
+     "title": "Protecting Animals"
+    },
+    {
+     "unit": 8,
+     "unitTitle": "Looking Back",
+     "number": 2,
+     "title": "Sports Time"
+    },
+    {
+     "unit": 8,
+     "unitTitle": "Looking Back",
+     "number": 3,
+     "title": "A Matter of Science"
+    },
+    {
+     "unit": 8,
+     "unitTitle": "Looking Back",
+     "number": 4,
+     "title": "Stories"
+    },
+    {
+     "unit": 8,
+     "unitTitle": "Looking Back",
+     "number": 5,
+     "title": "Discovering the World"
+    },
+    {
+     "unit": 8,
+     "unitTitle": "Looking Back",
+     "number": 6,
+     "title": "A Time for Tea"
+    },
+    {
+     "unit": 8,
+     "unitTitle": "Looking Back",
+     "number": 7,
+     "title": "Food and Health"
+    },
+    {
+     "unit": 8,
+     "unitTitle": "Looking Back",
+     "number": 8,
+     "title": "Learning for Life"
+    }
+   ],
+   "missingLessons": [
+    "الوحدة 4 — الدرس 5",
+    "الوحدة 6 — الدرس 1",
+    "الوحدة 6 — الدرس 6"
+   ],
+   "structureNote": "جدول المحتويات (ص٧) يذكر ٨ وحدات، وكل وحدة ٨ صفحات بداخلها ٨ دروس. استُخرجت عناوين ٦١ درساً من أصل ٦٤؛ الثلاثة الناقصة لم تُقرأ بوضوح في المسح. مكوّنات السلسلة: كتاب التلميذ، كتاب النشاط، كتاب المعلم، تسجيلات، وبطاقات مصوّرة."
+  },
+  {
+   "key": "civics",
+   "subjectId": "civics",
+   "book": "التربية الوطنية — الصف الثاني — المرحلة المتوسطة",
+   "publisher": "المركز القومي للمناهج والبحث التربوي — بخت الرضا · وزارة التربية والتعليم الاتحادية",
+   "edition": "الطبعة الأولى ٢٠٢٢م",
+   "pages": 53,
+   "source": "https://www.mdl.edu.sd/img/bookpdf/%20الوطنية%20الصف%20الثاني%20متوسط_1695553430.pdf",
+   "listingPage": "https://www.mdl.edu.sd/SudaneseCurriculum",
+   "authority": "ministry",
+   "confidence": "high",
+   "verifiedAt": "2026-10-16",
+   "unitsCount": 4,
+   "lessonsCount": 13,
+   "gradeMismatch": true,
+   "appliesToThirdGrade": false,
+   "units": [
+    {
+     "n": 1,
+     "title": "الوطن والوطنية",
+     "page": 5,
+     "lessons": [
+      "الوطن",
+      "معنى الوطنية",
+      "المواطنة"
+     ]
+    },
+    {
+     "n": 2,
+     "title": "السودان: ملامح جغرافية وتاريخية",
+     "page": 17,
+     "lessons": [
+      "اسم وحدود السودان وتشكلها عبر التاريخ",
+      "إسهام السودان في الحضارة الإنسانية",
+      "القومية السودانية"
+     ]
+    },
+    {
+     "n": 3,
+     "title": "المجتمع السوداني",
+     "page": 30,
+     "lessons": [
+      "خصائص المجتمع السوداني",
+      "كيف نطور مجتمعنا",
+      "الهوية السودانية"
+     ]
+    },
+    {
+     "n": 4,
+     "title": "الدولة السودانية",
+     "page": 44,
+     "lessons": [
+      "ميزات الأرض السودانية",
+      "دولة السودان",
+      "مقومات الدولة (عناصر تكوينها)",
+      "مميزات ومهام الدولة"
+     ]
+    }
+   ],
+   "structureNote": "أحدث مصدر رسمي متاح للمادة، وهو للصف الثاني المتوسط لا الثالث. العناوين والأهداف منقولة حرفياً؛ الملخصات من كتابتنا."
   }
+ ],
+ "gaps": [
+  "التربية الوطنية والحياتية (civics): لا كتاب ولا امتحان لها في أي مصدر من المصادر الثلاثة — تحتاج قراراً (إزالة أو وسْم تجريبي).",
+  "اللغة العربية: ١٥ وحدة مؤكدة، لكن عناوينها غير موجودة في فهرس الكتاب — تحتاج استخراجاً من الصفحات الافتتاحية لكل وحدة.",
+  "الإنجليزية: ٣ دروس لم تُقرأ (الوحدة ٤ الدرس ٥، الوحدة ٦ الدرسان ١ و٦).",
+  "The Black Tulip: القصة المقررة الثانية مؤكدة، ولم نحصل على نسختها.",
+  "التربية الإسلامية: أسماء الوحدات ٣–٦ مرجّحة.",
+  "العلوم: عناوين الوحدات مرجّحة (صفحة الفهرس رديئة المسح).",
+  "امتحانات ٢٠٢٦ المنشورة لبقية المواد (عربية، رياضيات، علوم، إسلامية، تاريخ، جغرافيا، تكنولوجيا، تقنية) متاحة ولم تُستخرج بعد."
+ ],
+ "supplements": [
+  {
+   "key": "set-book-tale-of-two-cities",
+   "type": "set_book",
+   "subjectId": "english",
+   "title": "A Tale of Two Cities",
+   "titleAr": "قصة مدينتين",
+   "author": "Charles Dickens (رواية مُعاد صياغتها: Stephen Colbourn)",
+   "series": "Macmillan Readers — Beginner Level",
+   "pages": 65,
+   "source": "ملف مرفوع من المستخدم — كتاب الأدب الإنجليزي للصف الثالث المتوسط (منشور على almualm.com)",
+   "confidence": "high",
+   "chapters": [
+    "To Dover",
+    "A Wine Shop in Paris",
+    "The Old Bailey",
+    "New Friends",
+    "The Aristocrat",
+    "A Wedding",
+    "Revolution",
+    "To Paris",
+    "An Enemy of the Republic",
+    "Citizen Barsad",
+    "Doctor Manette's Letter",
+    "Sydney Carton's Plan",
+    "The Escape",
+    "The Guillotine"
+   ],
+   "frontMatter": [
+    "A Note About the Author",
+    "A Note About This Story",
+    "The People in This Story"
+   ],
+   "note": "١٤ فصلاً + ثلاث صفحات تمهيدية + مسرد (Glossary) في آخر الكتاب. هذا هو «كتاب الأدب» المقرر للمادة."
+  },
+  {
+   "key": "set-book-black-tulip",
+   "type": "set_book",
+   "subjectId": "english",
+   "title": "The Black Tulip",
+   "titleAr": "التوليب الأسود",
+   "author": "Alexandre Dumas",
+   "confidence": "high",
+   "chapters": [],
+   "note": "القصة المقررة الثانية — مؤكدة من نص الامتحان: «اختر السؤال (١) A Tale of Two Cities أو السؤال (٢) The Black Tulip». لم نحصل على نسختها بعد."
+  },
+  {
+   "key": "exam-english-2026",
+   "type": "exam_paper",
+   "subjectId": "english",
+   "title": "نماذج امتحان الشهادة المتوسطة — اللغة الإنجليزية (نموذج الدليل)، يوليو ٢٠٢٦",
+   "publisher": "أكاديمية (TiT) التعليمية — إدارة الامتحانات والتقويم · أ. توفيق إسماعيل توفيق (نهر النيل والخارج)",
+   "pages": 21,
+   "confidence": "high",
+   "duration": "ساعتان",
+   "isOfficialMinistry": false,
+   "note": "نموذج امتحان منشور من أكاديمية تعليمية — مصدر واقعي لبنية الامتحان وأنواع أسئلته، وليس ورقة وزارية رسمية.",
+   "blueprint": [
+    {
+     "part": "الجزء الأول: اللغة (Language)",
+     "sections": [
+      "A. وضع الأفعال بين قوسين في صورتها الصحيحة (٢ درجة)",
+      "B. وصل الأسئلة بإجاباتها (٢ درجة)",
+      "C. تكوين جمل وأسئلة من كلمات (٢ درجة)",
+      "D. وضع خط تحت الإجابة الصحيحة (٣ درجات)",
+      "E. إكمال الجمل بكلمات من الصندوق (٢ درجة)",
+      "F. وصل الكلمات بتعريفاتها (٥ درجات)"
+     ]
+    },
+    {
+     "part": "الجزء الثاني: الاستيعاب (Comprehension)",
+     "sections": [
+      "نص قرائي (مثال: الفنان السوداني إبراهيم الصلحي)",
+      "(A) إجابات قصيرة (٤ درجات)",
+      "(B) صح أو خطأ (٤ درجات)",
+      "(C) اختيار من متعدد (٤ درجات)"
+     ]
+    },
+    {
+     "part": "الجزء الثالث: التعبير (Composition)",
+     "sections": [
+      "مقال من ١٠٠–١٢٠ كلمة عن موضوع محدد",
+      "أو فقرة تُبنى على معلومات جدول (مثال: الطيب صالح: الميلاد، الوفاة، أشهر كتبه، الجوائز)"
+     ]
+    },
+    {
+     "part": "الجزء الرابع: القراءات المقررة (Supplementary Readers)",
+     "sections": [
+      "اختيار بين قصتين: A Tale of Two Cities أو The Black Tulip (٨ درجات)",
+      "(A) الإجابة عن أسئلة (٣ درجات)",
+      "(B) اختيار من متعدد (٥ درجات)"
+     ]
+    }
+   ]
+  }
+ ],
+ "civicsFinding": {
+  "subjectId": "civics",
+  "checkedAt": "2026-10-16",
+  "rejectedSource": {
+   "url": "https://www.slideshare.net/slideshow/ss-67714406/67714406",
+   "title": "التربية الوطنية والاجتماعية للصف الثالث متوسط",
+   "verdict": "مرفوض — ليس سودانياً",
+   "evidence": [
+    "وصف الموقع نفسه: «كتاب منهجي لطلبة الصف الثالث المتوسط في جمهورية العراق»",
+    "الصفحة الأولى من الكتاب: «جمهورية العراق · وزارة التربية · المديرية العامة للمناهج» — الطبعة الحادية عشرة",
+    "ص ١٠: «دستور جمهورية العراق» وأبوابه الستة",
+    "ص ٢٠: «السلطة القضائية» — مجلس القضاء الأعلى والمحكمة الاتحادية العليا (مؤسسات عراقية)",
+    "ص ٦٠: «لنعمل معاً … من أجل عراق خال من …»",
+    "صاحب الحساب ينشر محتوى عراقياً حصراً (دستور جمهورية العراق، قانون الإثبات العراقي، التربية الأسرية للخامس الإعدادي)"
+   ],
+   "note": "الاسم يتطابق صدفة لأن العراق والسودان يستعملان «الصف الثالث المتوسط» للسنة الثالثة من المرحلة المتوسطة. استعماله في تطبيق سوداني ادّعاء باطل."
+  },
+  "officialSourceFound": {
+   "status": "موجود — للصف الثاني المتوسط لا الثالث",
+   "url": "https://www.mdl.edu.sd/img/bookpdf/%20الوطنية%20الصف%20الثاني%20متوسط_1695553430.pdf",
+   "listingPage": "https://www.mdl.edu.sd/SudaneseCurriculum",
+   "title": "التربية الوطنية · الصف الثاني · المرحلة المتوسطة",
+   "publisher": "المركز القومي للمناهج والبحث التربوي — بخت الرضا · وزارة التربية والتعليم",
+   "edition": "الطبعة الأولى ٢٠٢٢",
+   "pages": 53,
+   "textLayer": true,
+   "confidence": "high",
+   "unitsCount": 4,
+   "lessonsCount": 13,
+   "units": [
+    {
+     "n": 1,
+     "title": "الوطن والوطنية",
+     "page": 5,
+     "lessons": [
+      "الوطن",
+      "معنى الوطنية",
+      "المواطنة"
+     ]
+    },
+    {
+     "n": 2,
+     "title": "السودان: ملامح جغرافية وتاريخية",
+     "page": 17,
+     "lessons": [
+      "اسم وحدود السودان وتشكلها عبر التاريخ",
+      "إسهام السودان في الحضارة الإنسانية",
+      "القومية السودانية"
+     ]
+    },
+    {
+     "n": 3,
+     "title": "المجتمع السوداني",
+     "page": 30,
+     "lessons": [
+      "خصائص المجتمع السوداني",
+      "كيف نطور مجتمعنا",
+      "الهوية السودانية"
+     ]
+    },
+    {
+     "n": 4,
+     "title": "الدولة السودانية",
+     "page": 44,
+     "lessons": [
+      "ميزات الأرض السودانية",
+      "دولة السودان",
+      "مقومات الدولة (عناصر تكوينها)",
+      "مميزات ومهام الدولة"
+     ]
+    }
+   ],
+   "note": "مقدمة الكتاب: «يسرنا أن نقدم لكم كتابكم الأول في مادة التربية الوطنية… فقد التقيتم بها في الصفوف السابقة، وتعلمتموها مع مادة التاريخ. وها هي تأتيكم منذ هذا الصف في كتاب منفصل.»"
+  },
+  "searched": [
+   "حزمة sudanexams للكتب التسعة (لا توجد للثالث المتوسط)",
+   "almualm.com — لا توجد للثالث المتوسط (توجد للصف الأول الثانوي)",
+   "al-amgaad.com — كتب وامتحانات ٢٠٢٦ لكل المواد، ولا توجد؛ وتعليق على الموقع (يناير ٢٠٢٥) يقول «مافي كتاب التربية الوطنية» للثالث المتوسط",
+   "mdl.edu.sd — الرف الرسمي للصف الثالث المتوسط: ٨ كتب، ولا توجد التربية الوطنية بينها"
+  ],
+  "firstHandReport": {
+   "source": "طالب في الصف الثالث المتوسط (ابن صاحب المشروع)",
+   "statement": "«ما مقررة عليهم أساساً» — المادة غير مقررة على الصف الثالث المتوسط",
+   "reportedAt": "2026-10-16",
+   "weight": "شهادة من داخل المدرسة، وتتوافق مع غياب الكتاب والامتحان في المصادر الأربعة",
+   "conclusion": "يرجّح قطعاً أن التربية الوطنية ليست مادة مقررة في الصف الثالث المتوسط."
+  },
+  "conclusion": "لا كتاب للصف الثالث المتوسط على الرف الرسمي ولا في أي من المصادر الأربعة، ولا امتحان لها في نماذج ٢٠٢٦، وشهادة طالب في الصف نفسه بأنها «غير مقررة عليهم أساساً». الخلاصة: المادة ليست مقررة في الصف الثالث المتوسط.",
+  "recommendation": "قرار مطلوب من صاحب المشروع، ثلاثة خيارات: (أ) إزالة المادة من التطبيق؛ (ب) الإبقاء عليها مع وسْم كل محتواها «تجريبي — بلا مصدر رسمي»؛ (ج) بناء محتواها على الكتاب الرسمي للصف الثاني المتوسط مع وسْم واضح بأنه للصف الثاني لا الثالث.",
+  "decision": {
+   "chosen": "c",
+   "decidedAt": "2026-10-16",
+   "decidedBy": "صاحب المشروع",
+   "action": "بناء محتوى المادة على الكتاب الرسمي للصف الثاني المتوسط مع وسْم صريح بأنه للصف الثاني لا الثالث",
+   "implementedIn": [
+    "shared/content/civics.json: ٤ وحدات / ١٣ درساً، عناوين وأهداف حرفية من الكتاب، وسم gradeWarning على مستوى المادة",
+    "structure.json: حقل civicsFinding.decision"
+   ],
+   "labeling": "كل وحدة ودرس يحمل عنوان الكتاب، وحقل gradeWarning يبيّن للمستخدم أن المصدر للصف الثاني المتوسط"
+  }
+ },
+ "officialShelf": {
+  "source": "https://www.mdl.edu.sd/SudaneseCurriculum#moyen-eco2",
+  "note": "الرف الرسمي للصف الثالث المتوسط على موقع المركز القومي للمناهج في ٢٠٢٦-١٠-١٦.",
+  "books": [
+   {
+    "file": "إنجليزي ثالث متوسط2024 _1725219420.pdf",
+    "pages": 72,
+    "textLayer": false,
+    "subject": "english",
+    "note": "نسخة مصوّرة بلا طبقة نص؛ مطابقة لمصدرنا الحالي (٧٢ صفحة)"
+   },
+   {
+    "file": "أساسيات التربية التقنية نهائية ثالث متوسط_compressed_1724916454_1725099268.pdf",
+    "pages": 160,
+    "textLayer": true,
+    "subject": "technical",
+    "note": "طبقة نص سليمة"
+   },
+   {
+    "file": "الجغرافيا ثالث متوسط_1724918346.pdf",
+    "pages": 160,
+    "textLayer": true,
+    "subject": "geography",
+    "note": "طبقة نص سليمة"
+   },
+   {
+    "file": "تكنولجيا_المعلومات_والاتصالات_نهائية_ثالث_متوسط_1724917428.pdf",
+    "pages": 92,
+    "textLayer": true,
+    "subject": "ict",
+    "note": "طبقة نص سليمة · يذكر NCCER بخت الرضا"
+   },
+   {
+    "file": "الرياضيات_ثالث_متوسط_للطباعة_FINAL_15_2_2024_18_2_2024_1724916935.pdf",
+    "pages": 304,
+    "textLayer": true,
+    "subject": "math",
+    "note": "طبقة نص سليمة"
+   },
+   {
+    "file": "اسلامية_ثالث_متوسط_تربوية_1724915885.pdf",
+    "pages": 184,
+    "textLayer": true,
+    "subject": "islamic",
+    "note": "طبقة نص سليمة"
+   },
+   {
+    "file": "qq1_1724911518.pdf",
+    "pages": 120,
+    "textLayer": true,
+    "subject": "history",
+    "note": "تبيّن أنه كتاب التاريخ للصف الثالث المتوسط — مصدر رسمي لم يكن بين يدينا"
+   },
+   {
+    "file": " الانجليزي ثالث متوسط_1695557025.pdf",
+    "pages": 107,
+    "textLayer": true,
+    "subject": "english",
+    "note": "SMILE Series Book 6 · Pupil's Book · Grade 8 Basic Level — مُدرج في قسم الثالث المتوسط لكنه لكتاب الصف الثامن"
+   }
+  ],
+  "missingFromOfficialShelf": [
+   "اللغة العربية",
+   "العلوم",
+   "التربية الوطنية",
+   "التربية الفنية"
+  ]
+ }
 }

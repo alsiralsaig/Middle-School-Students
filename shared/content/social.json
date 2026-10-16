@@ -5,9 +5,9 @@
   "code": "SOC-09",
   "category": "humanities",
   "description": "تشمل تاريخ السودان الحديث والمعاصر، الثورة المهدية، موقع السودان الجغرافي، التضاريس، والمناخ والموارد.",
-  "curriculumRef": "كتابا التاريخ والجغرافيا — الصف الثالث المتوسط — المركز القومي للمناهج والبحث التربوي — بخت الرضا · وزارة التربية والتعليم الاتحادية",
+  "curriculumRef": "كتابا التاريخ والجغرافيا — الصف الثالث المتوسط — المركز القومي للمناهج والبحث التربوي — بخت الرضا · وزارة التربية والتعليم الاتحادية. هيكل التاريخ والجغرافيا مستخرج حرفياً من الملفات الرسمية المنشورة على موقع المركز.",
   "unitsCount": 7,
-  "lessonsCount": 14,
+  "lessonsCount": 55,
   "colorScheme": {
     "bg": "bg-orange-50",
     "text": "text-orange-900",
@@ -75,13 +75,400 @@
   ],
   "official": {
     "book": "كتابا التاريخ والجغرافيا — الصف الثالث المتوسط",
-    "publisher": "المركز القومي للمناهج والبحث التربوي — بخت الرضا · وزارة التربية والتعليم الاتحادية",
+    "publisher": "المركز القومي للمناهج والبحث التربوي (NCCER) — بخت الرضا · وزارة التربية والتعليم الاتحادية",
     "pages": 280,
     "url": "https://docs.google.com/uc?export=download&id=1Ohxm-OBbcam5GrVQLy1hQnUDCXeg926H",
     "unitsCount": 7,
-    "lessonsCount": null,
+    "lessonsCount": 55,
     "confidence": "high",
     "verifiedAt": "2026-10-16",
-    "note": "التاريخ ٤ وحدات (من تاريخ السودان، الدولة الإسلامية في العهد العثماني، من تاريخ أفريقيا، من تاريخ العالم) + الجغرافيا ٣ وحدات (جغرافية السودان الطبيعية، البشرية، المشكلات البيئية)."
-  }
+    "history": {
+      "source": "https://www.mdl.edu.sd/img/bookpdf/qq1_1724911518.pdf",
+      "listingPage": "https://www.mdl.edu.sd/SudaneseCurriculum#moyen-eco2",
+      "pages": 120,
+      "unitsCount": 4,
+      "lessonsCount": 25,
+      "confidence": "high"
+    },
+    "geography": {
+      "source": "https://www.mdl.edu.sd/img/bookpdf/الجغرافيا%20ثالث%20متوسط_1724918346.pdf",
+      "listingPage": "https://www.mdl.edu.sd/SudaneseCurriculum#moyen-eco2",
+      "pages": 160,
+      "unitsCount": 3,
+      "themesCount": 30,
+      "lessonsCount": null,
+      "confidence": "high",
+      "note": "الكتاب لا يرقّم دروسه، فلم نخترع ترقيماً واعتمدنا «محاور»."
+    },
+    "note": "التاريخ: ٤ وحدات · ٢٥ درساً. الجغرافيا: ٣ وحدات · ٣٠ محوراً. المجموع ٧ وحدات."
+  },
+  "syllabus": [
+    {
+      "subject": "history",
+      "unitNumber": 1,
+      "title": "من تاريخ السودان",
+      "sourceConfidence": "high",
+      "numbering": "lessons",
+      "lessons": [
+        {
+          "lessonNumber": 1,
+          "title": "أسباب قيام ونجاح الثورة المهدية",
+          "sourcePage": 8
+        },
+        {
+          "lessonNumber": 2,
+          "title": "المواجهات العسكرية بين الثوار والاستعمار التركي المصري (١)",
+          "sourcePage": 12
+        },
+        {
+          "lessonNumber": 3,
+          "title": "المواجهات العسكرية بين الثوار والاستعمار التركي المصري (٢)",
+          "sourcePage": 15
+        },
+        {
+          "lessonNumber": 4,
+          "title": "المواجهات العسكرية بين الثوار والاستعمار التركي المصري (٣)",
+          "sourcePage": 17
+        },
+        {
+          "lessonNumber": 5,
+          "title": "نظم الحكم والإدارة في الدولة المهدية",
+          "sourcePage": 21
+        },
+        {
+          "lessonNumber": 6,
+          "title": "الحكم الثنائي: نظم الحكم والإدارة في فترة الحكم الثنائي",
+          "sourcePage": 24
+        },
+        {
+          "lessonNumber": 7,
+          "title": "التطورات الاقتصادية والاجتماعية في فترة الحكم الثنائي",
+          "sourcePage": 28
+        },
+        {
+          "lessonNumber": 8,
+          "title": "مقاومة السودانيين للحكم الثنائي",
+          "sourcePage": 33
+        },
+        {
+          "lessonNumber": 9,
+          "title": "الحركة الوطنية السودانية الحديثة",
+          "sourcePage": 37
+        },
+        {
+          "lessonNumber": 10,
+          "title": "التطورات السياسية والاجتماعية في السودان",
+          "sourcePage": 42
+        }
+      ]
+    },
+    {
+      "subject": "history",
+      "unitNumber": 2,
+      "title": "تطور الدولة الإسلامية في العهد العثماني",
+      "sourceConfidence": "high",
+      "numbering": "lessons",
+      "lessons": [
+        {
+          "lessonNumber": 1,
+          "title": "نشأة الدولة العثمانية",
+          "sourcePage": 51
+        },
+        {
+          "lessonNumber": 2,
+          "title": "اتساع الإمارة العثمانية وفتوحاتها في أوربا",
+          "sourcePage": 54
+        },
+        {
+          "lessonNumber": 3,
+          "title": "امتداد الدولة العثمانية في البلاد العربية",
+          "sourcePage": 57
+        },
+        {
+          "lessonNumber": 4,
+          "title": "نظم الحكم العثماني للولايات العربية ونتائجها",
+          "sourcePage": 62
+        },
+        {
+          "lessonNumber": 5,
+          "title": "تدهور الدولة العثمانية",
+          "sourcePage": 64
+        }
+      ]
+    },
+    {
+      "subject": "history",
+      "unitNumber": 3,
+      "title": "من تاريخ أفريقيا",
+      "sourceConfidence": "high",
+      "numbering": "lessons",
+      "lessons": [
+        {
+          "lessonNumber": 1,
+          "title": "دوافع الاستعمار الأوربي لأفريقيا",
+          "sourcePage": 72
+        },
+        {
+          "lessonNumber": 2,
+          "title": "أنواع الاستعمار الأوربي في أفريقيا",
+          "sourcePage": 74
+        },
+        {
+          "lessonNumber": 3,
+          "title": "آثار الاستعمار الأوربي على القارة الأفريقية",
+          "sourcePage": 76
+        },
+        {
+          "lessonNumber": 4,
+          "title": "تقسيم القارة الأفريقية بين الدول الأوربية",
+          "sourcePage": 78
+        },
+        {
+          "lessonNumber": 5,
+          "title": "حركات التحرر الوطني في أفريقيا",
+          "sourcePage": 80
+        },
+        {
+          "lessonNumber": 6,
+          "title": "منظمة الوحدة الأفريقية",
+          "sourcePage": 86
+        }
+      ]
+    },
+    {
+      "subject": "history",
+      "unitNumber": 4,
+      "title": "من تاريخ العالم",
+      "sourceConfidence": "high",
+      "numbering": "lessons",
+      "lessons": [
+        {
+          "lessonNumber": 1,
+          "title": "الحرب العالمية الأولى (١٩١٤–١٩١٨م)",
+          "sourcePage": 95
+        },
+        {
+          "lessonNumber": 2,
+          "title": "الحرب العالمية الثانية (١٩٣٩–١٩٤٥م)",
+          "sourcePage": 98
+        },
+        {
+          "lessonNumber": 3,
+          "title": "هيأة الأمم المتحدة",
+          "sourcePage": 103
+        },
+        {
+          "lessonNumber": 4,
+          "title": "التطورات العالمية بعد الحرب العالمية الثانية",
+          "sourcePage": 109
+        }
+      ]
+    },
+    {
+      "subject": "geography",
+      "unitNumber": 1,
+      "title": "جغرافية السودان الطبيعية",
+      "sourceConfidence": "high",
+      "numbering": "themes",
+      "objectives": [
+        "يتعرّف موقع السودان ومساحته",
+        "يتعرّف أهم معالم السطح والتضاريس",
+        "يتعرّف مناخ السودان وأهم عناصره",
+        "يعدد أنواع التربة في السودان",
+        "يصنف النباتات الطبيعية في السودان",
+        "يبيّن مصادر المياه في السودان"
+      ],
+      "lessons": [
+        {
+          "lessonNumber": 1,
+          "title": "موقع السودان ومساحته (الفلكي والجغرافي) والحدود السياسية",
+          "pages": "٦–١٠، ٢٣"
+        },
+        {
+          "lessonNumber": 2,
+          "title": "معالم السطح والتضاريس",
+          "pages": "١١"
+        },
+        {
+          "lessonNumber": 3,
+          "title": "مناخ السودان والأقاليم المناخية",
+          "pages": "١٢–١٤"
+        },
+        {
+          "lessonNumber": 4,
+          "title": "النباتات الطبيعية",
+          "pages": "١٥–١٧"
+        },
+        {
+          "lessonNumber": 5,
+          "title": "أنواع التربة في السودان",
+          "pages": "—"
+        },
+        {
+          "lessonNumber": 6,
+          "title": "مصادر المياه: حوض النيل، الأنهار الرئيسية، المجاري الموسمية، البحيرات",
+          "pages": "١٨–٣١"
+        }
+      ]
+    },
+    {
+      "subject": "geography",
+      "unitNumber": 2,
+      "title": "جغرافية السودان البشرية",
+      "sourceConfidence": "high",
+      "numbering": "themes",
+      "objectives": [
+        "يبين أصول سكان السودان",
+        "يقارن بين التعدادات السكانية المختلفة",
+        "يوضح أهمية النشاط الزراعي",
+        "يبيّن المشاريع الزراعية المروية",
+        "يصنف أنماط تربية الحيوان",
+        "يذكر أنواع الصناعة",
+        "يتعرّف مصادر الطاقة والتعدين",
+        "يبيّن طرق النقل المختلفة",
+        "يطور مهارة قراءة وتحليل الخرائط والأشكال البيانية",
+        "يتعرّف على أهم المناطق السياحية في السودان"
+      ],
+      "lessons": [
+        {
+          "lessonNumber": 1,
+          "title": "السكان: النمو، الأنماط، الكثافة، التركيب العمري والنوعي",
+          "pages": "٣٤–٤٥"
+        },
+        {
+          "lessonNumber": 2,
+          "title": "النشاط الزراعي: طرق الري، ملكية الأراضي، الزراعة المطرية والمروية والآلية، المحاصيل",
+          "pages": "٤٦–٦٧"
+        },
+        {
+          "lessonNumber": 3,
+          "title": "الإنتاج الحيواني وأنماط تربية الحيوان",
+          "pages": "٦٨–٧٠"
+        },
+        {
+          "lessonNumber": 4,
+          "title": "الثروة السمكية والموارد البحرية",
+          "pages": "٧١–٧٣"
+        },
+        {
+          "lessonNumber": 5,
+          "title": "الإنتاج الغابي (الصمغ العربي)",
+          "pages": "٧٤–٧٨"
+        },
+        {
+          "lessonNumber": 6,
+          "title": "الطاقة والتوليد الكهربائي",
+          "pages": "٧٩–٨٣"
+        },
+        {
+          "lessonNumber": 7,
+          "title": "البترول والتعدين",
+          "pages": "٨٤–٩٠"
+        },
+        {
+          "lessonNumber": 8,
+          "title": "الصناعة: الكيميائية، مواد البناء، التصنيع الحربي",
+          "pages": "٩١–١٠٢"
+        },
+        {
+          "lessonNumber": 9,
+          "title": "النقل: الطرق، السكك الحديدية، النقل الجوي",
+          "pages": "١٠٣–١٠٩"
+        },
+        {
+          "lessonNumber": 10,
+          "title": "الاتصالات",
+          "pages": "١١٠"
+        },
+        {
+          "lessonNumber": 11,
+          "title": "السياحة والمعالم الأثرية",
+          "pages": "١١١–١٢٠"
+        },
+        {
+          "lessonNumber": 12,
+          "title": "التجارة الخارجية والأمن الغذائي",
+          "pages": "١٢١–١٢٤"
+        }
+      ]
+    },
+    {
+      "subject": "geography",
+      "unitNumber": 3,
+      "title": "المشكلات البيئية في السودان",
+      "sourceConfidence": "high",
+      "numbering": "themes",
+      "objectives": [
+        "يتعرف على المشكلات البيئية في السودان",
+        "يوضح الآثار الناتجة عن المشكلات البيئية",
+        "يتعرف على عناصر البيئة ومدى ترابطها",
+        "يتعرف على كيفية المحافظة على البيئة",
+        "يلعب دوراً في التوعية البيئية في مجتمعه المحلي والقومي",
+        "يشارك في العمل الجماعي عبر الجمعيات البيئية"
+      ],
+      "lessons": [
+        {
+          "lessonNumber": 1,
+          "title": "مكونات النظام البيئي",
+          "pages": "١٢٨"
+        },
+        {
+          "lessonNumber": 2,
+          "title": "تلوث الهواء وآثاره",
+          "pages": "١٢٩–١٣٢"
+        },
+        {
+          "lessonNumber": 3,
+          "title": "تلوث المياه (نهر النيل وساحل البحر الأحمر)",
+          "pages": "١٣٣–١٣٥"
+        },
+        {
+          "lessonNumber": 4,
+          "title": "تلوث التربة",
+          "pages": "١٣٦–١٣٧"
+        },
+        {
+          "lessonNumber": 5,
+          "title": "مشكلة التصحر",
+          "pages": "١٣٨–١٤١"
+        },
+        {
+          "lessonNumber": 6,
+          "title": "مشكلات القطاع الغابي",
+          "pages": "١٤٢–١٤٣"
+        },
+        {
+          "lessonNumber": 7,
+          "title": "مشكلة النفايات (الإلكترونية والطبية)",
+          "pages": "١٤٤–١٥٠"
+        },
+        {
+          "lessonNumber": 8,
+          "title": "التعدين الأهلي وأثره على البيئة",
+          "pages": "١٥١–١٥٣"
+        },
+        {
+          "lessonNumber": 9,
+          "title": "الحرب وأثرها على البيئة",
+          "pages": "١٥٤"
+        },
+        {
+          "lessonNumber": 10,
+          "title": "الفقر وأثره على البيئة",
+          "pages": "١٥٥–١٥٦"
+        },
+        {
+          "lessonNumber": 11,
+          "title": "دور الثقافة والتوعية البيئية في المحافظة على البيئة",
+          "pages": "١٥٧–١٥٨"
+        },
+        {
+          "lessonNumber": 12,
+          "title": "دور المجتمع المدني المحلي",
+          "pages": "١٥٩–١٦٠"
+        }
+      ]
+    }
+  ],
+  "lessonsCountNote": "٥٥ = ٢٥ درساً مُرقّماً في التاريخ + ٣٠ محوراً في الجغرافيا. كتاب التاريخ يرقّم دروسه، وكتاب الجغرافيا لا يرقّمها فاعتمدنا «محاور» من عناوينه وأهداف وحداته."
 }
