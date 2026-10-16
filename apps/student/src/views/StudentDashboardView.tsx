@@ -3,6 +3,7 @@ import { Subject, ViewMode, Lesson } from '../types';
 import { WeeklyProgressChart } from '../components/WeeklyProgressChart';
 import { InteractiveCalendar } from '../components/InteractiveCalendar';
 import { StudyReminderWidget } from '../components/StudyReminderWidget';
+import { WeeklyExamPlanner } from '../components/WeeklyExamPlanner';
 import { useAccount } from '../context/AccountContext';
 import { useLanguage } from '../context/LanguageContext';
 import { 
@@ -335,6 +336,9 @@ export const StudentDashboardView: React.FC<StudentDashboardViewProps> = ({
 
       {/* Study Reminder & Push Notification Scheduler Widget */}
       <StudyReminderWidget />
+
+      {/* جدولة اختبارات تجريبية أسبوعية → تُضاف للتقويم الدراسي */}
+      <WeeklyExamPlanner />
 
 
       {/* Bookmarked / Saved for Later Lessons Section */}

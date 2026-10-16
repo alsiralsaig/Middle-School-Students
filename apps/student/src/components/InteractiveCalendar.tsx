@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { 
   Calendar as CalendarIcon, 
   ChevronRight, 
@@ -13,18 +13,21 @@ import {
   X
 } from 'lucide-react';
 import { CalendarEvent } from '../types';
-import { INITIAL_CALENDAR_EVENTS } from '../data/platformFeaturesData';
+import { PlannerEvent, getAllEvents, removeEvent, subscribePlanner, typeLabelAr, typeTone } from '../utils/plannerStore';
 import { useLanguage } from '../context/LanguageContext';
 
 export const InteractiveCalendar: React.FC = () => {
   const { t, language, isRtl } = useLanguage();
-  const [events] = useState<CalendarEvent[]>(INITIAL_CALENDAR_EVENTS);
-  const [selectedEventType, setSelectedEventType] = useState<'all' | 'live_class' | 'deadline' | 'exam'>('all');
-  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
+  const [events, setEvents] = useState<PlannerEvent[]>(getAllEvents);
+  const [selectedEventType, setSelectedEventType] = useState<'all' | 'live_class' | 'deadline' | 'exam' | 'trial_exam' | 'review'>('all');
+  const [selectedEvent, setSelectedEvent] = useState<PlannerEvent | null>(null);
 
   // Month state - October 2026 default based on environment date
   const [currentDate, setCurrentDate] = useState(new Date(2026, 9, 1)); // October 2026
   const [selectedDateStr, setSelectedDateStr] = useState<string>('2026-10-18');
+
+  // متابعة أي إضافة أو حذف في مواعيد التقويم (الاختبارات التجريبية…)
+  useEffect(() => subscribePlanner(() => setEvents(getAllEvents())), []);
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
@@ -86,6 +89,27 @@ export const InteractiveCalendar: React.FC = () => {
           bg: 'bg-rose-500/15 border-rose-500/30 text-rose-400',
           dot: 'bg-rose-400',
           icon: <AlertCircle className="w-3.5 h-3.5" />
+        };
+      case 'trial_exam':
+        return {
+          label: language === 'en' ? 'Trial Exam' : 'اختبار تجريبي',
+          bg: 'bg-amber-500/15 border-amber-500/30 text-amber-300',
+          dot: 'bg-amber-300',
+          icon: <Sparkles className="w-3.5 h-3.5" />
+        };
+      case 'review':
+        return {
+          label: language === 'en' ? 'Review Session' : 'جلسة مراجعة',
+          bg: 'bg-sky-500/15 border-sky-500/30 text-sky-300',
+          dot: 'bg-sky-300',
+          icon: <Clock className="w-3.5 h-3.5" />
+        };
+      default:
+        return {
+          label: language === 'en' ? 'Reminder' : 'تذكير',
+          bg: 'bg-slate-500/15 border-slate-500/30 text-slate-300',
+          dot: 'bg-slate-300',
+          icon: <Clock className="w-3.5 h-3.5" />
         };
     }
   };
@@ -149,6 +173,17 @@ export const InteractiveCalendar: React.FC = () => {
           >
             <AlertCircle className="w-3 h-3" />
             <span>{t('monthlyExams')}</span>
+          </button>
+          <button
+            onClick={() => setSelectedEventType('trial_exam')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+              selectedEventType === 'trial_exam'
+                ? 'bg-amber-500 text-slate-950 shadow-md'
+                : 'bg-[#0E2440] text-amber-300 hover:bg-[#122E52] border border-amber-500/30'
+            }`}
+          >
+            <Sparkles className="w-3 h-3" />
+            <span>اختباراتي التجريبية</span>
           </button>
         </div>
       </div>
@@ -376,9 +411,16 @@ export const InteractiveCalendar: React.FC = () => {
               </button>
             </div>
 
-            <h3 className="text-base font-bold text-white mb-2 leading-relaxed">
-              {language === 'en' ? selectedEvent.titleEn : selectedEvent.title}
-            </h3>
+            <div className="flex items-center gap-2 mb-2 flex-wrap">
+              <h3 className="text-base font-bold text-white leading-relaxed">
+                {language === 'en' ? selectedEvent.titleEn : selectedEvent.title}
+              </h3>
+              {selectedEvent.status === 'sample' && (
+                <span className="text-[10px] px-2 py-0.5 rounded-full border border-amber-400/40 bg-amber-500/10 text-amber-300 font-bold">
+                  موعد تجريبي
+                </span>
+              )}
+            </div>
 
             <p className="text-xs text-slate-300 leading-relaxed bg-[#071728] p-3.5 rounded-xl border border-[#152D4C] mb-4">
               {selectedEvent.description}
@@ -405,7 +447,18 @@ export const InteractiveCalendar: React.FC = () => {
               )}
             </div>
 
-            <div className="flex items-center justify-end gap-2.5">
+            <div className="flex items-center justify-end gap-2.5 flex-wrap">
+              {selectedEvent.status === 'user' && (
+                <button
+                  onClick={() => {
+                    removeEvent(selectedEvent.id);
+                    setSelectedEvent(null);
+                  }}
+                  className="px-4 py-2 rounded-xl text-xs font-semibold text-rose-300 hover:bg-rose-500/10 border border-rose-500/30 transition-colors"
+                >
+                  حذف الموعد
+                </button>
+              )}
               <button
                 onClick={() => setSelectedEvent(null)}
                 className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:bg-[#162D4A] transition-colors"

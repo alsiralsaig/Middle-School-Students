@@ -3,6 +3,7 @@ import { Bell, CheckCheck, Video, BookOpen, Award, AlertCircle, X, ExternalLink 
 import { NotificationItem, ViewMode } from '../types';
 import { INITIAL_NOTIFICATIONS } from '../data/platformFeaturesData';
 import { useLanguage } from '../context/LanguageContext';
+import { onNotificationsChanged } from '../utils/toastBus';
 
 interface NotificationCenterProps {
   onNavigate: (view: ViewMode) => void;
@@ -23,6 +24,19 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ onNaviga
 
   const [activeTab, setActiveTab] = useState<'all' | 'unread'>('all');
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // إعادة قراءة الإشعارات عند إضافة تنبيه جديد من أي مكان في التطبيق
+  useEffect(() => {
+    const reload = () => {
+      try {
+        const saved = localStorage.getItem('sudanese_platform_notifications');
+        if (saved) setNotifications(JSON.parse(saved));
+      } catch {
+        /* تجاهل */
+      }
+    };
+    return onNotificationsChanged(reload);
+  }, []);
 
   useEffect(() => {
     try {

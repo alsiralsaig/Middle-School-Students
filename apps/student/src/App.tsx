@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { ViewMode, Lesson, Subject } from './types';
 import { SUBJECTS_DATA, RESOURCES_DATA } from './data/curriculumData';
 import { Header } from './components/Header';
@@ -11,6 +11,8 @@ import { MobileBottomNav } from './components/MobileBottomNav';
 import { Footer } from './components/Footer';
 import { AccountManagerModal } from './components/AccountManagerModal';
 import { LanguageProvider, useLanguage } from './context/LanguageContext';
+import { ToastHost } from './components/ToastHost';
+import { useReminderEngine, PendingLesson } from './hooks/useReminderEngine';
 import { AccountProvider, useAccount } from './context/AccountContext';
 
 import { HomeView } from './views/HomeView';
@@ -89,6 +91,24 @@ function AppContent() {
 
   const currentSubject =
     SUBJECTS_DATA.find((s) => s.id === selectedSubjectId) || SUBJECTS_DATA[0];
+
+  // دروس في قائمة المتابعة ولم تكتمل → يُذكّر بها محرّك التنبيهات مساءً
+  const pendingLessons: PendingLesson[] = useMemo(() => {
+    const allLessons = SUBJECTS_DATA.flatMap((s) =>
+      s.units.flatMap((u) => u.lessons.map((l) => ({ lesson: l, subjectName: s.name })))
+    );
+    return allLessons
+      .filter(({ lesson }) => bookmarkedLessonIds.includes(lesson.id))
+      .filter(({ lesson }) => !completedLessonIds.includes(lesson.id))
+      .map(({ lesson, subjectName }) => ({
+        id: lesson.id,
+        title: lesson.title,
+        subjectName,
+      }));
+  }, [bookmarkedLessonIds, completedLessonIds]);
+
+  // محرّك التنبيهات المحلي (تذكيرات + مواعيد التقويم + الدروس غير المكتملة)
+  useReminderEngine({ pendingLessons });
 
   const allLessonsInCurrentSubject = currentSubject.units.flatMap(
     (u) => u.lessons
@@ -205,6 +225,14 @@ function AppContent() {
 
       {/* Student Account Switcher and Creator Modal */}
       <AccountManagerModal />
+
+      {/* التنبيهات المنبثقة (Toasts) — تُدار عبر ناقل الأحداث */}
+      <ToastHost
+        onNavigate={(view, id) => {
+          handleNavigate(view);
+          if (id) setSelectedSubjectId(id);
+        }}
+      />
     </div>
   );
 }

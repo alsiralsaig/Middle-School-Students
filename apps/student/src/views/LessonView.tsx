@@ -34,6 +34,7 @@ import {
 import { ReaderSettings, ReaderTheme, ReaderLineHeight, ReaderFontSize } from '../types';
 import { ChatWidget } from '../components/ChatWidget';
 import { InteractiveQuiz } from '../components/InteractiveQuiz';
+import { showToast } from '../utils/toastBus';
 
 
 interface EncouragementToast {
@@ -1134,6 +1135,27 @@ export const LessonView: React.FC<LessonViewProps> = ({
             </div>
           )}
         </div>
+      </section>
+
+      {/* اختبار فوري مُولّد من بيانات هذا الدرس (قواعد + أمثلة + ملخص) */}
+      <section className="pt-2">
+        <InteractiveQuiz
+          lesson={lesson}
+          subjectName={subject.name}
+          onQuizComplete={(score, total) => {
+            const percent = Math.round((score / total) * 100);
+            showToast({
+              title: `نتيجة الاختبار الفوري: ${score} من ${total}`,
+              message:
+                percent >= 80
+                  ? 'ممتاز! أتقنت مفاهيم هذا الدرس — واصل على نفس المستوى.'
+                  : percent >= 50
+                  ? 'جيد — راجع القواعد الذهبية وأعد الاختبار لتثبت المعلومة.'
+                  : 'لا بأس، أعد قراءة الشرح ثم أعد الاختبار مرة أخرى.',
+              tone: percent >= 80 ? 'success' : percent >= 50 ? 'info' : 'warning',
+            });
+          }}
+        />
       </section>
 
       {/* Previous / Next Lesson Navigation Footer */}

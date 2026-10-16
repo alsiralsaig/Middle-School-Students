@@ -139,7 +139,7 @@ export interface CalendarEvent {
   id: string;
   title: string;
   titleEn: string;
-  type: 'live_class' | 'deadline' | 'exam';
+  type: 'live_class' | 'deadline' | 'exam' | 'trial_exam' | 'review' | 'reminder';
   date: string; // YYYY-MM-DD
   time: string;
   subjectName: string;
