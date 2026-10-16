@@ -1,0 +1,6 @@
+{
+  "name": "منصة الطالب السوداني الذكية",
+  "description": "منصة تعليمية إلكترونية متخصصة لطلاب الصف الثالث المتوسط بالمنهج السوداني تشمل شروحات الدروس، مكتبة المذكرات، وبنك الاختبارات.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
