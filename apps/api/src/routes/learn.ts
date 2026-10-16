@@ -20,6 +20,7 @@ learnRouter.get('/subjects', async (_req, res) => {
     res.json({
       subjects: subjects.map((s) => ({
         ...s,
+        official: s.official ? JSON.parse(s.official) : null,
         units: s.units.map((u) => ({
           ...u,
           lessons: u.lessons.map((l) => ({

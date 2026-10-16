@@ -64,6 +64,7 @@ async function main() {
         curriculumRef: subject.curriculumRef ?? null,
         unitsCount: subject.unitsCount ?? 0,
         lessonsCount: subject.lessonsCount ?? 0,
+        official: subject.official ? JSON.stringify(subject.official) : null,
         status: 'sample',
       },
     });

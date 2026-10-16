@@ -5,7 +5,7 @@
   "code": "ENG-09",
   "category": "humanities",
   "description": "English for Grade 9: Reading comprehension, grammar (tenses, passive voice, conditionals), vocabulary, and guided writing.",
-  "curriculumRef": "وثيقة المنهج القومي - وزارة التربية والتعليم السودانية (Smile Book 3)",
+  "curriculumRef": "كتاب اللغة الإنجليزية — الصف الثالث المتوسط — المركز القومي للمناهج والبحث التربوي — بخت الرضا · وزارة التربية والتعليم الاتحادية (الهيكل مرجّح ويحتاج تأكيداً)",
   "unitsCount": 3,
   "lessonsCount": 12,
   "colorScheme": {
@@ -68,5 +68,16 @@
         }
       ]
     }
-  ]
+  ],
+  "official": {
+    "book": "كتاب اللغة الإنجليزية — الصف الثالث المتوسط",
+    "publisher": "المركز القومي للمناهج والبحث التربوي — بخت الرضا · وزارة التربية والتعليم الاتحادية",
+    "pages": 72,
+    "url": "https://docs.google.com/uc?export=download&id=110MLeYgOh4ztx6RCehBxTRyWXNLLsULY",
+    "unitsCount": null,
+    "lessonsCount": null,
+    "confidence": "none",
+    "verifiedAt": "2026-10-16",
+    "note": "الكتاب متوفر لكن خطوطه المضمّنة معطوبة ولا توجد طبقة نص — تعذّر استخراج فهرسه آلياً."
+  }
 }

@@ -50,6 +50,27 @@ export interface Unit {
   description: string;
   lessons: Lesson[];
 }
+/** مصدر رسمي استُخرج منه هيكل المادة (اسم الكتاب وناشره وعدده) */
+export interface OfficialSource {
+  /** اسم الكتاب المدرسي الرسمي كما ورد على الغلاف */
+  book: string | null;
+  /** الجهة الناشرة */
+  publisher: string | null;
+  /** عدد صفحات الكتاب */
+  pages: number | null;
+  /** رابط تحميل الكتاب الرسمي */
+  url: string | null;
+  /** عدد الوحدات في الكتاب الرسمي (null = غير مستخرج) */
+  unitsCount: number | null;
+  /** عدد الدروس في الكتاب الرسمي إن توفّر في الفهرس */
+  lessonsCount: number | null;
+  /** مدى الثقة في الهيكل المستخرج */
+  confidence: 'high' | 'partial' | 'none';
+  /** تاريخ الاستخراج */
+  verifiedAt: string | null;
+  /** ملاحظات عن طريقة الاستخراج وما يحتاج تأكيداً */
+  note: string | null;
+}
 export interface Subject {
   id: string;
   name: string;
@@ -60,6 +81,8 @@ export interface Subject {
   curriculumRef: string;
   unitsCount: number;
   lessonsCount: number;
+  /** المصدر الرسمي لهيكل المادة — قد يكون null إن لم يُعثر على مصدر */
+  official?: OfficialSource;
   colorScheme: {
     bg: string;
     text: string;

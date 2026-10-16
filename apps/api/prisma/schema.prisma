@@ -45,6 +45,8 @@ model Subject {
   curriculumRef String?
   unitsCount    Int        @default(0)
   lessonsCount  Int        @default(0)
+  // مصدر رسمي لهيكل المادة (JSON): {book, publisher, pages, url, confidence, note...}
+  official      String?
   status        String     @default("sample") // sample | verified
 
   units     Unit[]
