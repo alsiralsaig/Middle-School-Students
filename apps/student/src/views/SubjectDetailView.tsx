@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Subject, Lesson } from '../types';
-import OfficialSyllabus from '../components/OfficialSyllabus';
 import { 
   ArrowRight, 
   BookOpen, 
@@ -96,20 +95,15 @@ export const SubjectDetailView: React.FC<SubjectDetailViewProps> = ({
         </div>
       </div>
 
-      {/* الهيكل الرسمي المستخرج من الكتاب المدرسي */}
-      <OfficialSyllabus subject={subject} />
-
       {/* Units & Lessons Accordion List */}
       <div className="space-y-4">
-        <div className="space-y-1 text-right">
-          <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white">
-            الشروح المتاحة في التطبيق
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white text-right">
+            فهرس الوحدات والدروس المقررة
           </h2>
-          <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-            {subject.syllabus && subject.syllabus.length > 0
-              ? 'هذه شروح من تأليفنا تغطّي جزءاً من المادة؛ الهيكل الكامل المقرَّر في الأعلى. اضغط على الوحدة لعرض دروسها.'
-              : 'اضغط على الوحدة لعرض دروسها.'}
-          </p>
+          <span className="text-xs text-slate-500 dark:text-slate-400">
+            اضغط على الوحدة لعرض دروسها
+          </span>
         </div>
 
         {subject.units.map((unit) => {

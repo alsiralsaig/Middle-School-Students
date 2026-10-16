@@ -7,12 +7,18 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "start": "tsx src/index.ts",
-    "db:push": "prisma db push --skip-generate",
+    "lint": "tsc --noEmit",
     "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma migrate deploy",
+    "db:status": "prisma migrate status",
+    "db:push": "prisma db push --skip-generate",
     "db:seed": "tsx prisma/seed.ts",
+    "db:reset": "rm -f prisma/dev.db && npm run db:deploy && npm run db:seed",
     "db:studio": "prisma studio",
-    "db:reset": "rm -f prisma/dev.db && npm run db:push && npm run db:seed",
-    "lint": "tsc --noEmit"
+    "db:backup": "node prisma/db-tool.mjs backup",
+    "db:restore": "node prisma/db-tool.mjs restore",
+    "db:backups": "node prisma/db-tool.mjs list"
   },
   "dependencies": {
     "@prisma/client": "^6.1.0",

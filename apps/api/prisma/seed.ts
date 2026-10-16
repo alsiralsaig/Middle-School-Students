@@ -179,12 +179,129 @@ async function main() {
     },
   });
 
-  const first = await prisma.lesson.findFirst();
-  if (first) {
+  const allLessons = await prisma.lesson.findMany({ orderBy: { id: 'asc' } });
+  if (allLessons.length) {
     await prisma.lessonProgress.create({
-      data: { userId: student.id, lessonId: first.id, completed: true, secondsSpent: 1500 },
+      data: { userId: student.id, lessonId: allLessons[0].id, completed: true, secondsSpent: 1500 },
     });
   }
+
+  /* ──────────────────────────────────────────────────────────────────────
+     بيانات تشغيلية تجريبية — كانت الجداول الستة التالية فارغة تماماً،
+     فتبدو لوحات «سجل المذاكرة» و«التقييمات» و«المخطط» و«التنبيهات» و
+     «نتائج الاختبارات» بلا أي شيء. كل ما يُنشأ هنا موسوم بأنه تجريبي.
+     ────────────────────────────────────────────────────────────────────── */
+
+  // ١. تقدّم الدروس: أول خمسة دروس مكتملة بدرجات زمن مختلفة
+  for (const [i, l] of allLessons.slice(0, 5).entries()) {
+    await prisma.lessonProgress.upsert({
+      where: { userId_lessonId: { userId: student.id, lessonId: l.id } },
+      update: {},
+      create: {
+        userId: student.id,
+        lessonId: l.id,
+        completed: i < 4,
+        bookmarked: i === 1 || i === 4,
+        secondsSpent: 900 + i * 420,
+      },
+    });
+  }
+
+  // ٢. جلسات مذاكرة على آخر ١٤ يوماً — يملأ رسم التقدّم الأسبوعي
+  const dayKey = (offset: number) => {
+    const d = new Date();
+    d.setDate(d.getDate() - offset);
+    return d.toISOString().slice(0, 10);
+  };
+  const minutesPattern = [45, 30, 60, 0, 25, 90, 40, 0, 55, 35, 70, 20, 0, 50];
+  await prisma.studySession.deleteMany({ where: { userId: student.id } });
+  for (const [i, minutes] of minutesPattern.entries()) {
+    if (!minutes) continue; // أيام راحة مقصودة حتى يبدو الرسم واقعياً
+    await prisma.studySession.create({
+      data: { userId: student.id, day: dayKey(13 - i), minutes },
+    });
+  }
+
+  // ٣. تقييمات الدروس (unique على userId+lessonId → تقييم واحد لكل درس)
+  const ratings = [
+    { r: 5, c: 'الشرح واضح والأمثلة قريبة من أسئلة الامتحان.' },
+    { r: 4, c: 'ممتاز، لكن أريد تمارين أكثر على القواعد.' },
+    { r: 5, c: null },
+    { r: 3, c: 'محتوى جيد، والصور تحتاج تكبيراً على الجوال.' },
+    { r: 4, c: null },
+  ];
+  for (const [i, l] of allLessons.slice(0, 5).entries()) {
+    await prisma.lessonRating.upsert({
+      where: { userId_lessonId: { userId: student.id, lessonId: l.id } },
+      update: {},
+      create: { userId: student.id, lessonId: l.id, rating: ratings[i].r, comment: ratings[i].c },
+    });
+  }
+
+  // ٤. أحداث المخطط الأسبوعي
+  await prisma.plannerEvent.deleteMany({ where: { userId: student.id } });
+  const subjectRows = await prisma.subject.findMany({ take: 4 });
+  const plan = [
+    { title: 'مراجعة الفصل الأول', type: 'review', time: '16:00' },
+    { title: 'امتحان تجريبي قصير', type: 'trial_exam', time: '18:00' },
+    { title: 'حصة مباشرة — أسئلة وأجوبة', type: 'live_class', time: '20:00' },
+    { title: 'تسليم واجب', type: 'deadline', time: '12:00' },
+  ];
+  for (const [i, item] of plan.entries()) {
+    await prisma.plannerEvent.create({
+      data: {
+        userId: student.id,
+        title: item.title,
+        type: item.type,
+        date: dayKey(-(i + 1)), // أيام قادمة
+        time: item.time,
+        subjectName: subjectRows[i % Math.max(subjectRows.length, 1)]?.name ?? 'عام',
+        description: 'حدث تجريبي للتوضيح',
+      },
+    });
+  }
+
+  // ٥. تنبيهات — بعضها مقروء وبعضها جديد
+  await prisma.notification.deleteMany({ where: { userId: student.id } });
+  const notes = [
+    { title: 'اقترب موعد الامتحان التجريبي', message: 'لديك امتحان تجريبي غداً الساعة ١٨:٠٠.', type: 'exam', read: false },
+    { title: 'راجع درسك المحفوظ', message: 'درس «' + (allLessons[1]?.title ?? '') + '» محفوظ ولم تفتحه منذ أيام.', type: 'reminder', read: false },
+    { title: 'أُضيف محتوى جديد', message: 'نُزّل هيكل منهج العلوم من الكتاب الرسمي.', type: 'system', read: true },
+  ];
+  for (const n of notes) {
+    await prisma.notification.create({
+      data: { userId: student.id, title: n.title, message: n.message, type: n.type, isRead: n.read },
+    });
+  }
+
+  // ٦. محاولة اختبار مكتملة بإجاباتها
+  const exam = await prisma.exam.findFirst({ include: { questions: true } });
+  if (exam && exam.questions.length) {
+    await prisma.examAttempt.deleteMany({ where: { userId: student.id } });
+    const started = new Date(Date.now() - 1000 * 60 * 22);
+    const attempt = await prisma.examAttempt.create({
+      data: {
+        examId: exam.id,
+        userId: student.id,
+        startedAt: started,
+        finishedAt: new Date(),
+        total: exam.questions.length,
+        score: 0, // يُحدَّث بعد حساب الإجابات الصحيحة
+      },
+    });
+    let score = 0;
+    for (const [i, q] of exam.questions.entries()) {
+      const chosen = i % 2 === 0 ? q.correctIndex : (q.correctIndex + 1) % 4;
+      const correct = chosen === q.correctIndex;
+      if (correct) score += 1;
+      await prisma.examAnswer.create({
+        data: { attemptId: attempt.id, questionId: q.id, chosenIndex: chosen, correct },
+      });
+    }
+    await prisma.examAttempt.update({ where: { id: attempt.id }, data: { score } });
+  }
+
+  console.log('📊 بيانات تشغيلية تجريبية: جلسات · تقييمات · مخطط · تنبيهات · محاولة اختبار');
 
   console.log('👤 حسابات تجريبية:');
   console.log('   مدير  → الهاتف 1000000000 · كلمة المرور admin12345');

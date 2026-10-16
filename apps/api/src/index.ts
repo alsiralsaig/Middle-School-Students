@@ -10,6 +10,10 @@ import { examsRouter } from './routes/exams.js';
 import { aiRouter } from './routes/ai.js';
 import { uploadsRouter } from './routes/uploads.js';
 import { syncRouter } from './routes/sync.js';
+import { assertEnv } from './lib/envCheck.js';
+
+/* فحص بيئة التشغيل قبل أي شيء: يوقف الخادم إن كان الإنتاج بسرّ افتراضي */
+assertEnv();
 
 const app = express();
 const PORT = Number(process.env.PORT || 5000);
