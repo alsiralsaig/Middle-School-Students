@@ -239,3 +239,11 @@ export interface StudyRoom {
 }
 
 
+
+/** تقييم الطالب وملاحظاته على درس معيّن (يُحفظ محلياً في المرحلة الأولى) */
+export interface LessonFeedback {
+  lessonId: string;
+  rating: number; // من ١ إلى ٥
+  comment: string;
+  updatedAt: string;
+}

@@ -29,11 +29,13 @@ import {
   Sun,
   Moon,
   Palette,
-  Type
-} from 'lucide-react';
+  Type,
+  Timer} from 'lucide-react';
 import { ReaderSettings, ReaderTheme, ReaderLineHeight, ReaderFontSize } from '../types';
 import { ChatWidget } from '../components/ChatWidget';
 import { InteractiveQuiz } from '../components/InteractiveQuiz';
+import { LessonRatingPanel } from '../components/LessonRatingPanel';
+import { FocusModeOverlay } from '../components/FocusModeOverlay';
 import { showToast } from '../utils/toastBus';
 
 
@@ -142,6 +144,12 @@ export const LessonView: React.FC<LessonViewProps> = ({
     'civ-l1': { average: 4.9, totalRatings: 44, userRating: null },
   });
   const [hoveredStar, setHoveredStar] = useState<number | null>(null);
+  // وضع التركيز (إخفاء المشتتات + مؤقّت بومودورو)
+  const [isFocusMode, setIsFocusMode] = useState(false);
+  const [focusMinutes, setFocusMinutes] = useState(() => {
+    try { return Number(localStorage.getItem('ssp_focus_sessions_v1') || 0) * 25 || 0; }
+    catch { return 0; }
+  });
   const [ratingSubmittedMsg, setRatingSubmittedMsg] = useState<string | null>(null);
 
   const currentRatingInfo = ratingsMap[lesson.id] || { average: 4.8, totalRatings: 45, userRating: null };
@@ -512,6 +520,26 @@ export const LessonView: React.FC<LessonViewProps> = ({
               )}
             </button>
 
+
+            {/* زر وضع التركيز */}
+            <button
+              onClick={() => setIsFocusMode(true)}
+              className={`flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-sm min-h-[44px] ${
+                isFocusMode
+                  ? 'bg-[#002368] text-white border border-[#054287]'
+                  : 'bg-slate-100 dark:bg-[#142A46] hover:bg-[#EEF2F7] dark:hover:bg-[#1B3559] text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-[#21436F]'
+              }`}
+              title="إخفاء المشتتات وتفعيل مؤقّت بومودورو (25 دقيقة)"
+              aria-label="تفعيل وضع التركيز"
+            >
+              <Timer className="w-4 h-4 text-amber-500" />
+              <span>وضع التركيز</span>
+              {focusMinutes > 0 && (
+                <span className="text-[10px] font-mono text-amber-600 dark:text-amber-400">
+                  {focusMinutes}د
+                </span>
+              )}
+            </button>
 
             {/* Mark Complete Action Button */}
             <button
@@ -1031,111 +1059,8 @@ export const LessonView: React.FC<LessonViewProps> = ({
         </div>
       )}
 
-      {/* 5-Star Rating Section */}
-      <section className="bg-white dark:bg-[#0D1F35] rounded-3xl border border-slate-200 dark:border-[#1C3A62] p-6 sm:p-8 shadow-sm space-y-5 text-right">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-5">
-          <div className="space-y-1">
-            <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-              <Star className="w-5 h-5 text-amber-500 fill-amber-400" />
-              <span>تقييم محتوى وشرح الدرس</span>
-            </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              ساعد زملاءك ومعلمي المنصة بمشاركة رأيك حول وضوح الشرح وجودة الأمثلة
-            </p>
-          </div>
-
-          {/* Average Rating Box */}
-          <div className="flex items-center gap-3 bg-amber-50/70 dark:bg-[#132A48] border border-amber-200/80 dark:border-amber-400/30 px-4 py-2.5 rounded-2xl self-start sm:self-auto">
-            <div className="text-right">
-              <div className="flex items-center gap-1 font-mono font-bold text-slate-900 dark:text-white text-lg">
-                <span className="text-amber-600 dark:text-amber-400 font-extrabold">{currentRatingInfo.average.toFixed(1)}</span>
-                <span className="text-slate-400 text-xs">/ 5</span>
-              </div>
-              <div className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
-                ({currentRatingInfo.totalRatings} تقييماً)
-              </div>
-            </div>
-            <div className="flex items-center gap-0.5 text-amber-400">
-              {[1, 2, 3, 4, 5].map((starIdx) => (
-                <Star
-                  key={starIdx}
-                  className={`w-4 h-4 ${
-                    starIdx <= Math.round(currentRatingInfo.average)
-                      ? 'text-amber-500 fill-amber-400'
-                      : 'text-slate-200 dark:text-slate-600'
-                  }`}
-                />
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Interactive Student Rating Area */}
-        <div className="space-y-3 pt-1">
-          <div className="text-xs font-bold text-slate-700 dark:text-slate-200">
-            {currentRatingInfo.userRating !== null ? (
-              <span className="text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                <span>تقييمك المسجل: {currentRatingInfo.userRating} من 5 نجوم (يمكنك النقر لتعديله في أي وقت)</span>
-              </span>
-            ) : (
-              <span>ما هو تقييمك لشرح هذا الدرس؟ اضغط على النجوم لاختيار تقييمك:</span>
-            )}
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-            <div className="flex items-center gap-1 p-1 bg-slate-50 dark:bg-[#122844] rounded-2xl border border-slate-200 dark:border-[#1E3A60]">
-              {[1, 2, 3, 4, 5].map((starNum) => {
-                const isFilled =
-                  (hoveredStar !== null && starNum <= hoveredStar) ||
-                  (hoveredStar === null && currentRatingInfo.userRating !== null && starNum <= currentRatingInfo.userRating);
-
-                return (
-                  <button
-                    key={starNum}
-                    type="button"
-                    onClick={() => handleRateLesson(starNum)}
-                    onMouseEnter={() => setHoveredStar(starNum)}
-                    onMouseLeave={() => setHoveredStar(null)}
-                    className="p-2 sm:p-2.5 rounded-xl hover:bg-amber-100/60 dark:hover:bg-amber-400/20 text-slate-300 dark:text-slate-600 hover:text-amber-500 transition-all hover:scale-110 active:scale-95 cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center"
-                    title={`${starNum} من 5 نجوم`}
-                    aria-label={`تقييم ${starNum} من 5`}
-                  >
-                    <Star
-                      className={`w-7 h-7 sm:w-8 sm:h-8 transition-colors ${
-                        isFilled
-                          ? 'text-amber-500 fill-amber-400 drop-shadow-sm'
-                          : 'text-slate-300 dark:text-slate-600'
-                      }`}
-                    />
-                  </button>
-                );
-              })}
-            </div>
-
-            <div className="text-xs font-semibold text-slate-700 dark:text-slate-200 mr-2 py-1 px-3 rounded-lg bg-slate-100 dark:bg-[#142A48] border border-slate-200 dark:border-[#1E3A60]">
-              {hoveredStar === 5 || (!hoveredStar && currentRatingInfo.userRating === 5)
-                ? '⭐ ممتاز وشرح واضح جداً'
-                : hoveredStar === 4 || (!hoveredStar && currentRatingInfo.userRating === 4)
-                ? '⭐ جيد جداً ومفيد'
-                : hoveredStar === 3 || (!hoveredStar && currentRatingInfo.userRating === 3)
-                ? '⭐ جيد ومفهوم'
-                : hoveredStar === 2 || (!hoveredStar && currentRatingInfo.userRating === 2)
-                ? '⭐ مقبول ويحتاج مزيداً من الأمثلة'
-                : hoveredStar === 1 || (!hoveredStar && currentRatingInfo.userRating === 1)
-                ? '⭐ بحاجة إلى تبسيط وتحسين'
-                : 'حدد تقييمك من 1 إلى 5 نجوم'}
-            </div>
-          </div>
-
-          {ratingSubmittedMsg && (
-            <div className="p-3.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-700/60 text-emerald-950 dark:text-emerald-200 text-xs flex items-center gap-2 animate-in fade-in duration-200">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-              <span className="font-semibold">{ratingSubmittedMsg}</span>
-            </div>
-          )}
-        </div>
-      </section>
+      {/* تقييم الدرس + ملاحظات تحسين الشرح */}
+      <LessonRatingPanel lessonId={lesson.id} lessonTitle={lesson.title} />
 
       {/* اختبار فوري مُولّد من بيانات هذا الدرس (قواعد + أمثلة + ملخص) */}
       <section className="pt-2">
@@ -1389,12 +1314,30 @@ export const LessonView: React.FC<LessonViewProps> = ({
       )}
 
       {/* Floating & Pop-up Gemini AI Chat Widget for this lesson */}
+      <div data-ssp-hide-in-focus="true">
       <ChatWidget 
         lesson={lesson} 
         subject={subject} 
         isOpen={isChatOpen} 
         onOpenChange={setIsChatOpen} 
       />
+      </div>
+
+      {/* وضع التركيز: يخفي الهيدر والتنقل + مؤقّت بومودورو */}
+      {isFocusMode && (
+        <FocusModeOverlay
+          lessonTitle={lesson.title}
+          onExit={() => setIsFocusMode(false)}
+          onSessionComplete={(mins) => {
+            setFocusMinutes((m) => m + mins);
+            showToast({
+              title: 'أُضيفت 25 دقيقة لرصيد تركيزك اليوم',
+              message: 'استمر — الانتظام أهم من الطول.',
+              tone: 'success',
+            });
+          }}
+        />
+      )}
     </div>
   );
 };

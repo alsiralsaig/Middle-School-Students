@@ -81,3 +81,26 @@
     size: auto;
   }
 }
+
+/* ============================================================
+ * وضع التركيز (Study Focus Mode)
+ * يُفعّل بإضافة الصنف ssp-focus على <html> من مكوّن FocusModeOverlay،
+ * فيتم إخفاء كل ما يُشتّت الانتباه أثناء المذاكرة.
+ * ============================================================ */
+html.ssp-focus header,
+html.ssp-focus footer,
+html.ssp-focus nav[aria-label="التنقل السفلي للهاتف"],
+html.ssp-focus [data-ssp-hide-in-focus] {
+  display: none !important;
+}
+
+/* مساحة إضافية أسفل الصفحة حتى لا يحجب المؤقّت آخر سطر في الدرس */
+html.ssp-focus body {
+  padding-bottom: 220px;
+}
+
+@media (min-width: 640px) {
+  html.ssp-focus body {
+    padding-bottom: 120px;
+  }
+}
