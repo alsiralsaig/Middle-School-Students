@@ -5,7 +5,7 @@
   "code": "ENG-09",
   "category": "humanities",
   "description": "English for Grade 9: Reading comprehension, grammar (tenses, passive voice, conditionals), vocabulary, and guided writing.",
-  "curriculumRef": "SMILE Series: Book 9 — Pupil's Book — المركز القومي للمناهج والبحث التربوي (NCCER) — بخت الرضا · وزارة التربية والتعليم الاتحادية",
+  "curriculumRef": "SMILE Series: Book 9 — Pupil's Book — NCCER بخت الرضا · وزارة التربية والتعليم · ٨ وحدات × ٨ دروس = ٦٤ · مقدمة الكتاب تنص على أن الدرس الثامن مراجعة",
   "unitsCount": 8,
   "lessonsCount": 64,
   "colorScheme": {
@@ -78,6 +78,74 @@
     "lessonsCount": 64,
     "confidence": "high",
     "verifiedAt": "2026-10-16",
-    "note": "٨ وحدات × ٨ دروس = ٦٤ درساً. الوحدات: People and Science، Arts and Literature، Around the World، Work and Play، Food and Health، Money and Shopping، Learning، Looking Back. استُخرجت عناوين ٦١ درساً (٣ لم تُقرأ). القصتان المقررتان: A Tale of Two Cities (١٤ فصلاً) و The Black Tulip. بنية الامتحان موثّقة في shared/content/official/structure.json (supplements)."
-  }
+    "note": "٨ وحدات × ٨ دروس = ٦٤ درساً. الوحدات: People and Science، Arts and Literature، Around the World، Work and Play، Food and Health، Money and Shopping، Learning، Looking Back. استُخرجت عناوين ٦١ درساً (٣ لم تُقرأ). القصتان المقررتان: A Tale of Two Cities (١٤ فصلاً) و The Black Tulip. بنية الامتحان موثّقة في shared/content/official/structure.json (supplements).",
+    "numbering": "lessons"
+  },
+  "syllabus": [
+    {
+      "unitNumber": 1,
+      "title": "People and Science",
+      "sourceConfidence": "high",
+      "numbering": "lessons",
+      "sourcePage": 1,
+      "lessons": []
+    },
+    {
+      "unitNumber": 2,
+      "title": "Arts and Literature",
+      "sourceConfidence": "high",
+      "numbering": "lessons",
+      "sourcePage": 9,
+      "lessons": []
+    },
+    {
+      "unitNumber": 3,
+      "title": "Around the World",
+      "sourceConfidence": "high",
+      "numbering": "lessons",
+      "sourcePage": 17,
+      "lessons": []
+    },
+    {
+      "unitNumber": 4,
+      "title": "Work and Play",
+      "sourceConfidence": "high",
+      "numbering": "lessons",
+      "sourcePage": 25,
+      "lessons": []
+    },
+    {
+      "unitNumber": 5,
+      "title": "Food and Health",
+      "sourceConfidence": "high",
+      "numbering": "lessons",
+      "sourcePage": 33,
+      "lessons": []
+    },
+    {
+      "unitNumber": 6,
+      "title": "Money and Shopping",
+      "sourceConfidence": "high",
+      "numbering": "lessons",
+      "sourcePage": 41,
+      "lessons": []
+    },
+    {
+      "unitNumber": 7,
+      "title": "Learning",
+      "sourceConfidence": "high",
+      "numbering": "lessons",
+      "sourcePage": 49,
+      "lessons": []
+    },
+    {
+      "unitNumber": 8,
+      "title": "Looking Back",
+      "sourceConfidence": "high",
+      "numbering": "lessons",
+      "sourcePage": 57,
+      "lessons": []
+    }
+  ],
+  "lessonsCountNote": "مقدمة الكتاب (ص٣): «تتكوّن كتب SMILE من ثماني وحدات، وكل وحدة ثمانية دروس، والدرس الثامن مراجعة لدروس الوحدة». الوحدة الثامنة مراجعة عامة."
 }

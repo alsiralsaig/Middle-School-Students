@@ -5,9 +5,9 @@
   "code": "ISL-09",
   "category": "core",
   "description": "تشمل القرآن الكريم وتفسيره، الأحاديث الشريفة، العقيدة الإسلامية، الفقه، وسيرة الخلفاء الراشدين.",
-  "curriculumRef": "كتاب التربية الإسلامية — مقرر الصف الثالث المتوسط — المركز القومي للمناهج والبحث التربوي — بخت الرضا · وزارة التربية والتعليم الاتحادية (الهيكل مرجّح ويحتاج تأكيداً)",
+  "curriculumRef": "كتاب التربية الإسلامية — الصف الثالث المتوسط — المركز القومي للمناهج والبحث التربوي (بخت الرضا) · ٦ وحدات · ٤٧ درساً وحديثاً",
   "unitsCount": 6,
-  "lessonsCount": 16,
+  "lessonsCount": 47,
   "colorScheme": {
     "bg": "bg-teal-50",
     "text": "text-teal-900",
@@ -81,8 +81,249 @@
     "url": "https://docs.google.com/uc?export=download&id=1JwSQRydSCbJnhQoyRW0ntOyBmgIySDqd",
     "unitsCount": 6,
     "lessonsCount": null,
-    "confidence": "partial",
+    "confidence": "high",
     "verifiedAt": "2026-10-16",
-    "note": "التجويد، القرآن الكريم، الحديث الشريف، العقيدة، الزكاة (الفقه)، السيرة النبوية — الوحدتان ١ و٢ مؤكدتان والباقي مرجّح."
-  }
+    "note": "التجويد، القرآن الكريم، الحديث الشريف، العقيدة، الزكاة (الفقه)، السيرة النبوية — الوحدتان ١ و٢ مؤكدتان والباقي مرجّح.",
+    "numbering": "lessons",
+    "correction": "صُحِّح عدد الدروس من ١٦ إلى ٤٧."
+  },
+  "syllabus": [
+    {
+      "unitNumber": 1,
+      "title": "التجويد",
+      "sourceConfidence": "high",
+      "numbering": "lessons",
+      "lessons": [
+        {
+          "lessonNumber": 1,
+          "title": "مراجعة"
+        },
+        {
+          "lessonNumber": 2,
+          "title": "المد بسبب السكون"
+        },
+        {
+          "lessonNumber": 3,
+          "title": "المد اللازم"
+        },
+        {
+          "lessonNumber": 4,
+          "title": "المد اللازم الحرفي"
+        },
+        {
+          "lessonNumber": 5,
+          "title": "خلاصة المد اللازم الحرفي"
+        },
+        {
+          "lessonNumber": 6,
+          "title": "التفخيم والترقيق"
+        },
+        {
+          "lessonNumber": 7,
+          "title": "أحكام الراء"
+        },
+        {
+          "lessonNumber": 8,
+          "title": "الراء المرققة"
+        }
+      ]
+    },
+    {
+      "unitNumber": 2,
+      "title": "القرآن الكريم",
+      "sourceConfidence": "high",
+      "numbering": "lessons",
+      "lessons": [
+        {
+          "lessonNumber": 1,
+          "title": "سورة يس"
+        },
+        {
+          "lessonNumber": 2,
+          "title": "قصة أصحاب القرية"
+        },
+        {
+          "lessonNumber": 3,
+          "title": "الأدلة على قدرة الله"
+        },
+        {
+          "lessonNumber": 4,
+          "title": "صور من مواقف الكفار وأحوالهم"
+        },
+        {
+          "lessonNumber": 5,
+          "title": "جزاء المحسنين وجزاء المجرمين"
+        },
+        {
+          "lessonNumber": 6,
+          "title": "صفة الرسالة النبوية والرد على منكري البعث"
+        },
+        {
+          "lessonNumber": 7,
+          "title": "آيات مختارة للفهم والتلاوة"
+        }
+      ]
+    },
+    {
+      "unitNumber": 3,
+      "title": "الأحاديث النبوية",
+      "sourceConfidence": "high",
+      "numbering": "lessons",
+      "lessons": [
+        {
+          "lessonNumber": 1,
+          "title": "الحديث الأول: أهمية الرفق في كل الأمور"
+        },
+        {
+          "lessonNumber": 2,
+          "title": "الحديث الثاني: خطورة النميمة"
+        },
+        {
+          "lessonNumber": 3,
+          "title": "الحديث الثالث: البر حسن الخلق"
+        },
+        {
+          "lessonNumber": 4,
+          "title": "الحديث الرابع: الاستعانة بالله والتوكل عليه"
+        },
+        {
+          "lessonNumber": 5,
+          "title": "الحديث الخامس: الوقت هو الحياة"
+        },
+        {
+          "lessonNumber": 6,
+          "title": "الحديث السادس: من جوامع الكلم لرسول الله (ص)"
+        },
+        {
+          "lessonNumber": 7,
+          "title": "الحديث السابع: فضل العلماء والحث على طلب العلم"
+        },
+        {
+          "lessonNumber": 8,
+          "title": "الحديث الثامن: المسؤولية في الإسلام"
+        },
+        {
+          "lessonNumber": 9,
+          "title": "الحديث التاسع: الخمر مفتاح الشر"
+        },
+        {
+          "lessonNumber": 10,
+          "title": "الحديث العاشر: قبول العذر في الإسلام"
+        }
+      ]
+    },
+    {
+      "unitNumber": 4,
+      "title": "العقيدة",
+      "sourceConfidence": "high",
+      "numbering": "lessons",
+      "lessons": [
+        {
+          "lessonNumber": 1,
+          "title": "عظمة الله جل جلاله"
+        },
+        {
+          "lessonNumber": 2,
+          "title": "التفكر والتأمل في الآفاق"
+        },
+        {
+          "lessonNumber": 3,
+          "title": "التفكر والتأمل في الأنفس"
+        },
+        {
+          "lessonNumber": 4,
+          "title": "الإعجاز العلمي في الجنين"
+        },
+        {
+          "lessonNumber": 5,
+          "title": "دلالة (لا حول ولا قوة إلا بالله) العقدية"
+        },
+        {
+          "lessonNumber": 6,
+          "title": "المخلوقات تؤكد وجود الخالق"
+        }
+      ]
+    },
+    {
+      "unitNumber": 5,
+      "title": "الفقه",
+      "sourceConfidence": "high",
+      "numbering": "lessons",
+      "lessons": [
+        {
+          "lessonNumber": 1,
+          "title": "فضل الزكاة في الإسلام وحكمتها"
+        },
+        {
+          "lessonNumber": 2,
+          "title": "حكم زكاة الأموال وعقوبة مانعها"
+        },
+        {
+          "lessonNumber": 3,
+          "title": "شروط وجوب الزكاة"
+        },
+        {
+          "lessonNumber": 4,
+          "title": "زكاة الذهب والفضة والعملة"
+        },
+        {
+          "lessonNumber": 5,
+          "title": "زكاة عروض التجارة"
+        },
+        {
+          "lessonNumber": 6,
+          "title": "زكاة بهيمة الأنعام"
+        },
+        {
+          "lessonNumber": 7,
+          "title": "زكاة البقر والغنم"
+        },
+        {
+          "lessonNumber": 8,
+          "title": "زكاة الزروع والثمار"
+        },
+        {
+          "lessonNumber": 9,
+          "title": "مصارف الزكاة"
+        }
+      ]
+    },
+    {
+      "unitNumber": 6,
+      "title": "السيرة",
+      "sourceConfidence": "high",
+      "numbering": "lessons",
+      "lessons": [
+        {
+          "lessonNumber": 1,
+          "title": "غزوة الأحزاب"
+        },
+        {
+          "lessonNumber": 2,
+          "title": "الاستعداد لمقابلة الأعداء"
+        },
+        {
+          "lessonNumber": 3,
+          "title": "بث الخذلان في صفوف الأعداء"
+        },
+        {
+          "lessonNumber": 4,
+          "title": "صلح الحديبية"
+        },
+        {
+          "lessonNumber": 5,
+          "title": "صلح الحديبية وما ترتب عليه من أحداث"
+        },
+        {
+          "lessonNumber": 6,
+          "title": "فتح مكة"
+        },
+        {
+          "lessonNumber": 7,
+          "title": "تحطيم رموز الوثنية"
+        }
+      ]
+    }
+  ],
+  "lessonsCountNote": "⚠️ **تصحيح جوهري:** كنا سجّلنا **١٦ درساً**؛ فهرس المحتويات (ص٣–٥) يثبت **٤٧** (٤٠ درساً + ١٠ أحاديث في وحدة الأحاديث). الوحدات الست هي فروع التربية الإسلامية التي تذكرها المقدمة: التجويد · القرآن الكريم · الحديث الشريف · العقيدة · الفقه · السيرة."
 }

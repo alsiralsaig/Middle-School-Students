@@ -5,7 +5,7 @@
   "code": "MATH-09",
   "category": "science",
   "description": "تشمل الجبر، المعادلات، الهندسة الإقليدية، نظرية فيثاغورس، الدائرة، والإحصاء والاحتمالات.",
-  "curriculumRef": "كتاب الرياضيات — الصف الثالث من مرحلة التعليم المتوسط (الطبعة الأولى) — المركز القومي للمناهج والبحث التربوي — بخت الرضا · وزارة التربية والتعليم الاتحادية",
+  "curriculumRef": "كتاب الرياضيات — الصف الثالث من مرحلة التعليم المتوسط — الطبعة الأولى — المركز القومي للمناهج والبحث التربوي (بخت الرضا) · ٨ وحدات",
   "unitsCount": 8,
   "lessonsCount": 16,
   "colorScheme": {
@@ -211,8 +211,68 @@
     "url": "https://docs.google.com/uc?export=download&id=1N8PjB61itGALhOPTl32tiM1PV1w4Iy7t",
     "unitsCount": 8,
     "lessonsCount": null,
-    "confidence": "high",
+    "confidence": "partial",
     "verifiedAt": "2026-10-16",
-    "note": "٨ وحدات: الدالة (التطبيق)، الأسس واللوغاريتمات، المستوى الديكارتي والمعادلات الآنية، الدائرة، ضرب وتحليل المقادير الجبرية، معادلات الدرجة الثانية، الإحصاء، الحجوم."
-  }
+    "note": "٨ وحدات: الدالة (التطبيق)، الأسس واللوغاريتمات، المستوى الديكارتي والمعادلات الآنية، الدائرة، ضرب وتحليل المقادير الجبرية، معادلات الدرجة الثانية، الإحصاء، الحجوم.",
+    "numbering": "themes"
+  },
+  "syllabus": [
+    {
+      "unitNumber": 1,
+      "title": "الدالة (التطبيق)",
+      "sourceConfidence": "high",
+      "numbering": "lessons",
+      "lessons": []
+    },
+    {
+      "unitNumber": 2,
+      "title": "الأسس واللوغريثمات",
+      "sourceConfidence": "high",
+      "numbering": "lessons",
+      "lessons": []
+    },
+    {
+      "unitNumber": 3,
+      "title": "المستوى الديكارتي والمعادلات الآنية",
+      "sourceConfidence": "high",
+      "numbering": "lessons",
+      "lessons": []
+    },
+    {
+      "unitNumber": 4,
+      "title": "الدائرة",
+      "sourceConfidence": "high",
+      "numbering": "lessons",
+      "lessons": []
+    },
+    {
+      "unitNumber": 5,
+      "title": "ضرب وتحليل المقادير الجبرية",
+      "sourceConfidence": "high",
+      "numbering": "lessons",
+      "lessons": []
+    },
+    {
+      "unitNumber": 6,
+      "title": "معادلات الدرجة الثانية",
+      "sourceConfidence": "high",
+      "numbering": "lessons",
+      "lessons": []
+    },
+    {
+      "unitNumber": 7,
+      "title": "الإحصاء",
+      "sourceConfidence": "high",
+      "numbering": "lessons",
+      "lessons": []
+    },
+    {
+      "unitNumber": 8,
+      "title": "الحجوم",
+      "sourceConfidence": "high",
+      "numbering": "lessons",
+      "lessons": []
+    }
+  ],
+  "lessonsCountNote": "⚠️ عناوين الوحدات من فهرس المحتويات (ص٣)، لكن **أرقام الصفحات غير مقروءة في المسح** فلم نخترعها. الكتاب لا يرقّم دروسه بصيغة «الدرس الأول/الثاني» بل يقسّم كل وحدة إلى موضوعات."
 }

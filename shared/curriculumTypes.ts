@@ -64,13 +64,69 @@ export interface OfficialSource {
   unitsCount: number | null;
   /** عدد الدروس في الكتاب الرسمي إن توفّر في الفهرس */
   lessonsCount: number | null;
+  /** عدد المحاور إن كان الكتاب لا يرقّم دروسه (جغرافيا · علوم) */
+  themesCount?: number | null;
   /** مدى الثقة في الهيكل المستخرج */
   confidence: 'high' | 'partial' | 'none';
   /** تاريخ الاستخراج */
   verifiedAt: string | null;
   /** ملاحظات عن طريقة الاستخراج وما يحتاج تأكيداً */
   note: string | null;
+  /** الطبعة كما وردت في الكتاب */
+  edition?: string | null;
+  /** هل الكتاب بلا طبقة نص (مسح ضوئي) — يبرّر التحفّظات */
+  hasTextLayer?: boolean;
+  /** كيف يسمّي الكتاب ما يحتويه كل وحدة */
+  numbering?: 'lessons' | 'themes';
+  /** تصحيح جوهري طرأ على هيكل مسجَّل سابقاً */
+  correction?: string | null;
+  /** هل للوحدات عناوين في الكتاب أصلاً (العربية: لا) */
+  hasUnitTitles?: boolean;
+  /** كيف يعرّف الكتاب وحداته حين لا يسمّيها */
+  unitNaming?: string | null;
 }
+
+/** نوع ترقيم محتوى الوحدة في الكتاب: دروس مُرقّمة أو محاور بلا ترقيم */
+export type SyllabusNumbering = 'lessons' | 'themes';
+
+export interface SyllabusLesson {
+  lessonNumber?: number;
+  title: string;
+  /** صفحة الدرس في الكتاب (التاريخ) */
+  sourcePage?: number | null;
+  /** مدى صفحات المحور (الجغرافيا) */
+  pages?: string | null;
+  /** تحفّظ على هذا العنصر تحديداً */
+  note?: string | null;
+}
+
+export interface SyllabusComponent {
+  type: string;
+  topic: string;
+}
+
+/** وحدة كما وردت في الكتاب الرسمي — الهيكل الكامل المستخرج */
+export interface SyllabusEntry {
+  /** التاريخ أو الجغرافيا في مادة الاجتماعيات */
+  subject?: string;
+  unitNumber: number;
+  title?: string | null;
+  sourcePage?: number | null;
+  startPage?: number | null;
+  endPage?: number | null;
+  sourceConfidence?: 'high' | 'partial' | 'none';
+  numbering?: SyllabusNumbering;
+  /** أهداف الوحدة كما كتبها الكتاب */
+  objectives?: string[];
+  /** الفكرة الرئيسة للوحدة */
+  mainIdea?: string;
+  /** مفردات الوحدة */
+  vocabulary?: string[];
+  /** مكوّنات الوحدة (اللغة العربية: قراءة/أدب/نحو/إملاء/تعبير) */
+  components?: SyllabusComponent[];
+  lessons: SyllabusLesson[];
+}
+
 export interface Subject {
   id: string;
   name: string;
@@ -81,6 +137,12 @@ export interface Subject {
   curriculumRef: string;
   unitsCount: number;
   lessonsCount: number;
+  /** شرح لكيفية حساب lessonsCount حين تكون محاور لا دروساً */
+  lessonsCountNote?: string | null;
+  /** تحذير بأن المصدر لصفّ آخر (التربية الوطنية: كتاب الصف الثاني) */
+  gradeWarning?: string | null;
+  /** الهيكل الرسمي الكامل المستخرج من الكتاب */
+  syllabus?: SyllabusEntry[];
   /** المصدر الرسمي لهيكل المادة — قد يكون null إن لم يُعثر على مصدر */
   official?: OfficialSource;
   colorScheme: {
