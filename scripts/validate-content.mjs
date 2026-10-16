@@ -13,7 +13,7 @@ import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const dir = resolve(root, 'src/content');
+const dir = resolve(root, 'apps/student/src/content');
 
 /** الحقول المطلوبة في كل درس — ونوعها */
 const REQUIRED = {

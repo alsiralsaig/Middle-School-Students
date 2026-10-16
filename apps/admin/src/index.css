@@ -1,0 +1,56 @@
+@import '@shared/brand.css';
+@import 'tailwindcss';
+
+@theme {
+  --color-navy-50: #e8edf6;
+  --color-navy-100: #d3dded;
+  --color-navy-200: #adbedd;
+  --color-navy-300: #7f97c4;
+  --color-navy-400: #54749f;
+  --color-navy-500: #054287;
+  --color-navy-600: #04356e;
+  --color-navy-700: #03305f;
+  --color-navy-800: #002368;
+  --color-navy-900: #001842;
+
+  --color-gold-100: #fdf6e3;
+  --color-gold-300: #fbd97a;
+  --color-gold-400: #f1ac12;
+  --color-gold-500: #fcb91e;
+  --color-gold-600: #d9960b;
+
+  --font-sans: 'Cairo', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    font-family: var(--font-sans);
+    direction: rtl;
+    text-align: right;
+    background: #f6f8fb;
+    color: var(--color-navy-900);
+  }
+  :focus-visible {
+    outline: 3px solid var(--color-gold-400);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+}
+
+.nums {
+  font-variant-numeric: tabular-nums;
+  direction: ltr;
+  unicode-bidi: isolate;
+  display: inline-block;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

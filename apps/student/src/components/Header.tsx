@@ -100,18 +100,19 @@ export const Header: React.FC<HeaderProps> = ({
       </div>
 
       {/* Main Top Navigation Row */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-2 sm:gap-4">
         {/* Zone 1: Single Brand Wordmark */}
         <button
           onClick={() => handleNavClick('home')}
-          className="flex items-center gap-2.5 text-right cursor-pointer group focus:outline-none shrink-0"
+          className="flex items-center gap-2.5 text-right cursor-pointer group focus:outline-none min-w-0 shrink"
         >
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center text-slate-950 shadow-inner shrink-0 group-hover:scale-105 transition-transform">
             <GraduationCap className="w-6 h-6" />
           </div>
-          <div className="whitespace-nowrap shrink-0 text-right">
-            <span className="text-base sm:text-lg font-bold tracking-tight text-white block">
-              {language === 'en' ? 'Sudan Edu Platform' : 'منصة المنهاج السوداني'}
+          <div className="min-w-0 text-right">
+            <span className="text-sm sm:text-lg font-bold tracking-tight text-white block truncate max-w-[40vw] sm:max-w-none">
+              <span className="sm:hidden">{language === 'en' ? 'Sudan Edu' : 'المنهاج'}</span>
+              <span className="hidden sm:inline">{language === 'en' ? 'Sudan Edu Platform' : 'منصة المنهاج السوداني'}</span>
             </span>
             <span className="text-[10px] text-amber-400 font-medium hidden sm:block">
               {language === 'en' ? 'Smart Secondary Education' : 'للشهادة الثانوية العامة'}
@@ -161,7 +162,7 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Quick Bookmarks Button */}
           <button
             onClick={() => handleNavClick('student-dashboard')}
-            className="p-2 rounded-xl bg-[#162D4A] hover:bg-[#1E3A60] text-amber-300 hover:text-amber-200 border border-[#27446C] transition-all cursor-pointer min-h-[40px] min-w-[40px] flex items-center justify-center shadow-sm relative"
+            className="hidden sm:flex p-2 rounded-xl bg-[#162D4A] hover:bg-[#1E3A60] text-amber-300 hover:text-amber-200 border border-[#27446C] transition-all cursor-pointer min-h-[40px] min-w-[40px] items-center justify-center shadow-sm relative"
             title={`قائمة المتابعة لاحقاً (${bookmarkedCount} دروس)`}
             aria-label="قائمة المتابعة لاحقاً"
           >
@@ -183,7 +184,7 @@ export const Header: React.FC<HeaderProps> = ({
             <span className="hidden sm:inline font-bold truncate max-w-[90px]">
               {activeAccount.name.split(' ')[0]}
             </span>
-            <Users className="w-3.5 h-3.5 text-slate-400" />
+            <Users className="w-3.5 h-3.5 text-slate-400 hidden sm:block" />
           </button>
 
           {/* Student Dashboard Action Button */}

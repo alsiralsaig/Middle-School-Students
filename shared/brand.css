@@ -1,0 +1,98 @@
+/**
+ * الهوية البصرية المشتركة بين تطبيقي الطالب والإدارة.
+ * الألوان مستخرجة من اللوجو (#002368 كحلي · #F1AC12 ذهبي) والبنار (#054287 أزرق).
+ * يُستورد في كل تطبيق: import '@ssp/shared/brand.css'
+ */
+
+:root {
+  /* الكحلي — من اللوجو */
+  --brand-navy: #002368;
+  --brand-navy-deep: #001842;
+  --brand-navy-soft: #e8edf6;
+
+  /* الأزرق — من البنار */
+  --brand-blue: #054287;
+  --brand-blue-deep: #04356e;
+  --brand-blue-soft: #edf0f3;
+
+  /* الذهبي الخفيف */
+  --brand-gold: #f1ac12;
+  --brand-gold-light: #fcb91e;
+  --brand-gold-soft: #fdf6e3;
+
+  /* محايد */
+  --brand-white: #ffffff;
+  --brand-ink: #0f172a;
+  --brand-muted: #64748b;
+  --brand-border: #e2e8f0;
+
+  /* حالات */
+  --brand-success: #12805c;
+  --brand-warning: #b45309;
+  --brand-danger: #b42318;
+
+  /* قياسات */
+  --brand-radius: 1rem;
+  --brand-shadow: 0 8px 30px -12px rgba(0, 35, 104, 0.25);
+}
+
+/* طبقات مساعدة جاهزة للاستخدام في التطبيقين */
+.brand-shell {
+  background: var(--brand-white);
+  color: var(--brand-ink);
+}
+
+.brand-header {
+  background: linear-gradient(135deg, var(--brand-navy) 0%, var(--brand-blue) 100%);
+  color: var(--brand-white);
+}
+
+.brand-hero {
+  background:
+    linear-gradient(135deg, rgba(0, 35, 104, 0.92) 0%, rgba(5, 66, 135, 0.85) 100%),
+    var(--brand-navy);
+  color: var(--brand-white);
+}
+
+.brand-card {
+  background: var(--brand-white);
+  border: 1px solid var(--brand-border);
+  border-radius: var(--brand-radius);
+  box-shadow: var(--brand-shadow);
+}
+
+.brand-gold-rule {
+  height: 3px;
+  background: linear-gradient(90deg, var(--brand-gold) 0%, var(--brand-gold-light) 100%);
+  border-radius: 999px;
+}
+
+.brand-btn-primary {
+  background: var(--brand-navy);
+  color: var(--brand-white);
+  border-radius: 0.85rem;
+  font-weight: 800;
+  transition: background-color 0.15s ease;
+}
+.brand-btn-primary:hover {
+  background: var(--brand-blue);
+}
+
+.brand-btn-gold {
+  background: var(--brand-gold);
+  color: var(--brand-navy);
+  border-radius: 0.85rem;
+  font-weight: 800;
+}
+.brand-btn-gold:hover {
+  background: var(--brand-gold-light);
+}
+
+.brand-chip {
+  background: var(--brand-navy-soft);
+  color: var(--brand-navy);
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.25rem 0.7rem;
+}
