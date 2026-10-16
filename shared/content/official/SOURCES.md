@@ -160,17 +160,76 @@
 
 ---
 
-### ٩. اللغة الإنجليزية — ٧٢ صفحة — ❌ تعذّر الاستخراج
+### ٩. اللغة الإنجليزية — ٧٢ صفحة — ✅ مؤكد (٨ وحدات × ٨ دروس)
 
-الكتاب متوفر وحجمه سليم، لكن **خطوطه المضمّنة معطوبة**: لا توجد طبقة نص، والصفحات تُرسم بحروف مقلوبة/مبدّلة، فجاء الـ OCR مشوّشاً. يحتاج نسخة أنظف من الكتاب أو إدخالاً يدوياً.
+**SMILE Series: Book 9 — Pupil's Book** — *Sudan Modern Integrated Learning of English*
+الناشر: **المركز القومي للمناهج والبحث التربوي (NCCER) — بخت الرضا** · وزارة التربية والتعليم الاتحادية · جمهورية السودان
+الصف: Intermediate Level 3 — «المنهج الجديد، يحل محل منهج SPINE»
 
-الرابط: <https://docs.google.com/uc?export=download&id=110MLeYgOh4ztx6RCehBxTRyWXNLLsULY>
+> مكوّنات السلسلة: كتاب التلميذ · كتاب النشاط · كتاب المعلم · تسجيلات CD/MP3 · بطاقات مصوّرة
+
+جدول المحتويات (ص٧) — ٨ وحدات، كل وحدة ٨ صفحات و٨ دروس:
+
+| # | الوحدة | الدروس |
+|---|---|---|
+| ١ | People and Science | What is Science? · Famous Scientists · BONES · How to Measure · Traditional Medicine · Wonders of Engineering · Puzzles and Games · Revision: Science |
+| ٢ | Arts and Literature | A Traditional Story · National Dress · Famous Sudanese Writers · Sand Art · Robinson Crusoe · Calligraphy · A Sudanese Artist · Revision: Words and Pictures |
+| ٣ | Around the World | Where is Sudan? · Countries Quiz · Two Interesting Places · Saudi Arabia · Marco Polo · A Trip of a Lifetime · Friendly People · Revision: An Arab Adventure |
+| ٤ | Work and Play | Jobs, Jobs, Jobs · Teachers · Children and Work · Learning for a Job · *(٥ لم تُقرأ)* · Who Gets Paid the Most? · Work in the Future · Revision: Hard Work |
+| ٥ | Food and Health | Chocolate · Growing Food · Sudanese Crops · A Healthy Diet · The Greenhouse · Honey · Healthy Habits · Revision: Food Facts |
+| ٦ | Money and Shopping | *(١ لم تُقرأ)* · Adverts · Saving for a Rainy Day! · Young Business People · The Gold Rush · *(٦ لم تُقرأ)* · Paying for it! · Revision: The Cost of Shopping |
+| ٧ | Learning | Learning a Lesson · Learning for a Competition · The History of the University of Khartoum · Learning to Do Things Yourself · Learning isn't Easy · The Brain · Test Your Knowledge · Revision: Test Your Learning |
+| ٨ | Looking Back | Protecting Animals · Sports Time · A Matter of Science · Stories · Discovering the World · A Time for Tea · Food and Health · Learning for Life |
+
+**٦١ درساً من ٦٤ استُخرجت** — الثلاثة الناقصة: الوحدة ٤ الدرس ٥، الوحدة ٦ الدرسان ١ و٦.
+
+> 📌 **ملاحظة تقنية مهمة:** نسخة هذا الكتاب على Google Drive (ضمن حزمة sudanexams) **خطوطها معطوبة** — لا طبقة نص والصفحات تُرسم بحروف مبدّلة. النسخة المستخدمة هنا من موقع «المعلم التعليمي» وهي سليمة تماماً.
+
+الرابط: <https://www.almualm.com/wp-content/uploads/2025/06/كتاب-الانجليزي-الثالث-المتوسط-السودان.pdf>
+صفحة المادة: <https://www.almualm.com/2025/06/كتاب-اللغة-الانجليزية-الصف-الثالث-المتوسط.html>
+
+---
+
+## ملاحق مؤكدة (supplements)
+
+### القصتان المقررتان (Set Books) — ✅ مؤكد من نص الامتحان
+
+نصّ الامتحان: «اختر السؤال (١) A Tale of Two Cities **أو** السؤال (٢) The Black Tulip»
+
+**أ. A Tale of Two Cities — قصة مدينتين**
+تأليف Charles Dickens · إعادة صياغة Stephen Colbourn · سلسلة **Macmillan Readers — Beginner Level** · ٦٥ صفحة
+
+تمهيد: A Note About the Author · A Note About This Story · The People in This Story
+
+١٤ فصلاً:
+١. To Dover — ٢. A Wine Shop in Paris — ٣. The Old Bailey — ٤. New Friends — ٥. The Aristocrat — ٦. A Wedding — ٧. Revolution — ٨. To Paris — ٩. An Enemy of the Republic — ١٠. Citizen Barsad — ١١. Doctor Manette's Letter — ١٢. Sydney Carton's Plan — ١٣. The Escape — ١٤. The Guillotine
+
+(+ مسرد المصطلحات Glossary في آخر الكتاب)
+
+**ب. The Black Tulip — التوليب الأسود** — تأليف Alexandre Dumas — مؤكدة قراءتها، ولم نحصل على نسختها بعد.
+
+---
+
+### بنية امتحان الشهادة المتوسطة — اللغة الإنجليزية ✅ (نموذج منشور)
+
+**المصدر:** نماذج امتحان الشهادة المتوسطة (نموذج الدليل)، يوليو ٢٠٢٦ — أكاديمية (TiT) التعليمية، إدارة الامتحانات والتقويم، أ. توفيق إسماعيل توفيق (نهر النيل والخارج) — ٢١ صفحة
+ⓘ **ليست ورقة وزارية رسمية** — نموذج منشور من أكاديمية تعليمية، ومع ذلك مصدر واقعي لبنية الامتحان وأنواع أسئلته.
+
+**الزمن: ساعتان** · جدول الدرجات: Language | Composition | Supplementary
+
+| الجزء | المحتوى | الدرجات |
+|---|---|---|
+| **الأول: اللغة** | أ) الأفعال في صورتها الصحيحة · ب) وصل السؤال بجوابه · ج) تكوين جمل من كلمات · د) خط تحت الإجابة الصحيحة · هـ) إكمال الجمل من صندوق · و) وصل الكلمة بتعريفها | ٢+٢+٢+٣+٢+٥ |
+| **الثاني: الاستيعاب** | نص قرائي (مثال: الفنان إبراهيم الصلحي) — أ) إجابات قصيرة · ب) صح/خطأ · ج) اختيار من متعدد | ٤+٤+٤ |
+| **الثالث: التعبير** | مقال ١٠٠–١٢٠ كلمة عن موضوع محدد (مثال: «السودان»)، أو فقرة تُبنى على جدول معلومات (مثال: الطيب صالح) | — |
+| **الرابع: القراءات المقررة** | اختيار إحدى القصتين — أ) أسئلة إجابات قصيرة · ب) اختيار من متعدد | ٣ + ٥ = ٨ |
 
 ---
 
 ## الثغرات المتبقية
 
 - **التربية الوطنية والحياتية (civics)** — لا يوجد كتاب لها في هذه المجموعة؛ لم يُعثر على مصدر رسمي بعد.
-- **اللغة الإنجليزية** — الكتاب موجود لكن غير قابل للاستخراج آلياً.
+- **الإنجليزية — ٣ دروس** لم تُقرأ (الوحدة ٤ الدرس ٥، الوحدة ٦ الدرسان ١ و٦).
+- **The Black Tulip** — القصة المقررة الثانية مؤكدة، لكن لم نحصل على نسختها.
 - أسماء وحدات التربية الإسلامية (٣–٦) وعناوين وحدات العلوم **مرجّحة** وتحتاج تأكيداً.
 - أرقام صفحات الفهرس لم تُقرأ بدقة في معظم الكتب.

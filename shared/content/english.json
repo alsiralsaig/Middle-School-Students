@@ -5,9 +5,9 @@
   "code": "ENG-09",
   "category": "humanities",
   "description": "English for Grade 9: Reading comprehension, grammar (tenses, passive voice, conditionals), vocabulary, and guided writing.",
-  "curriculumRef": "كتاب اللغة الإنجليزية — الصف الثالث المتوسط — المركز القومي للمناهج والبحث التربوي — بخت الرضا · وزارة التربية والتعليم الاتحادية (الهيكل مرجّح ويحتاج تأكيداً)",
-  "unitsCount": 3,
-  "lessonsCount": 12,
+  "curriculumRef": "SMILE Series: Book 9 — Pupil's Book — المركز القومي للمناهج والبحث التربوي (NCCER) — بخت الرضا · وزارة التربية والتعليم الاتحادية",
+  "unitsCount": 8,
+  "lessonsCount": 64,
   "colorScheme": {
     "bg": "bg-indigo-50",
     "text": "text-indigo-900",
@@ -70,14 +70,14 @@
     }
   ],
   "official": {
-    "book": "كتاب اللغة الإنجليزية — الصف الثالث المتوسط",
-    "publisher": "المركز القومي للمناهج والبحث التربوي — بخت الرضا · وزارة التربية والتعليم الاتحادية",
+    "book": "SMILE Series: Book 9 — Pupil's Book (Sudan Modern Integrated Learning of English)",
+    "publisher": "المركز القومي للمناهج والبحث التربوي (NCCER) — بخت الرضا · وزارة التربية والتعليم الاتحادية",
     "pages": 72,
-    "url": "https://docs.google.com/uc?export=download&id=110MLeYgOh4ztx6RCehBxTRyWXNLLsULY",
-    "unitsCount": null,
-    "lessonsCount": null,
-    "confidence": "none",
+    "url": "https://www.almualm.com/wp-content/uploads/2025/06/%D9%83%D8%AA%D8%A7%D8%A8-%D8%A7%D9%84%D8%A7%D9%86%D8%AC%D9%84%D9%8A%D8%B2%D9%8A-%D8%A7%D9%84%D8%AB%D8%A7%D9%84%D8%AB-%D8%A7%D9%84%D9%85%D8%AA%D9%88%D8%B3%D8%B7-%D8%A7%D9%84%D8%B3%D9%88%D8%AF%D8%A7%D9%86.pdf",
+    "unitsCount": 8,
+    "lessonsCount": 64,
+    "confidence": "high",
     "verifiedAt": "2026-10-16",
-    "note": "الكتاب متوفر لكن خطوطه المضمّنة معطوبة ولا توجد طبقة نص — تعذّر استخراج فهرسه آلياً."
+    "note": "٨ وحدات × ٨ دروس = ٦٤ درساً. الوحدات: People and Science، Arts and Literature، Around the World، Work and Play، Food and Health، Money and Shopping، Learning، Looking Back. استُخرجت عناوين ٦١ درساً (٣ لم تُقرأ). القصتان المقررتان: A Tale of Two Cities (١٤ فصلاً) و The Black Tulip. بنية الامتحان موثّقة في shared/content/official/structure.json (supplements)."
   }
 }

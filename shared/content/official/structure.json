@@ -2,7 +2,7 @@
   "_meta": {
     "title": "الهيكل الرسمي لمنهج الصف الثالث المتوسط — جمهورية السودان",
     "extractedAt": "2026-10-16",
-    "method": "تحميل الكتب المدرسية الرسمية بصيغة PDF ثم استخراج فهارس المحتويات (المحتويات/الفهرس) ومقدمات الكتب عبر OCR بالعربية (tesseract-ocr ara).",
+    "method": "تحميل الكتب المدرسية الرسمية بصيغة PDF ثم استخراج فهارس المحتويات والمقدمات عبر OCR (tesseract: ara / eng). الكتب ذات الخطوط المعطوبة تُعالَج بنسخة بديلة أو تُعلَّم confidence=none.",
     "publisher": "المركز القومي للمناهج والبحث التربوي — بخت الرضا · وزارة التربية والتعليم الاتحادية",
     "indexPage": "https://www.sudanexams.com/2026/05/third-intermediate-sudan-books-pdf.html",
     "warning": "العناوين منقولة حرفياً من فهارس الكتب الرسمية. شروح الدروس في هذا المشروع من كتابتنا وليست نصاً رسمياً، وتبقى موسومة sample حتى تُراجَع."
@@ -166,7 +166,7 @@
       "url": "https://docs.google.com/uc?export=download&id=1M5ChXQYgvWHGkxQ1lm-Yom02hTgz7lcr",
       "confidence": "high",
       "unitsCount": 4,
-      "lessonsCount": 12,
+      "lessonsCount": 10,
       "unitTitles": [
         "الوحدة الأولى: أساسيات البرمجة",
         "الوحدة الثانية: مدخل إلى لغات البرمجة",
@@ -185,7 +185,7 @@
         "المخططات الانسيابية",
         "تطبيقات على الخوارزميات"
       ],
-      "structureNote": "المقدمة: «جاء هذا الكتاب في أربع وحدات». دروس الوحدات ١-٣ مؤكدة (١٠ دروس) + دروس الوحدة الرابعة (سكراتش) لم تُقرأ بالكامل. كل وحدة تُنهي بـ «اختبار نهاية الوحدة»."
+      "structureNote": "المقدمة: «جاء هذا الكتاب في أربع وحدات». دروس الوحدات ١-٣ مؤكدة (١٠ دروس) ودروس الوحدة الرابعة (سكراتش) لم تُقرأ من الفهرس. كل وحدة تُنهي بـ «اختبار نهاية الوحدة»."
     },
     {
       "key": "technical",
@@ -206,20 +206,503 @@
     {
       "key": "english",
       "subjectId": "english",
-      "book": "كتاب اللغة الإنجليزية — الصف الثالث المتوسط",
+      "book": "SMILE Series: Book 9 — Pupil's Book (Sudan Modern Integrated Learning of English)",
+      "bookAr": "سلسلة سمايل (SMILE) — الكتاب التاسع: كتاب التلميذ — الإنجليزية المدمجة الحديثة للسودان",
+      "publisher": "المركز القومي للمناهج والبحث التربوي (NCCER) — بخت الرضا · وزارة التربية والتعليم الاتحادية · جمهورية السودان",
+      "edition": "المنهج الجديد — يحل محل منهج SPINE",
       "pages": 72,
-      "url": "https://docs.google.com/uc?export=download&id=110MLeYgOh4ztx6RCehBxTRyWXNLLsULY",
-      "confidence": "none",
-      "unitsCount": null,
-      "lessonsCount": null,
-      "unitTitles": [],
-      "structureNote": "الكتاب متوفر وحجمه سليم، لكن خطوطه المضمّنة معطوبة: لا يوجد طبقة نص، والصفحات تُرسم بحروف مقلوبة/مبدّلة، فتعذّر استخراج الفهرس آلياً (الـ OCR أعطى نصاً مشوّشاً). يحتاج تدخلاً يدوياً أو نسخة أنظف من الكتاب."
+      "url": "https://www.almualm.com/wp-content/uploads/2025/06/%D9%83%D8%AA%D8%A7%D8%A8-%D8%A7%D9%84%D8%A7%D9%86%D8%AC%D9%84%D9%8A%D8%B2%D9%8A-%D8%A7%D9%84%D8%AB%D8%A7%D9%84%D8%AB-%D8%A7%D9%84%D9%85%D8%AA%D9%88%D8%B3%D8%B7-%D8%A7%D9%84%D8%B3%D9%88%D8%AF%D8%A7%D9%86.pdf",
+      "indexUrl": "https://www.almualm.com/2025/06/...كتاب-اللغة-الانجليزية-الصف-الثالث-ال",
+      "confidence": "high",
+      "unitsCount": 8,
+      "lessonsCount": 64,
+      "unitTitles": [
+        "Unit 1: People and Science",
+        "Unit 2: Arts and Literature",
+        "Unit 3: Around the World",
+        "Unit 4: Work and Play",
+        "Unit 5: Food and Health",
+        "Unit 6: Money and Shopping",
+        "Unit 7: Learning",
+        "Unit 8: Looking Back"
+      ],
+      "lessons": [
+        {
+          "unit": 1,
+          "unitTitle": "People and Science",
+          "number": 1,
+          "title": "What is Science?"
+        },
+        {
+          "unit": 1,
+          "unitTitle": "People and Science",
+          "number": 2,
+          "title": "Famous Scientists"
+        },
+        {
+          "unit": 1,
+          "unitTitle": "People and Science",
+          "number": 3,
+          "title": "BONES"
+        },
+        {
+          "unit": 1,
+          "unitTitle": "People and Science",
+          "number": 4,
+          "title": "How to Measure"
+        },
+        {
+          "unit": 1,
+          "unitTitle": "People and Science",
+          "number": 5,
+          "title": "Traditional Medicine"
+        },
+        {
+          "unit": 1,
+          "unitTitle": "People and Science",
+          "number": 6,
+          "title": "Wonders of Engineering"
+        },
+        {
+          "unit": 1,
+          "unitTitle": "People and Science",
+          "number": 7,
+          "title": "Puzzles and Games"
+        },
+        {
+          "unit": 1,
+          "unitTitle": "People and Science",
+          "number": 8,
+          "title": "Revision: Science"
+        },
+        {
+          "unit": 2,
+          "unitTitle": "Arts and Literature",
+          "number": 1,
+          "title": "A Traditional Story"
+        },
+        {
+          "unit": 2,
+          "unitTitle": "Arts and Literature",
+          "number": 2,
+          "title": "National Dress"
+        },
+        {
+          "unit": 2,
+          "unitTitle": "Arts and Literature",
+          "number": 3,
+          "title": "Famous Sudanese Writers"
+        },
+        {
+          "unit": 2,
+          "unitTitle": "Arts and Literature",
+          "number": 4,
+          "title": "Sand Art"
+        },
+        {
+          "unit": 2,
+          "unitTitle": "Arts and Literature",
+          "number": 5,
+          "title": "Robinson Crusoe"
+        },
+        {
+          "unit": 2,
+          "unitTitle": "Arts and Literature",
+          "number": 6,
+          "title": "Calligraphy"
+        },
+        {
+          "unit": 2,
+          "unitTitle": "Arts and Literature",
+          "number": 7,
+          "title": "A Sudanese Artist"
+        },
+        {
+          "unit": 2,
+          "unitTitle": "Arts and Literature",
+          "number": 8,
+          "title": "Revision: Words and Pictures"
+        },
+        {
+          "unit": 3,
+          "unitTitle": "Around the World",
+          "number": 1,
+          "title": "Where is Sudan?"
+        },
+        {
+          "unit": 3,
+          "unitTitle": "Around the World",
+          "number": 2,
+          "title": "Countries Quiz"
+        },
+        {
+          "unit": 3,
+          "unitTitle": "Around the World",
+          "number": 3,
+          "title": "Two Interesting Places"
+        },
+        {
+          "unit": 3,
+          "unitTitle": "Around the World",
+          "number": 4,
+          "title": "Saudi Arabia"
+        },
+        {
+          "unit": 3,
+          "unitTitle": "Around the World",
+          "number": 5,
+          "title": "Marco Polo"
+        },
+        {
+          "unit": 3,
+          "unitTitle": "Around the World",
+          "number": 6,
+          "title": "A Trip of a Lifetime"
+        },
+        {
+          "unit": 3,
+          "unitTitle": "Around the World",
+          "number": 7,
+          "title": "Friendly People"
+        },
+        {
+          "unit": 3,
+          "unitTitle": "Around the World",
+          "number": 8,
+          "title": "Revision: An Arab Adventure"
+        },
+        {
+          "unit": 4,
+          "unitTitle": "Work and Play",
+          "number": 1,
+          "title": "Jobs, Jobs, Jobs"
+        },
+        {
+          "unit": 4,
+          "unitTitle": "Work and Play",
+          "number": 2,
+          "title": "Teachers"
+        },
+        {
+          "unit": 4,
+          "unitTitle": "Work and Play",
+          "number": 3,
+          "title": "Children and Work"
+        },
+        {
+          "unit": 4,
+          "unitTitle": "Work and Play",
+          "number": 4,
+          "title": "Learning for a Job"
+        },
+        {
+          "unit": 4,
+          "unitTitle": "Work and Play",
+          "number": 6,
+          "title": "Who Gets Paid the Most?"
+        },
+        {
+          "unit": 4,
+          "unitTitle": "Work and Play",
+          "number": 7,
+          "title": "Work in the Future"
+        },
+        {
+          "unit": 4,
+          "unitTitle": "Work and Play",
+          "number": 8,
+          "title": "Revision: Hard Work"
+        },
+        {
+          "unit": 5,
+          "unitTitle": "Food and Health",
+          "number": 1,
+          "title": "Chocolate"
+        },
+        {
+          "unit": 5,
+          "unitTitle": "Food and Health",
+          "number": 2,
+          "title": "Growing Food"
+        },
+        {
+          "unit": 5,
+          "unitTitle": "Food and Health",
+          "number": 3,
+          "title": "Sudanese Crops"
+        },
+        {
+          "unit": 5,
+          "unitTitle": "Food and Health",
+          "number": 4,
+          "title": "A Healthy Diet"
+        },
+        {
+          "unit": 5,
+          "unitTitle": "Food and Health",
+          "number": 5,
+          "title": "The Greenhouse"
+        },
+        {
+          "unit": 5,
+          "unitTitle": "Food and Health",
+          "number": 6,
+          "title": "Honey"
+        },
+        {
+          "unit": 5,
+          "unitTitle": "Food and Health",
+          "number": 7,
+          "title": "Healthy Habits"
+        },
+        {
+          "unit": 5,
+          "unitTitle": "Food and Health",
+          "number": 8,
+          "title": "Revision: Food Facts"
+        },
+        {
+          "unit": 6,
+          "unitTitle": "Money and Shopping",
+          "number": 2,
+          "title": "Adverts"
+        },
+        {
+          "unit": 6,
+          "unitTitle": "Money and Shopping",
+          "number": 3,
+          "title": "Saving for a Rainy Day!"
+        },
+        {
+          "unit": 6,
+          "unitTitle": "Money and Shopping",
+          "number": 4,
+          "title": "Young Business People"
+        },
+        {
+          "unit": 6,
+          "unitTitle": "Money and Shopping",
+          "number": 5,
+          "title": "The Gold Rush"
+        },
+        {
+          "unit": 6,
+          "unitTitle": "Money and Shopping",
+          "number": 7,
+          "title": "Paying for it!"
+        },
+        {
+          "unit": 6,
+          "unitTitle": "Money and Shopping",
+          "number": 8,
+          "title": "Revision: The Cost of Shopping"
+        },
+        {
+          "unit": 7,
+          "unitTitle": "Learning",
+          "number": 1,
+          "title": "Learning a Lesson"
+        },
+        {
+          "unit": 7,
+          "unitTitle": "Learning",
+          "number": 2,
+          "title": "Learning for a Competition"
+        },
+        {
+          "unit": 7,
+          "unitTitle": "Learning",
+          "number": 3,
+          "title": "The History of the University of Khartoum"
+        },
+        {
+          "unit": 7,
+          "unitTitle": "Learning",
+          "number": 4,
+          "title": "Learning to Do Things Yourself"
+        },
+        {
+          "unit": 7,
+          "unitTitle": "Learning",
+          "number": 5,
+          "title": "Learning isn’t Easy"
+        },
+        {
+          "unit": 7,
+          "unitTitle": "Learning",
+          "number": 6,
+          "title": "The Brain"
+        },
+        {
+          "unit": 7,
+          "unitTitle": "Learning",
+          "number": 7,
+          "title": "Test Your Knowledge"
+        },
+        {
+          "unit": 7,
+          "unitTitle": "Learning",
+          "number": 8,
+          "title": "Revision: Test Your Learning"
+        },
+        {
+          "unit": 8,
+          "unitTitle": "Looking Back",
+          "number": 1,
+          "title": "Protecting Animals"
+        },
+        {
+          "unit": 8,
+          "unitTitle": "Looking Back",
+          "number": 2,
+          "title": "Sports Time"
+        },
+        {
+          "unit": 8,
+          "unitTitle": "Looking Back",
+          "number": 3,
+          "title": "A Matter of Science"
+        },
+        {
+          "unit": 8,
+          "unitTitle": "Looking Back",
+          "number": 4,
+          "title": "Stories"
+        },
+        {
+          "unit": 8,
+          "unitTitle": "Looking Back",
+          "number": 5,
+          "title": "Discovering the World"
+        },
+        {
+          "unit": 8,
+          "unitTitle": "Looking Back",
+          "number": 6,
+          "title": "A Time for Tea"
+        },
+        {
+          "unit": 8,
+          "unitTitle": "Looking Back",
+          "number": 7,
+          "title": "Food and Health"
+        },
+        {
+          "unit": 8,
+          "unitTitle": "Looking Back",
+          "number": 8,
+          "title": "Learning for Life"
+        }
+      ],
+      "missingLessons": [
+        "الوحدة 4 — الدرس 5",
+        "الوحدة 6 — الدرس 1",
+        "الوحدة 6 — الدرس 6"
+      ],
+      "structureNote": "جدول المحتويات (ص٧) يذكر ٨ وحدات، وكل وحدة ٨ صفحات بداخلها ٨ دروس. استُخرجت عناوين ٦١ درساً من أصل ٦٤؛ الثلاثة الناقصة لم تُقرأ بوضوح في المسح. مكوّنات السلسلة: كتاب التلميذ، كتاب النشاط، كتاب المعلم، تسجيلات، وبطاقات مصوّرة."
     }
   ],
   "gaps": [
     "مادة التربية الوطنية والحياتية (civics): لا يوجد كتاب لها في هذه المجموعة — لم يُعثر على مصدر رسمي بعد.",
-    "اللغة الإنجليزية: الكتاب موجود لكن غير قابل للاستخراج آلياً.",
-    "أسماء وحدات التربية الإسلامية (٣-٦) وعناوين وحدات العلوم مرجّحة وتحتاج تأكيداً من صفحات الفهرس الأصلية.",
+    "التربية الإسلامية: أسماء الوحدات ٣–٦ مرجّحة وتحتاج تأكيداً.",
+    "العلوم: عناوين الوحدات مرجّحة (صفحة الفهرس رديئة المسح).",
+    "الإنجليزية: ٣ دروس لم تُقرأ (الوحدة ٤ الدرس ٥، الوحدة ٦ الدرسان ١ و٦)، والقصة المقررة الثانية (The Black Tulip) لم نحصل على نسختها.",
     "أرقام صفحات الفهرس لم تُقرأ بدقة في معظم الكتب."
+  ],
+  "supplements": [
+    {
+      "key": "set-book-tale-of-two-cities",
+      "type": "set_book",
+      "subjectId": "english",
+      "title": "A Tale of Two Cities",
+      "titleAr": "قصة مدينتين",
+      "author": "Charles Dickens (رواية مُعاد صياغتها: Stephen Colbourn)",
+      "series": "Macmillan Readers — Beginner Level",
+      "pages": 65,
+      "source": "ملف مرفوع من المستخدم — كتاب الأدب الإنجليزي للصف الثالث المتوسط (منشور على almualm.com)",
+      "confidence": "high",
+      "chapters": [
+        "To Dover",
+        "A Wine Shop in Paris",
+        "The Old Bailey",
+        "New Friends",
+        "The Aristocrat",
+        "A Wedding",
+        "Revolution",
+        "To Paris",
+        "An Enemy of the Republic",
+        "Citizen Barsad",
+        "Doctor Manette's Letter",
+        "Sydney Carton's Plan",
+        "The Escape",
+        "The Guillotine"
+      ],
+      "frontMatter": [
+        "A Note About the Author",
+        "A Note About This Story",
+        "The People in This Story"
+      ],
+      "note": "١٤ فصلاً + ثلاث صفحات تمهيدية + مسرد (Glossary) في آخر الكتاب. هذا هو «كتاب الأدب» المقرر للمادة."
+    },
+    {
+      "key": "set-book-black-tulip",
+      "type": "set_book",
+      "subjectId": "english",
+      "title": "The Black Tulip",
+      "titleAr": "التوليب الأسود",
+      "author": "Alexandre Dumas",
+      "confidence": "high",
+      "chapters": [],
+      "note": "القصة المقررة الثانية — مؤكدة من نص الامتحان: «اختر السؤال (١) A Tale of Two Cities أو السؤال (٢) The Black Tulip». لم نحصل على نسختها بعد."
+    },
+    {
+      "key": "exam-english-2026",
+      "type": "exam_paper",
+      "subjectId": "english",
+      "title": "نماذج امتحان الشهادة المتوسطة — اللغة الإنجليزية (نموذج الدليل)، يوليو ٢٠٢٦",
+      "publisher": "أكاديمية (TiT) التعليمية — إدارة الامتحانات والتقويم · أ. توفيق إسماعيل توفيق (نهر النيل والخارج)",
+      "pages": 21,
+      "confidence": "high",
+      "duration": "ساعتان",
+      "isOfficialMinistry": false,
+      "note": "نموذج امتحان منشور من أكاديمية تعليمية — مصدر واقعي لبنية الامتحان وأنواع أسئلته، وليس ورقة وزارية رسمية.",
+      "blueprint": [
+        {
+          "part": "الجزء الأول: اللغة (Language)",
+          "sections": [
+            "A. وضع الأفعال بين قوسين في صورتها الصحيحة (٢ درجة)",
+            "B. وصل الأسئلة بإجاباتها (٢ درجة)",
+            "C. تكوين جمل وأسئلة من كلمات (٢ درجة)",
+            "D. وضع خط تحت الإجابة الصحيحة (٣ درجات)",
+            "E. إكمال الجمل بكلمات من الصندوق (٢ درجة)",
+            "F. وصل الكلمات بتعريفاتها (٥ درجات)"
+          ]
+        },
+        {
+          "part": "الجزء الثاني: الاستيعاب (Comprehension)",
+          "sections": [
+            "نص قرائي (مثال: الفنان السوداني إبراهيم الصلحي)",
+            "(A) إجابات قصيرة (٤ درجات)",
+            "(B) صح أو خطأ (٤ درجات)",
+            "(C) اختيار من متعدد (٤ درجات)"
+          ]
+        },
+        {
+          "part": "الجزء الثالث: التعبير (Composition)",
+          "sections": [
+            "مقال من ١٠٠–١٢٠ كلمة عن موضوع محدد",
+            "أو فقرة تُبنى على معلومات جدول (مثال: الطيب صالح: الميلاد، الوفاة، أشهر كتبه، الجوائز)"
+          ]
+        },
+        {
+          "part": "الجزء الرابع: القراءات المقررة (Supplementary Readers)",
+          "sections": [
+            "اختيار بين قصتين: A Tale of Two Cities أو The Black Tulip (٨ درجات)",
+            "(A) الإجابة عن أسئلة (٣ درجات)",
+            "(B) اختيار من متعدد (٥ درجات)"
+          ]
+        }
+      ]
+    }
   ]
 }
