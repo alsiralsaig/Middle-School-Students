@@ -88,7 +88,48 @@
       "sourceConfidence": "high",
       "numbering": "lessons",
       "sourcePage": 1,
-      "lessons": []
+      "lessons": [
+        {
+          "lessonNumber": 1,
+          "title": "What is Science?",
+          "sourcePage": 1
+        },
+        {
+          "lessonNumber": 2,
+          "title": "Famous Scientists",
+          "sourcePage": 2
+        },
+        {
+          "lessonNumber": 3,
+          "title": "Bones",
+          "sourcePage": 3
+        },
+        {
+          "lessonNumber": 4,
+          "title": "How to Measure",
+          "sourcePage": 4
+        },
+        {
+          "lessonNumber": 5,
+          "title": "Traditional Medicine",
+          "sourcePage": 5
+        },
+        {
+          "lessonNumber": 6,
+          "title": "Wonders of Engineering",
+          "sourcePage": 6
+        },
+        {
+          "lessonNumber": 7,
+          "title": "Puzzles and Games",
+          "sourcePage": 7
+        },
+        {
+          "lessonNumber": 8,
+          "title": "Revision — Science",
+          "sourcePage": 8
+        }
+      ]
     },
     {
       "unitNumber": 2,
@@ -96,7 +137,48 @@
       "sourceConfidence": "high",
       "numbering": "lessons",
       "sourcePage": 9,
-      "lessons": []
+      "lessons": [
+        {
+          "lessonNumber": 1,
+          "title": "A Traditional Story",
+          "sourcePage": 9
+        },
+        {
+          "lessonNumber": 2,
+          "title": "National Dress",
+          "sourcePage": 10
+        },
+        {
+          "lessonNumber": 3,
+          "title": "Famous Sudanese Writers",
+          "sourcePage": 11
+        },
+        {
+          "lessonNumber": 4,
+          "title": "Sand Art",
+          "sourcePage": 12
+        },
+        {
+          "lessonNumber": 5,
+          "title": "Robinson Crusoe",
+          "sourcePage": 13
+        },
+        {
+          "lessonNumber": 6,
+          "title": "(العنوان غير مقروء في المسح — الصفحة عن فن الخط)",
+          "sourcePage": 14
+        },
+        {
+          "lessonNumber": 7,
+          "title": "A Sudanese Artist",
+          "sourcePage": 15
+        },
+        {
+          "lessonNumber": 8,
+          "title": "Revision — Words and Pictures",
+          "sourcePage": 16
+        }
+      ]
     },
     {
       "unitNumber": 3,
@@ -104,7 +186,48 @@
       "sourceConfidence": "high",
       "numbering": "lessons",
       "sourcePage": 17,
-      "lessons": []
+      "lessons": [
+        {
+          "lessonNumber": 1,
+          "title": "Where is Sudan?",
+          "sourcePage": 17
+        },
+        {
+          "lessonNumber": 2,
+          "title": "Countries Quiz",
+          "sourcePage": 18
+        },
+        {
+          "lessonNumber": 3,
+          "title": "Two Interesting Places",
+          "sourcePage": 19
+        },
+        {
+          "lessonNumber": 4,
+          "title": "Saudi Arabia",
+          "sourcePage": 20
+        },
+        {
+          "lessonNumber": 5,
+          "title": "Marco Polo",
+          "sourcePage": 21
+        },
+        {
+          "lessonNumber": 6,
+          "title": "A Trip of a Lifetime",
+          "sourcePage": 22
+        },
+        {
+          "lessonNumber": 7,
+          "title": "Friendly People",
+          "sourcePage": 23
+        },
+        {
+          "lessonNumber": 8,
+          "title": "Revision — An Arab Adventure",
+          "sourcePage": 24
+        }
+      ]
     },
     {
       "unitNumber": 4,
@@ -112,7 +235,48 @@
       "sourceConfidence": "high",
       "numbering": "lessons",
       "sourcePage": 25,
-      "lessons": []
+      "lessons": [
+        {
+          "lessonNumber": 1,
+          "title": "Jobs, Jobs, Jobs",
+          "sourcePage": 25
+        },
+        {
+          "lessonNumber": 2,
+          "title": "Teachers",
+          "sourcePage": 26
+        },
+        {
+          "lessonNumber": 3,
+          "title": "Children and Work",
+          "sourcePage": 27
+        },
+        {
+          "lessonNumber": 4,
+          "title": "Learning for a Job",
+          "sourcePage": 28
+        },
+        {
+          "lessonNumber": 5,
+          "title": "My Hobby and My Job",
+          "sourcePage": 29
+        },
+        {
+          "lessonNumber": 6,
+          "title": "Who Gets the Most?",
+          "sourcePage": 30
+        },
+        {
+          "lessonNumber": 7,
+          "title": "Work in the Future",
+          "sourcePage": 31
+        },
+        {
+          "lessonNumber": 8,
+          "title": "Revision — Hard Work",
+          "sourcePage": 32
+        }
+      ]
     },
     {
       "unitNumber": 5,
@@ -120,7 +284,48 @@
       "sourceConfidence": "high",
       "numbering": "lessons",
       "sourcePage": 33,
-      "lessons": []
+      "lessons": [
+        {
+          "lessonNumber": 1,
+          "title": "Chocolate",
+          "sourcePage": 33
+        },
+        {
+          "lessonNumber": 2,
+          "title": "Growing Food",
+          "sourcePage": 34
+        },
+        {
+          "lessonNumber": 3,
+          "title": "Sudanese Crops",
+          "sourcePage": 35
+        },
+        {
+          "lessonNumber": 4,
+          "title": "A Healthy Diet",
+          "sourcePage": 36
+        },
+        {
+          "lessonNumber": 5,
+          "title": "The Greenhouse",
+          "sourcePage": 37
+        },
+        {
+          "lessonNumber": 6,
+          "title": "Honey",
+          "sourcePage": 38
+        },
+        {
+          "lessonNumber": 7,
+          "title": "Healthy Habits",
+          "sourcePage": 39
+        },
+        {
+          "lessonNumber": 8,
+          "title": "Revision — Food Facts",
+          "sourcePage": 40
+        }
+      ]
     },
     {
       "unitNumber": 6,
@@ -128,7 +333,48 @@
       "sourceConfidence": "high",
       "numbering": "lessons",
       "sourcePage": 41,
-      "lessons": []
+      "lessons": [
+        {
+          "lessonNumber": 1,
+          "title": "(العنوان غير مقروء في المسح — الصفحة عن إعلان متجر)",
+          "sourcePage": 41
+        },
+        {
+          "lessonNumber": 2,
+          "title": "Adverts",
+          "sourcePage": 42
+        },
+        {
+          "lessonNumber": 3,
+          "title": "Saving for a Rainy Day!",
+          "sourcePage": 43
+        },
+        {
+          "lessonNumber": 4,
+          "title": "Young Business People",
+          "sourcePage": 44
+        },
+        {
+          "lessonNumber": 5,
+          "title": "The Gold Rush",
+          "sourcePage": 45
+        },
+        {
+          "lessonNumber": 6,
+          "title": "Omdurman Market",
+          "sourcePage": 46
+        },
+        {
+          "lessonNumber": 7,
+          "title": "Paying for it!",
+          "sourcePage": 47
+        },
+        {
+          "lessonNumber": 8,
+          "title": "Revision — The Cost of Shopping",
+          "sourcePage": 48
+        }
+      ]
     },
     {
       "unitNumber": 7,
@@ -136,7 +382,48 @@
       "sourceConfidence": "high",
       "numbering": "lessons",
       "sourcePage": 49,
-      "lessons": []
+      "lessons": [
+        {
+          "lessonNumber": 1,
+          "title": "Learning a Lesson",
+          "sourcePage": 49
+        },
+        {
+          "lessonNumber": 2,
+          "title": "Learning for a Competition",
+          "sourcePage": 50
+        },
+        {
+          "lessonNumber": 3,
+          "title": "The History of the University of Khartoum",
+          "sourcePage": 51
+        },
+        {
+          "lessonNumber": 4,
+          "title": "Learning to Do Things Yourself",
+          "sourcePage": 52
+        },
+        {
+          "lessonNumber": 5,
+          "title": "Learning isn't Easy",
+          "sourcePage": 53
+        },
+        {
+          "lessonNumber": 6,
+          "title": "(العنوان غير مقروء في المسح)",
+          "sourcePage": 54
+        },
+        {
+          "lessonNumber": 7,
+          "title": "Test Your Knowledge",
+          "sourcePage": 55
+        },
+        {
+          "lessonNumber": 8,
+          "title": "Revision — Test Your Learning",
+          "sourcePage": 56
+        }
+      ]
     },
     {
       "unitNumber": 8,
@@ -144,7 +431,48 @@
       "sourceConfidence": "high",
       "numbering": "lessons",
       "sourcePage": 57,
-      "lessons": []
+      "lessons": [
+        {
+          "lessonNumber": 1,
+          "title": "Protecting Animals",
+          "sourcePage": 57
+        },
+        {
+          "lessonNumber": 2,
+          "title": "Sports Time",
+          "sourcePage": 58
+        },
+        {
+          "lessonNumber": 3,
+          "title": "A Matter of Science",
+          "sourcePage": 59
+        },
+        {
+          "lessonNumber": 4,
+          "title": "Stories",
+          "sourcePage": 60
+        },
+        {
+          "lessonNumber": 5,
+          "title": "Discovering the World",
+          "sourcePage": 61
+        },
+        {
+          "lessonNumber": 6,
+          "title": "A Time for Tea",
+          "sourcePage": 62
+        },
+        {
+          "lessonNumber": 7,
+          "title": "Food and Health",
+          "sourcePage": 63
+        },
+        {
+          "lessonNumber": 8,
+          "title": "Learning for Life",
+          "sourcePage": 64
+        }
+      ]
     }
   ],
   "lessonsCountNote": "مقدمة الكتاب (ص٣): «تتكوّن كتب SMILE من ثماني وحدات، وكل وحدة ثمانية دروس، والدرس الثامن مراجعة لدروس الوحدة». الوحدة الثامنة مراجعة عامة."

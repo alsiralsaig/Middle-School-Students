@@ -333,14 +333,48 @@ CIVICS_UNITS = [
 #     eight lessons. Lesson 8 is a revision of the previous lessons of the unit.»
 # ─────────────────────────────────────────────────────────────────────────────
 ENGLISH_UNITS = [
-    (1, 'People and Science', 1, []),
-    (2, 'Arts and Literature', 9, []),
-    (3, 'Around the World', 17, []),
-    (4, 'Work and Play', 25, []),
-    (5, 'Food and Health', 33, []),
-    (6, 'Money and Shopping', 41, []),
-    (7, 'Learning', 49, []),
-    (8, 'Looking Back', 57, []),
+    (1, 'People and Science', 1, [
+        (1, 'What is Science?', 1), (2, 'Famous Scientists', 2), (3, 'Bones', 3),
+        (4, 'How to Measure', 4), (5, 'Traditional Medicine', 5),
+        (6, 'Wonders of Engineering', 6), (7, 'Puzzles and Games', 7),
+        (8, 'Revision — Science', 8)]),
+    (2, 'Arts and Literature', 9, [
+        (1, 'A Traditional Story', 9), (2, 'National Dress', 10),
+        (3, 'Famous Sudanese Writers', 11), (4, 'Sand Art', 12),
+        (5, 'Robinson Crusoe', 13),
+        (6, '(العنوان غير مقروء في المسح — الصفحة عن فن الخط)', 14),
+        (7, 'A Sudanese Artist', 15), (8, 'Revision — Words and Pictures', 16)]),
+    (3, 'Around the World', 17, [
+        (1, 'Where is Sudan?', 17), (2, 'Countries Quiz', 18),
+        (3, 'Two Interesting Places', 19), (4, 'Saudi Arabia', 20),
+        (5, 'Marco Polo', 21), (6, 'A Trip of a Lifetime', 22),
+        (7, 'Friendly People', 23), (8, 'Revision — An Arab Adventure', 24)]),
+    (4, 'Work and Play', 25, [
+        (1, 'Jobs, Jobs, Jobs', 25), (2, 'Teachers', 26),
+        (3, 'Children and Work', 27), (4, 'Learning for a Job', 28),
+        (5, 'My Hobby and My Job', 29), (6, 'Who Gets the Most?', 30),
+        (7, 'Work in the Future', 31), (8, 'Revision — Hard Work', 32)]),
+    (5, 'Food and Health', 33, [
+        (1, 'Chocolate', 33), (2, 'Growing Food', 34), (3, 'Sudanese Crops', 35),
+        (4, 'A Healthy Diet', 36), (5, 'The Greenhouse', 37), (6, 'Honey', 38),
+        (7, 'Healthy Habits', 39), (8, 'Revision — Food Facts', 40)]),
+    (6, 'Money and Shopping', 41, [
+        (1, '(العنوان غير مقروء في المسح — الصفحة عن إعلان متجر)', 41),
+        (2, 'Adverts', 42), (3, 'Saving for a Rainy Day!', 43),
+        (4, 'Young Business People', 44), (5, 'The Gold Rush', 45),
+        (6, 'Omdurman Market', 46), (7, 'Paying for it!', 47),
+        (8, 'Revision — The Cost of Shopping', 48)]),
+    (7, 'Learning', 49, [
+        (1, 'Learning a Lesson', 49), (2, 'Learning for a Competition', 50),
+        (3, 'The History of the University of Khartoum', 51),
+        (4, 'Learning to Do Things Yourself', 52), (5, "Learning isn't Easy", 53),
+        (6, '(العنوان غير مقروء في المسح)', 54), (7, 'Test Your Knowledge', 55),
+        (8, 'Revision — Test Your Learning', 56)]),
+    (8, 'Looking Back', 57, [
+        (1, 'Protecting Animals', 57), (2, 'Sports Time', 58),
+        (3, 'A Matter of Science', 59), (4, 'Stories', 60),
+        (5, 'Discovering the World', 61), (6, 'A Time for Tea', 62),
+        (7, 'Food and Health', 63), (8, 'Learning for Life', 64)]),
 ]
 ENGLISH_NOTE = ('مقدمة الكتاب (ص٣): «تتكوّن كتب SMILE من ثماني وحدات، وكل وحدة ثمانية '
                 'دروس، والدرس الثامن مراجعة لدروس الوحدة». الوحدة الثامنة مراجعة عامة.')
@@ -841,9 +875,12 @@ def sync_math():
         'math', MATH_UNITS,
         'كتاب الرياضيات — الصف الثالث من مرحلة التعليم المتوسط — الطبعة الأولى — '
         'المركز القومي للمناهج والبحث التربوي (بخت الرضا) · ٨ وحدات',
-        extra={'lessonsCountNote': MATH_NOTE,
+        extra={'lessonsCountNote': MATH_NOTE, 'lessonsCountUnverified': True,
                'officialPatch': {'numbering': 'themes', 'confidence': 'partial',
-                                 'verifiedAt': '2026-10-16'}})
+                                 'verifiedAt': '2026-10-16', 'lessonsCount': None,
+                                 'themesCount': 8,
+                                 'note': 'الكتاب لا يرقّم دروسه؛ الرقم ١٦ موروث من بيانات '
+                                         'سابقة ولم نتحقق منه من الكتاب.'}})
 
 
 def sync_ict():
