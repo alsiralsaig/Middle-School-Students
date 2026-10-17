@@ -5,12 +5,15 @@ import {
   CheckCircle2,
   FileText,
   FlaskConical,
+  GraduationCap,
+  KeyRound,
   Layers,
   TrendingUp,
+  Users,
 } from 'lucide-react';
-import { Badge, Card, NotConnectedNote, StatusBadge } from '../components/ui';
-import { useSimulatedData } from '../hooks/useSimulatedData';
-import { SUBJECTS_DATA, curriculumStats, subjectEmoji, CONTENT_STATUS } from '@shared/curriculum';
+import { Badge, Card, NotConnectedNote } from '../components/ui';
+import { subjectEmoji } from '@shared/curriculum';
+import { getApiBase } from '../lib/serverUrl';
 import { BRAND } from '@shared/brand';
 
 const StatCard: React.FC<{
@@ -34,9 +37,72 @@ const StatCard: React.FC<{
   </div>
 );
 
+interface OverviewStats {
+  subjects: number;
+  units: number;
+  plannedUnits: number;
+  lessons: number;
+  plannedLessons: number;
+  verifiedLessons: number;
+  sampleLessons: number;
+  resources: number;
+  students: number;
+  activeCodes: number;
+  exams: number;
+  examAttempts: number;
+  coverage: number;
+}
+
+interface OverviewSubject {
+  id: string;
+  name: string;
+  code: string;
+  status: string;
+  units: number;
+  plannedUnits: number;
+  lessons: number;
+  plannedLessons: number;
+  coverage: number;
+  gradeWarning: string | null;
+}
+
+interface ReadinessItem {
+  label: string;
+  state: 'ready' | 'partial' | 'off';
+  note: string;
+}
+
 export const OverviewPage: React.FC = () => {
-  const { data: subjects, loading } = useSimulatedData(SUBJECTS_DATA);
-  const stats = curriculumStats();
+  const [stats, setStats] = React.useState<OverviewStats | null>(null);
+  const [subjects, setSubjects] = React.useState<OverviewSubject[]>([]);
+  const [readiness, setReadiness] = React.useState<ReadinessItem[]>([]);
+  const [offline, setOffline] = React.useState(false);
+
+  const load = React.useCallback(async () => {
+    try {
+      const res = await fetch(`${getApiBase()}/api/admin/overview`, {
+        headers: { Accept: 'application/json', 'X-App': 'admin' },
+        credentials: 'include',
+      });
+      if (!res.ok) throw new Error(String(res.status));
+      const data = (await res.json()) as {
+        stats: OverviewStats;
+        subjects: OverviewSubject[];
+        readiness: ReadinessItem[];
+      };
+      setStats(data.stats);
+      setSubjects(data.subjects);
+      setReadiness(data.readiness);
+      setOffline(false);
+    } catch {
+      setStats(null);
+      setOffline(true);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    void load();
+  }, [load]);
 
   return (
     <div className="space-y-5">
@@ -54,23 +120,50 @@ export const OverviewPage: React.FC = () => {
         </div>
       </div>
 
-      <NotConnectedNote>
-        هذه لوحة <strong>تحضيرية للمرحلة الأولى</strong>: تعرض بيانات تجريبية فقط، ولا يوجد حفظ أو رفع
-        ملفات أو حسابات مستخدمين إلا بعد ربط قاعدة البيانات في المرحلة القادمة.
-      </NotConnectedNote>
+      {offline && (
+        <NotConnectedNote>
+          تعذّر الوصول إلى الخادم. احفظ عنوان الخادم الصحيح من صفحة{' '}
+          <strong>الإعدادات</strong>، ثم أعد تحميل هذه الصفحة.
+        </NotConnectedNote>
+      )}
 
       {/* إحصاءات */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <StatCard icon={BookOpen} label="المواد" value={stats.subjects} />
-        <StatCard icon={Layers} label="الوحدات" value={stats.units} />
-        <StatCard icon={FlaskConical} label="الدروس" value={stats.lessons} hint={`من ${stats.plannedLessons} في الخطة`} />
-        <StatCard icon={FileText} label="عناصر المكتبة" value={stats.resources} hint="للعرض — غير مرفوعة" />
+        <StatCard icon={BookOpen} label="المواد" value={stats?.subjects ?? '—'} />
+        <StatCard
+          icon={Layers}
+          label="الوحدات"
+          value={stats?.units ?? '—'}
+          hint={stats ? `من ${stats.plannedUnits} في الخطة` : undefined}
+        />
+        <StatCard
+          icon={FlaskConical}
+          label="الدروس"
+          value={stats?.lessons ?? '—'}
+          hint={stats ? `من ${stats.plannedLessons} · ${stats.coverage}%` : undefined}
+        />
+        <StatCard icon={FileText} label="عناصر المكتبة" value={stats?.resources ?? '—'} />
+      </div>
+
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <StatCard icon={Users} label="الطلاب المسجّلون" value={stats?.students ?? '—'} />
+        <StatCard icon={KeyRound} label="رموز نشطة" value={stats?.activeCodes ?? '—'} />
+        <StatCard icon={GraduationCap} label="الامتحانات" value={stats?.exams ?? '—'} />
+        <StatCard
+          icon={CheckCircle2}
+          label="دروس مُراجَعة"
+          value={stats ? `${stats.verifiedLessons}/${stats.lessons}` : '—'}
+          hint={stats ? `${stats.sampleLessons} بوسم «تجريبي»` : undefined}
+        />
       </div>
 
       {/* حالة المحتوى */}
       <div className="grid lg:grid-cols-2 gap-4">
-        <Card title="المواد وحالة المحتوى" subtitle="نفس مصدر بيانات تطبيق الطالب: shared/content/*.json">
-          {loading ? (
+        <Card
+          title="المواد وتغطية المنهج"
+          subtitle="من قاعدة البيانات — المصدر الوحيد للمنهج"
+        >
+          {stats === null ? (
             <div className="space-y-2">
               {[0, 1, 2, 3].map((i) => (
                 <div key={i} className="h-10 rounded-xl bg-slate-100 animate-pulse" />
@@ -78,50 +171,74 @@ export const OverviewPage: React.FC = () => {
             </div>
           ) : (
             <ul className="divide-y divide-slate-100">
-              {(subjects ?? []).map((s) => {
-                const lessons = s.units.reduce((a, u) => a + u.lessons.length, 0);
-                return (
-                  <li key={s.id} className="flex items-center gap-3 py-2.5">
+              {subjects.map((s) => (
+                <li key={s.id} className="py-2.5">
+                  <div className="flex items-center gap-3">
                     <span className="text-lg w-8 text-center">{subjectEmoji(s.id)}</span>
                     <div className="min-w-0 flex-1">
                       <p className="font-bold text-xs text-navy-800 truncate">{s.name}</p>
                       <p className="text-[10px] text-slate-500">
-                        {s.units.length} من {s.unitsCount} وحدة · {lessons} من {s.lessonsCount} درس
+                        {s.units} من {s.plannedUnits} وحدة · {s.lessons} من{' '}
+                        {s.plannedLessons} درس
                       </p>
                     </div>
-                    <StatusBadge status={CONTENT_STATUS} />
-                  </li>
-                );
-              })}
+                    <span className="nums text-xs font-black text-navy-800">
+                      {s.coverage}%
+                    </span>
+                  </div>
+                  <div className="mt-1.5 h-1.5 rounded-full bg-slate-100 overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-navy-800"
+                      style={{ width: `${s.coverage}%` }}
+                    />
+                  </div>
+                  {s.gradeWarning && (
+                    <p className="mt-1.5 text-[10px] text-amber-700 bg-amber-50 rounded-lg px-2 py-1">
+                      ⚠️ {s.gradeWarning}
+                    </p>
+                  )}
+                </li>
+              ))}
             </ul>
           )}
         </Card>
 
-        <Card title="جاهزية المرحلة القادمة" subtitle="ما يحتاج ربطاً بخادم أو قاعدة بيانات">
-          <ul className="space-y-2.5">
-            {[
-              { label: 'حفظ وتعديل المحتوى', ready: false },
-              { label: 'رفع ملفات المكتبة (PDF)', ready: false },
-              { label: 'حسابات الطلاب وتتبع التقدّم', ready: false },
-              { label: 'تصحيح الامتحانات آلياً', ready: false },
-              { label: 'عرض المحتوى للطلاب', ready: true },
-            ].map((item) => (
-              <li key={item.label} className="flex items-center justify-between gap-3">
-                <span className="text-xs text-slate-700">{item.label}</span>
-                {item.ready ? (
-                  <Badge tone="green">
-                    <CheckCircle2 className="w-3 h-3" /> جاهز
-                  </Badge>
-                ) : (
-                  <Badge tone="slate">غير متصل</Badge>
-                )}
-              </li>
-            ))}
-          </ul>
+        <Card title="حالة الميزات" subtitle="مقروءة من واقع قاعدة البيانات">
+          {readiness.length === 0 ? (
+            <div className="space-y-2">
+              {[0, 1, 2, 3].map((i) => (
+                <div key={i} className="h-8 rounded-xl bg-slate-100 animate-pulse" />
+              ))}
+            </div>
+          ) : (
+            <ul className="space-y-3">
+              {readiness.map((item) => (
+                <li key={item.label}>
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-xs font-bold text-slate-700">
+                      {item.label}
+                    </span>
+                    {item.state === 'ready' ? (
+                      <Badge tone="green">
+                        <CheckCircle2 className="w-3 h-3" /> يعمل
+                      </Badge>
+                    ) : item.state === 'partial' ? (
+                      <Badge tone="amber">جزئي</Badge>
+                    ) : (
+                      <Badge tone="slate">غير متصل</Badge>
+                    )}
+                  </div>
+                  <p className="text-[10px] text-slate-500 mt-0.5">{item.note}</p>
+                </li>
+              ))}
+            </ul>
+          )}
 
           <div className="mt-4 flex items-center gap-2 text-[11px] text-slate-500 bg-slate-50 rounded-xl p-3">
             <TrendingUp className="w-4 h-4 text-navy-800" />
-            <span>الهيكل الحالي يسمح بإضافة الخادم لاحقاً دون إعادة بناء الواجهات.</span>
+            <span>
+              كل رقم في هذه الصفحة مقروء من قاعدة البيانات — لا قيم مقدَّرة.
+            </span>
           </div>
         </Card>
       </div>
@@ -138,6 +255,12 @@ export const OverviewPage: React.FC = () => {
           className="text-xs font-extrabold border border-navy-200 text-navy-800 px-4 py-2.5 rounded-xl hover:bg-navy-50"
         >
           المكتبة
+        </Link>
+        <Link
+          to="/students"
+          className="text-xs font-extrabold border border-navy-200 text-navy-800 px-4 py-2.5 rounded-xl hover:bg-navy-50"
+        >
+          الطلاب
         </Link>
       </div>
     </div>

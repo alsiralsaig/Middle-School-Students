@@ -14,6 +14,7 @@ import { syncRouter } from './routes/sync.js';
 import { adminCodesRouter } from './routes/adminCodes.js';
 import { adminContentRouter } from './routes/adminContent.js';
 import { adminStudentsRouter } from './routes/adminStudents.js';
+import { adminOverviewRouter } from './routes/adminOverview.js';
 import { assertEnv } from './lib/envCheck.js';
 
 /* فحص بيئة التشغيل قبل أي شيء: يوقف الخادم إن كان الإنتاج بسرّ افتراضي */
@@ -88,6 +89,7 @@ app.use('/api', syncRouter);
 app.use('/api/admin', adminCodesRouter);
 app.use('/api/admin', adminContentRouter);
 app.use('/api/admin', adminStudentsRouter);
+app.use('/api/admin', adminOverviewRouter);
 
 app.use('/api', (_req, res) => {
   res.status(404).json({ error: 'المسار غير موجود' });
