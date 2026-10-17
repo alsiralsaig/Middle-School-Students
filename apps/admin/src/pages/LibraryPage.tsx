@@ -7,12 +7,27 @@ import {
   EmptyState,
   LoadingState,
   NotConnectedNote,
-  StatusBadge,
   Table,
 } from '../components/ui';
-import { useSimulatedData } from '../hooks/useSimulatedData';
-import { RESOURCES_DATA, subjectNameById, CONTENT_STATUS } from '@shared/curriculum';
 import type { ResourceCategory } from '@shared/curriculumTypes';
+import { getApiBase } from '../lib/serverUrl';
+
+interface LibraryRow {
+  id: string;
+  title: string;
+  category: string;
+  fileType: string;
+  fileSize: string;
+  pageCount: number;
+  author: string | null;
+  publishYear: string | null;
+  description: string;
+  status: string;
+  downloadCount: number;
+  isVerifiedCurriculum: boolean;
+  subjectId: string | null;
+  subjectName: string;
+}
 
 const CATEGORY_LABEL: Record<ResourceCategory, string> = {
   all: 'الكل',
@@ -25,8 +40,36 @@ const CATEGORY_LABEL: Record<ResourceCategory, string> = {
 const CATEGORIES: ResourceCategory[] = ['all', 'notes', 'textbook', 'worksheets', 'past_exams'];
 
 export const LibraryPage: React.FC = () => {
-  const { data: items, loading } = useSimulatedData(RESOURCES_DATA);
+  const [items, setItems] = useState<LibraryRow[] | null>(null);
+  const [summary, setSummary] = useState<{ total: number; verified: number; downloads: number } | null>(null);
+  const [offline, setOffline] = useState(false);
   const [category, setCategory] = useState<ResourceCategory>('all');
+
+  React.useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const res = await fetch(`${getApiBase()}/api/admin/library`, {
+          headers: { Accept: 'application/json', 'X-App': 'admin' },
+          credentials: 'include',
+        });
+        if (!res.ok) throw new Error(String(res.status));
+        const data = (await res.json()) as {
+          resources: LibraryRow[];
+          summary: { total: number; verified: number; downloads: number };
+        };
+        if (!alive) return;
+        setItems(data.resources);
+        setSummary(data.summary);
+        setOffline(false);
+      } catch {
+        if (alive) { setItems(null); setOffline(true); }
+      }
+    })();
+    return () => { alive = false; };
+  }, []);
+
+  const loading = items === null && !offline;
 
   const filtered = useMemo(
     () => (items ?? []).filter((r) => category === 'all' || r.category === category),
@@ -39,8 +82,8 @@ export const LibraryPage: React.FC = () => {
         <div>
           <h1 className="text-xl font-black text-navy-800">المكتبة</h1>
           <p className="text-xs text-slate-500 mt-1">
-            نفس بيانات مكتبة تطبيق الطالب — العرض والتصنيف جاهزان، والرفع يتطلب تخزيناً في المرحلة
-            القادمة.
+            عناصر حقيقية من قاعدة البيانات. الملفات نفسها تُرفع على خادم بقرص دائم — لا على
+            Vercel (نظام ملفات للقراءة فقط).
           </p>
         </div>
         <Button disabled title="رفع الملفات يتطلب خدمة تخزين (المرحلة القادمة)">
@@ -49,10 +92,27 @@ export const LibraryPage: React.FC = () => {
         </Button>
       </header>
 
-      <NotConnectedNote>
-        لا توجد ملفات مرفوعة فعلياً. العناصر أدناه <strong>بيانات تعريفية تجريبية</strong>، وروابط
-        التحميل غير متاحة حتى يتم ربط خدمة تخزين.
-      </NotConnectedNote>
+      {summary && (
+        <div className="grid grid-cols-3 gap-3">
+          {[
+            ['إجمالي العناصر', summary.total],
+            ['موثَّقة رسمياً', summary.verified],
+            ['مرّات التحميل', summary.downloads],
+          ].map(([label, value]) => (
+            <div key={label as string} className="bg-white border border-slate-200 rounded-2xl p-3">
+              <div className="text-lg font-black text-navy-800 nums">{value}</div>
+              <div className="text-[11px] text-slate-500">{label}</div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {offline && (
+        <NotConnectedNote>
+          تعذّر الوصول إلى الخادم. احفظ عنوان الخادم الصحيح من صفحة{' '}
+          <strong>الإعدادات</strong>.
+        </NotConnectedNote>
+      )}
 
       <Card>
         <div className="flex gap-2 flex-wrap mb-4">
@@ -92,17 +152,21 @@ export const LibraryPage: React.FC = () => {
                     </div>
                   </div>
                 </td>
-                <td className="py-2.5 px-3 text-slate-600">{subjectNameById(r.subjectId)}</td>
+                <td className="py-2.5 px-3 text-slate-600">{r.subjectName}</td>
                 <td className="py-2.5 px-3">
                   <Badge tone="navy">{r.fileType}</Badge>
                 </td>
                 <td className="py-2.5 px-3 nums text-slate-500">{r.pageCount}</td>
                 <td className="py-2.5 px-3 text-slate-500 whitespace-nowrap">{r.fileSize}</td>
-                <td className="py-2.5 px-3">
-                  <Badge tone="slate">غير مرفوع</Badge>
+                <td className="py-2.5 px-3 nums text-slate-500">
+                  {r.downloadCount} تحميل
                 </td>
                 <td className="py-2.5 px-3">
-                  <StatusBadge status={CONTENT_STATUS} />
+                  {r.isVerifiedCurriculum ? (
+                    <Badge tone="green">موثَّق</Badge>
+                  ) : (
+                    <Badge tone="slate">{r.status === 'sample' ? 'تجريبي' : r.status}</Badge>
+                  )}
                 </td>
               </tr>
             ))}
@@ -112,7 +176,7 @@ export const LibraryPage: React.FC = () => {
 
       <div className="flex items-center gap-2 text-[11px] text-slate-500">
         <Paperclip className="w-4 h-4 text-navy-800" />
-        <span>نفس المصدر: shared/curriculum.ts — RESOURCES_DATA</span>
+        <span>كل عنصر مقروء من جدول المكتبة في قاعدة البيانات.</span>
       </div>
     </div>
   );

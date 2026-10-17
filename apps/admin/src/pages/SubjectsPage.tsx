@@ -12,17 +12,24 @@ import {
   StatusBadge,
   Table,
 } from '../components/ui';
-import { useSimulatedData } from '../hooks/useSimulatedData';
-import { SUBJECTS_DATA, subjectEmoji, CONTENT_STATUS } from '@shared/curriculum';
+import { useSubjects } from '../hooks/useSubjects';
+import { subjectEmoji, CONTENT_STATUS } from '@shared/curriculum';
 import OfficialStructureCard from '../components/OfficialStructureCard';
 
 /* ============================ قائمة المواد ============================ */
 
 export const SubjectsPage: React.FC = () => {
-  const { data: subjects, loading } = useSimulatedData(SUBJECTS_DATA);
+  const { subjects, loading, offline } = useSubjects();
 
   return (
     <div className="space-y-5">
+      {offline && (
+        <NotConnectedNote>
+          تعذّر الوصول إلى الخادم — لا يمكن عرض المواد. احفظ عنوان الخادم
+          الصحيح من صفحة <strong>الإعدادات</strong>.
+        </NotConnectedNote>
+      )}
+
       <header className="flex items-start justify-between gap-3 flex-wrap">
         <div>
           <h1 className="text-xl font-black text-navy-800">المواد والدروس</h1>
@@ -93,10 +100,20 @@ export const SubjectsPage: React.FC = () => {
 
 export const SubjectDetailPage: React.FC = () => {
   const { subjectId } = useParams<{ subjectId: string }>();
-  const { data: subjects, loading } = useSimulatedData(SUBJECTS_DATA);
+  const { subjects, loading, offline } = useSubjects();
   const subject = (subjects ?? []).find((s) => s.id === subjectId);
 
   if (loading) return <LoadingState label="جارٍ تحميل تفاصيل المادة…" />;
+  if (offline) {
+    return (
+      <div className="space-y-5">
+        <NotConnectedNote>
+          تعذّر الوصول إلى الخادم — لا يمكن عرض تفاصيل المادة. احفظ عنوان
+          الخادم الصحيح من صفحة <strong>الإعدادات</strong>.
+        </NotConnectedNote>
+      </div>
+    );
+  }
 
   if (!subject) {
     return (

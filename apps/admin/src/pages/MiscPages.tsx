@@ -8,8 +8,6 @@ import {
   getDefaultApiBase,
 } from '../lib/serverUrl';
 import { EmptyState, NotConnectedNote, Table } from '../components/ui';
-import { useSimulatedData } from '../hooks/useSimulatedData';
-import { SAMPLE_ACTIVITIES } from '@shared/sampleContent';
 
 /* ============================ الطلاب ============================ */
 
@@ -196,49 +194,170 @@ export const StudentsPage: React.FC = () => {
 
 /* ============================ الأنشطة والتقارير ============================ */
 
+interface ActivitySummary {
+  totalMinutes: number;
+  totalSessions: number;
+  completedLessons: number;
+  students: number;
+  examAttempts: number;
+  averageScore: number;
+  averageMinutesPerStudent: number;
+}
+
+interface ActivityDay {
+  day: string;
+  minutes: number;
+  sessions: number;
+}
+
+interface RecentAttempt {
+  id: string;
+  student: string;
+  exam: string;
+  score: number;
+  total: number;
+  percent: number;
+  finished: boolean;
+  at: string;
+}
+
 export const ActivitiesPage: React.FC = () => {
-  const { data: activities, loading } = useSimulatedData(SAMPLE_ACTIVITIES);
+  const [summary, setSummary] = React.useState<ActivitySummary | null>(null);
+  const [days, setDays] = React.useState<ActivityDay[]>([]);
+  const [attempts, setAttempts] = React.useState<RecentAttempt[]>([]);
+  const [offline, setOffline] = React.useState(false);
+
+  React.useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const res = await fetch(`${getApiBase()}/api/admin/activity`, {
+          headers: { Accept: 'application/json', 'X-App': 'admin' },
+          credentials: 'include',
+        });
+        if (!res.ok) throw new Error(String(res.status));
+        const data = (await res.json()) as {
+          summary: ActivitySummary;
+          days: ActivityDay[];
+          recentAttempts: RecentAttempt[];
+        };
+        if (!alive) return;
+        setSummary(data.summary);
+        setDays(data.days);
+        setAttempts(data.recentAttempts);
+        setOffline(false);
+      } catch {
+        if (alive) { setSummary(null); setOffline(true); }
+      }
+    })();
+    return () => { alive = false; };
+  }, []);
+
+  const maxMinutes = Math.max(1, ...days.map((d) => d.minutes));
 
   return (
     <div className="space-y-5">
       <header>
         <h1 className="text-xl font-black text-navy-800">الأنشطة والتقارير</h1>
         <p className="text-xs text-slate-500 mt-1">
-          سجل تجريبي يوضّح شكل التقارير بعد ربط قاعدة البيانات.
+          كل رقم مقروء من جداول الجلسات والتقدّم ومحاولات الاختبارات.
         </p>
       </header>
 
-      {loading ? (
+      {offline && (
+        <NotConnectedNote>
+          تعذّر الوصول إلى الخادم. احفظ عنوان الخادم الصحيح من صفحة{' '}
+          <strong>الإعدادات</strong>.
+        </NotConnectedNote>
+      )}
+
+      {summary === null && !offline && (
         <div className="space-y-2">
-          {[0, 1, 2, 3].map((i) => (
+          {[0, 1, 2].map((i) => (
             <div key={i} className="h-12 rounded-xl bg-slate-100 animate-pulse" />
           ))}
         </div>
-      ) : (activities ?? []).length === 0 ? (
-        <div className="bg-white border border-slate-200 rounded-2xl">
-          <EmptyState
-            title="لا توجد أنشطة مسجّلة"
-            description="لا يوجد تتبّع فعلي للنشاط في هذه المرحلة — ستُسجَّل الأحداث تلقائياً بعد ربط الخادم."
-            hint="المرحلة القادمة: سجل الأنشطة"
-          />
-        </div>
-      ) : (
-        <div className="bg-white border border-slate-200 rounded-2xl p-4">
-          <ul className="divide-y divide-slate-100">
-            {(activities ?? []).map((a) => (
-              <li key={a.id} className="flex items-start gap-3 py-3">
-                <div className="w-8 h-8 rounded-lg bg-gold-100 grid place-items-center shrink-0">
-                  <BarChart3 className="w-4 h-4 text-gold-600" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-bold text-navy-800">{a.action}</p>
-                  <p className="text-[10px] text-slate-500 mt-0.5">{a.detail}</p>
-                </div>
-                <span className="text-[10px] text-slate-400 whitespace-nowrap">{a.time}</span>
-              </li>
+      )}
+
+      {summary && (
+        <>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {[
+              ['دقائق الدراسة', summary.totalMinutes],
+              ['الجلسات', summary.totalSessions],
+              ['دروس مكتملة', summary.completedLessons],
+              ['متوسط النتيجة', `${summary.averageScore}%`],
+            ].map(([label, value]) => (
+              <div key={label as string} className="bg-white border border-slate-200 rounded-2xl p-3">
+                <div className="text-lg font-black text-navy-800 nums">{value}</div>
+                <div className="text-[11px] text-slate-500">{label}</div>
+              </div>
             ))}
-          </ul>
-        </div>
+          </div>
+
+          <div className="bg-white border border-slate-200 rounded-2xl p-4">
+            <h2 className="text-sm font-black text-navy-800 mb-3">
+              دقائق الدراسة حسب اليوم
+            </h2>
+            {days.length === 0 ? (
+              <p className="text-xs text-slate-500">لا جلسات مسجّلة بعد.</p>
+            ) : (
+              <div className="space-y-1.5">
+                {days.map((d) => (
+                  <div key={d.day} className="flex items-center gap-3">
+                    <span className="nums text-[10px] text-slate-500 w-20 shrink-0">{d.day}</span>
+                    <div className="flex-1 h-4 rounded bg-slate-100 overflow-hidden">
+                      <div
+                        className="h-full rounded bg-navy-800"
+                        style={{ width: `${Math.round((d.minutes / maxMinutes) * 100)}%` }}
+                      />
+                    </div>
+                    <span className="nums text-[10px] text-slate-600 w-16 text-left">
+                      {d.minutes} د
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="bg-white border border-slate-200 rounded-2xl p-4">
+            <h2 className="text-sm font-black text-navy-800 mb-3">
+              آخر محاولات الاختبارات
+            </h2>
+            {attempts.length === 0 ? (
+              <p className="text-xs text-slate-500">لا محاولات بعد.</p>
+            ) : (
+              <Table head={['الطالب', 'الاختبار', 'النتيجة', 'النسبة']}>
+                {attempts.map((a) => (
+                  <tr key={a.id} className="hover:bg-slate-50/70">
+                    <td className="py-2.5 px-3 font-bold text-navy-800">{a.student}</td>
+                    <td className="py-2.5 px-3 text-slate-600">{a.exam}</td>
+                    <td className="py-2.5 px-3 nums text-slate-500">
+                      {a.score}/{a.total}
+                    </td>
+                    <td className="py-2.5 px-3">
+                      <span
+                        className={
+                          a.percent >= 50
+                            ? 'nums text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700'
+                            : 'nums text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700'
+                        }
+                      >
+                        {a.percent}%
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </Table>
+            )}
+          </div>
+
+          <div className="flex items-center gap-2 text-[11px] text-slate-500">
+            <BarChart3 className="w-4 h-4 text-navy-800" />
+            <span>لا أرقام مقدَّرة — كل ما سبق محسوب من قاعدة البيانات.</span>
+          </div>
+        </>
       )}
     </div>
   );
