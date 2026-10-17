@@ -1,151 +1,149 @@
-# خطوات النشر — افعلها بالترتيب
+# خطوات النشر — قاعدة البيانات تبقى SQLite
 
-الهدف في النهاية: **رابط خادم واحد** تضعه داخل تطبيق الأندرويد، فيعمل كل شيء.
+**لماذا Turso لا Neon؟** لأن المشروع مبني على SQLite، وTurso هي **SQLite نفسها**
+(نسخة متوافقة تماماً) لكن مستضافة. فلا يتغيّر المخطط ولا أي سطر استعلام،
+ولا حاجة إلى تحويل إلى PostgreSQL.
 
 ```
-Neon          ← قاعدة البيانات   (مجاني دائم)
-Vercel        ← الواجهتان والخادم (مجاني لغير التجاري)
-تطبيق الأندرويد ← يقرأ المنهج من قاعدة البيانات
+Turso   ← قاعدة SQLite مستضافة   (مجانية: ٥ جيجا · ٥٠٠ مليون قراءة/شهر)
+Vercel  ← الواجهتان والخادم      (مجاني لغير التجاري)
+التطبيق ← يقرأ المنهج من قاعدة البيانات
 ```
+
+> الكود **جاهز سلفاً**: إن وُجد `TURSO_DATABASE_URL` استخدم Turso، وإلا
+> استخدم ملف SQLite المحلي كما هو. لا تحتاج إلى تعديل أي شيء لتبديل الوضعين.
 
 ---
 
-## ١. قاعدة البيانات على Neon — ٣ دقائق
+## ١. أنشئ قاعدة Turso — ٣ دقائق
 
-١. اذهب إلى <https://neon.tech> وافتح حساباً (لا يطلب بطاقة)
-٢. «Create Project» ← الاسم `ssp` ← المنطقة اختَر الأقرب (Frankfurt)
-٣. من لوحة المشروع انسخ **رابط الاتصال** — وانتبه إلى نسخة **Pooled connection**
-   (يبدأ عادةً بـ `-pooler` في اسم المضيف)
+```bash
+# ثبّت الأداة
+curl -sSfL https://get.tur.so/install.sh | bash
 
-> ⚠️ **Pooled لا Direct.** Vercel يفتح اتصالات كثيرة، والرابط المباشر ينفد.
+# سجّل الدخول وافتح قاعدة
+turso auth signup          # أو turso auth login إن كان لديك حساب
+turso db create ssp
 
-الرابط يبدو هكذا:
+# الرابط والرمز
+turso db show ssp --url     # → libsql://ssp-username.turso.io
+turso db tokens create ssp  # → رمز طويل
 ```
-postgresql://user:pass@ep-xxxx-pooler.eu-central-1.aws.neon.tech/neondb?sslmode=require
-```
+
+المجاني يكفي: ٥ جيجا، ٥٠٠ مليون قراءة و١٠ ملايين كتابة شهرياً، **بلا بطاقة ائتمان**.
 
 ---
 
-## ٢. تبديل Prisma إلى PostgreSQL — من عندك في المستودع
+## ٢. انسخ المخطط إلى Turso
 
-في `apps/api/prisma/schema.prisma` بدّل:
-
-```prisma
-datasource db {
-  provider = "sqlite"      // ← احذف
-  provider = "postgresql"  // ← ضع هذا
-  url      = env("DATABASE_URL")
-}
-```
-
-ثم طبّق الجداول على Neon:
+أدوات الهجرة في Prisma لا تتحدث `libsql://` مباشرة، فنولّد SQL ثم نطبّقه:
 
 ```bash
 cd apps/api
-DATABASE_URL="الرابط_الذي_نسخته" npx prisma migrate deploy
-DATABASE_URL="الرابط_الذي_نسخته" npx prisma db seed   # إن وُجد بذور
+
+# ١. ولّد SQL المخطط
+npx prisma migrate diff \
+  --from-empty \
+  --to-schema-datamodel prisma/schema.prisma \
+  --script > /tmp/schema.sql
+
+# ٢. طبّقه
+turso db shell ssp < /tmp/schema.sql
 ```
 
----
-
-## ٣. جعل الخادم قابلاً للتصدير — تعديل صغير
-
-في `apps/api/src/index.ts` غيّر نهاية الملف من:
-
-```ts
-app.listen(PORT, () => console.log('...'));
-```
-
-إلى:
-
-```ts
-export default app;                              // لـ Vercel
-if (!process.env.VERCEL) {                       // للتطوير المحلي
-  app.listen(PORT, () => console.log('...'));
-}
-```
-
----
-
-## ٤. النشر على Vercel — ثلاثة مشاريع
-
-لكل مشروع: «Add New» ← «Project» ← اختر المستودع ← **Root Directory**
-
-| # | المشروع | Root Directory | الإعداد |
-|---|---|---|---|
-| ١ | تطبيق الطالب | `apps/student` | Build: `npm run build` · Output: `dist` |
-| ٢ | لوحة الإدارة | `apps/admin` | Build: `npm run build` · Output: `dist` |
-| ٣ | الخادم | `apps/api` | Vercel يكتشف Express تلقائياً |
-
-> الجذور `vercel.json` و `apps/admin/vercel.json` موجودة في المستودع أصلاً،
-> فلا تحتاج إلى ضبط `outputDirectory` يدوياً.
-
-### متغيّرات البيئة
-
-**في مشروع الخادم (٣):**
-```
-DATABASE_URL = الرابط من Neon (Pooled)
-JWT_SECRET   = ولّده: node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"
-NODE_ENV     = production
-```
-
-**في مشروعي الواجهتين (١ و ٢):**
-```
-VITE_API_URL = https://ssp-api.vercel.app     ← رابط مشروع الخادم
-```
-
-احفظ الرابط — **هذا هو ما ستضعه داخل التطبيق**.
-
-اختباره:
+تحقّق:
 ```bash
-curl https://ssp-api.vercel.app/api/subjects
+turso db shell ssp ".tables"
 ```
-يجب أن يردّ بـ JSON فيه المواد.
 
 ---
 
-## ٥. ضبط العنوان داخل التطبيق — مرة واحدة
+## ٣. املأ البيانات (المنهج والحسابات)
 
-- **تطبيق الطالب:** تفتح نافذة «عنوان الخادم» تلقائياً أول تشغيل
-- **لوحة الإدارة:** الإعدادات ← بطاقة «عنوان الخادم»
+```bash
+cd apps/api
+export TURSO_DATABASE_URL="libsql://ssp-username.turso.io"
+export TURSO_AUTH_TOKEN="الرمز_من_الخطوة_١"
 
-اكتب الرابط، اضغط **«اختبار الاتصال»**، ثم **حفظ**.
+npx tsx prisma/seed.ts
+```
 
-يُحفظ العنوان على الجهاز — فلا إعادة بناء ولا إعادة تحميل عند تغييره.
-
----
-
-## بديل: Render بدل Vercel للخادم
-
-إن أردت استخداماً تجارياً أو رفع ملفات على القرص:
-
-١. <https://render.com> ← «New» ← «Web Service» ← اربط المستودع
-٢. Root Directory: `apps/api`
-٣. Build: `npm install && npm run build`
-٤. Start: `node dist/index.js`
-٥. أضف `DATABASE_URL` و `JWT_SECRET` في «Environment»
-
-> ⚠️ النسخة المجانية **تنام بعد ١٥ دقيقة** — أول طلب يأخذ نحو دقيقة.
-> ⚠️ قاعدة Postgres المجانية على Render **تنتهي بعد ٣٠ يوماً** — استخدم Neon.
+يجب أن ترى: `📚 المواد: 8 · الوحدات: 13 · الدروس: 23`
 
 ---
 
-## تذكير التثبيت على الأندرويد
+## ٤. انشر الخادم
 
-إن رفض الجهاز التثبيت:
-- فعّل **«السماح من مصادر غير معروفة»** للمتصفح أو مدير الملفات
-- أو عطّل **Play Protect** مؤقتاً أثناء التثبيت
+### Vercel (مجاني، لغير التجاري)
 
-السبب: التطبيق موقّع بمفتاح تطوير، لا مفتاح متجر Google.
+١. «Add New» ← «Project» ← اختر المستودع ← Root Directory = `apps/api`
+٢. Vercel يكتشف Express تلقائياً (دعم رسمي منذ أغسطس ٢٠٢٦)
+٣. أضف متغيّرات البيئة:
+```
+TURSO_DATABASE_URL = libsql://ssp-username.turso.io
+TURSO_AUTH_TOKEN   = الرمز
+JWT_SECRET         = node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"
+NODE_ENV           = production
+```
+
+### Render (بديل — إن أردت استخداماً تجارياً)
+
+١. «New» ← «Web Service» ← اربط المستودع
+٢. Root Directory: `apps/api` · Build: `npm install && npm run build` · Start: `node dist/index.js`
+٣. نفس المتغيّرات أعلاه
+
+> ⚠️ النسخة المجانية على Render **تنام بعد ١٥ دقيقة** — أول طلب يأخذ نحو دقيقة.
 
 ---
 
-## ترتيب سريع
+## ٥. انشر الواجهتين
+
+لكل واحدة مشروع منفصل على Vercel:
+
+| المشروع | Root Directory | المتغيّر |
+|---|---|---|
+| تطبيق الطالب | `apps/student` | `VITE_API_URL = رابط الخادم` |
+| لوحة الإدارة | `apps/admin` | `VITE_API_URL = رابط الخادم` |
+
+> `vercel.json` في الجذر وفي `apps/admin` موجود أصلاً، فلا ضبط يدوي.
+
+اختبار:
+```bash
+curl https://your-api.vercel.app/api/subjects
+```
+يجب أن يردّ JSON فيه ٨ مواد.
+
+---
+
+## ٦. ضبط العنوان داخل التطبيق
+
+الرابط مفتوح الآن داخل التطبيق — لا يحتاج إعادة بناء:
+
+- **الطالب:** تفتح نافذة «عنوان الخادم» تلقائياً أول تشغيل (أو `#server`)
+- **الإدارة:** الإعدادات ← بطاقة «عنوان الخادم»
+
+اكتب الرابط ← **«اختبار الاتصال»** ← **حفظ**.
+
+---
+
+## ملاحظات
+
+- **التطبيق يعمل بدون خادم أيضاً** — يقرأ المنهج من نسخة مضمّنة. لكن
+  تعديلات الإدارة وحسابات الطلاب تحتاج الخادم.
+- **النسخ الاحتياطي:** مجانية Turso فيها استعادة ليوم واحد. صدّر نسخة دورياً:
+  ```bash
+  turso db shell ssp ".dump" > backup-$(date +%F).sql
+  ```
+- **إن أردت PostgreSQL لاحقاً** فالتحويل ممكن، لكن لا داعي له الآن.
+
+---
+
+## الترتيب السريع
 
 ```
-١. Neon  ← أنشئ القاعدة · انسخ الرابط Pooled
-٢. Prisma ← postgresql + migrate deploy
-٣. index.ts ← export default app
-٤. Vercel ← ٣ مشاريع + المتغيّرات
-٥. التطبيق ← اكتب الرابط · اختبار · حفظ
+١. turso db create ssp          ← أنشئ القاعدة
+٢. migrate diff + turso shell    ← انسخ المخطط
+٣. tsx prisma/seed.ts            ← املأ المنهج
+٤. Vercel (٣ مشاريع)             ← انشر
+٥. التطبيق ← اكتب الرابط         ← اربط
 ```
