@@ -1,12 +1,12 @@
 // مخطط قاعدة البيانات — منصة الطالب السوداني الذكية
-// SQLite للتطوير · PostgreSQL للإنتاج (غيّر provider في datasource)
+// PostgreSQL — تُقرأ من المتغيّر DATABASE_URL (Neon للإنتاج)
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
