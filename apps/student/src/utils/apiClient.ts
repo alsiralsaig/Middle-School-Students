@@ -12,7 +12,10 @@ export interface SessionUser {
   name: string;
   phone: string | null;
   email: string | null;
-  role: 'student' | 'admin';
+  /**
+   * لا يوجد حقل `role` هنا — تطبيق الطالب لا يعرف الأدوار أصلاً.
+   * فصلُ التطبيقين يقتضي ألّا يحمل تطبيق الطالب أي مفهوم «حساب إدارة».
+   */
   grade: string | null;
   school: string | null;
   avatar: string | null;
@@ -56,10 +59,17 @@ class ApiError extends Error {
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   let res: Response;
   try {
+    // تُبنى الترويسة بعد `init` حتى لا يفقد أي مُستدعٍ ترويسة X-App
+    const headers: Record<string, string> = {
+      // يعلن تطبيق الطالب عن نفسه — الخادم يرفض دخول حسابات الإدارة منه
+      'X-App': 'student',
+      ...(init?.body ? { 'Content-Type': 'application/json' } : {}),
+      ...((init?.headers as Record<string, string> | undefined) ?? {}),
+    };
     res = await fetch(`${BASE}${path}`, {
-      credentials: 'include',
-      headers: init?.body ? { 'Content-Type': 'application/json' } : undefined,
       ...init,
+      credentials: 'include',
+      headers,
     });
   } catch {
     throw new ApiError('تعذّر الاتصال بالخادم — تعمل المنصة الآن دون اتصال', 0);

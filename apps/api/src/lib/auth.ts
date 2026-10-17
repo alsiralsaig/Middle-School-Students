@@ -8,10 +8,19 @@ const TOKEN_TTL = '30d';
 
 export type UserRole = 'student' | 'admin';
 
+/** أي تطبيق أصدر هذا الرمز — تطبيق الطالب أم لوحة الإدارة. */
+export type AppScope = 'student' | 'admin';
+
 export interface JwtPayload {
   uid: string;
   role: UserRole;
   name: string;
+  /**
+   * نطاق التطبيق. لماذا موجود: التطبيقان منفصلان، فلا يكفي أن نعرف أن
+   * المستخدم «مدير» — يجب أن نعرف أيضاً **من أين دخل**. رمزٌ صادر عن تطبيق
+   * الطالب لا يفتح مسارات الإدارة، والعكس صحيح.
+   */
+  app: AppScope;
 }
 
 export function hashPassword(plain: string): Promise<string> {
@@ -82,6 +91,11 @@ export function requireAdmin(req: Request, res: Response, next: NextFunction): v
   }
   if (user.role !== 'admin') {
     res.status(403).json({ error: 'هذه العملية متاحة للإدارة فقط' });
+    return;
+  }
+  // حساب إدارة دخل من تطبيق الطالب لا يملك صلاحيات الإدارة
+  if (user.app !== 'admin') {
+    res.status(403).json({ error: 'هذه العملية متاحة من لوحة الإدارة فقط' });
     return;
   }
   next();

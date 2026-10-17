@@ -81,7 +81,8 @@ authRouter.post('/register', async (req, res) => {
       },
     });
 
-    const token = signToken({ uid: user.id, role: 'student', name: user.name });
+    // التسجيل via هذا المسار طلابي دائماً — حساب الإدارة لا يُنشأ من هنا
+    const token = signToken({ uid: user.id, role: 'student', name: user.name, app: 'student' });
     setAuthCookie(res, token);
     res.status(201).json({ user: publicUser(user), token });
   } catch (e) {
@@ -110,10 +111,28 @@ authRouter.post('/login', async (req, res) => {
       return;
     }
 
+    /* التطبيقان منفصلان: نطابق بين التطبيق الذي يطلب الدخول ونوع الحساب.
+       الترويسة X-App يرسلها كل تطبيق عن نفسه (تطبيق الطالب: student). */
+    const app = req.header('x-app') === 'admin' ? 'admin' : 'student';
+
+    if (user.role === 'admin' && app !== 'admin') {
+      res.status(403).json({
+        error: 'هذا حساب إدارة. تطبيق الطالب مخصّص للطلاب — استخدم لوحة الإدارة.',
+      });
+      return;
+    }
+    if (user.role === 'student' && app === 'admin') {
+      res.status(403).json({
+        error: 'هذا حساب طالب. لوحة الإدارة مخصّصة لحسابات الإدارة.',
+      });
+      return;
+    }
+
     const token = signToken({
       uid: user.id,
       role: user.role as 'student' | 'admin',
       name: user.name,
+      app,
     });
     setAuthCookie(res, token);
     res.json({ user: publicUser(user), token });

@@ -80,7 +80,6 @@ export const PlatformAuthCard: React.FC = () => {
             <p className="text-sm font-bold text-white truncate">{user.name}</p>
             <p className="text-[11px] text-slate-400 mt-0.5">
               {user.phone ? `📱 ${user.phone}` : user.email}
-              {user.role === 'admin' && ' · حساب إدارة'}
             </p>
           </div>
           <button
