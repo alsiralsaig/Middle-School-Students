@@ -1,3 +1,4 @@
+import fs from 'node:fs';
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
@@ -56,7 +57,14 @@ app.use('/api/auth', (req, res, next) => {
   next();
 });
 
-ensureUploadDir();
+// على Vercel نظام الملفات للقراءة فقط — لا ننشئ مجلداً، والرفع معطّل هناك
+if (!process.env.VERCEL) {
+  try {
+    ensureUploadDir();
+  } catch {
+    /* تجاهل: بيئة بلا قرص قابل للكتابة */
+  }
+}
 
 /* ============================ المسارات ============================ */
 
@@ -84,7 +92,9 @@ app.use('/api', (_req, res) => {
 });
 
 /* ملفات مرفوعة (إن وُجد مجلد uploads) */
-app.use('/uploads', express.static(UPLOAD_DIR, { fallthrough: true }));
+if (fs.existsSync(UPLOAD_DIR)) {
+  app.use('/uploads', express.static(UPLOAD_DIR, { fallthrough: true }));
+}
 
 /* ============================ معالجة الأخطاء ============================ */
 
@@ -109,7 +119,13 @@ app.use(
   },
 );
 
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`✅ الخادم يعمل على http://localhost:${PORT}`);
-  console.log(`   الصحة: http://localhost:${PORT}/api/health`);
-});
+/* Vercel يستورد التطبيق كدالة (Function) ولا يشغّله كخادم دائم،
+   فيجب تصديره. أما محلياً وفي Render فيحتاج الاستماع فعلياً. */
+export default app;
+
+if (!process.env.VERCEL) {
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`✅ الخادم يعمل على http://localhost:${PORT}`);
+    console.log(`   الصحة: http://localhost:${PORT}/api/health`);
+  });
+}

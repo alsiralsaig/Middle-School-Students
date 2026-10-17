@@ -9,16 +9,16 @@
     "start": "tsx src/index.ts",
     "lint": "tsc --noEmit",
     "db:generate": "prisma generate",
-    "db:migrate": "prisma migrate dev",
+    "db:migrate": "prisma migrate deploy",
     "db:deploy": "prisma migrate deploy",
     "db:status": "prisma migrate status",
-    "db:push": "prisma db push --skip-generate",
     "db:seed": "tsx prisma/seed.ts",
-    "db:reset": "rm -f prisma/dev.db && npm run db:deploy && npm run db:seed",
+    "db:reset": "prisma migrate reset --force && tsx prisma/seed.ts",
     "db:studio": "prisma studio",
     "db:backup": "node prisma/db-tool.mjs backup",
     "db:restore": "node prisma/db-tool.mjs restore",
-    "db:backups": "node prisma/db-tool.mjs list"
+    "db:backups": "node prisma/db-tool.mjs list",
+    "build": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
