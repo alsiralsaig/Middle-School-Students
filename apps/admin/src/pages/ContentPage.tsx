@@ -1,6 +1,6 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { BookOpen, Paperclip, Plus, Search } from 'lucide-react';
+import { BookOpen, Paperclip, Plus, Search, SquarePen } from 'lucide-react';
 import {
   Badge,
   Button,
@@ -11,15 +11,78 @@ import {
   StatusBadge,
   Table,
 } from '../components/ui';
-import { useSimulatedData } from '../hooks/useSimulatedData';
+import { api } from '../lib/contentApi';
 import { allLessons, CONTENT_STATUS } from '@shared/curriculum';
 
+interface LessonRow {
+  id: string;
+  title: string;
+  summary: string;
+  subjectId: string;
+  subjectName: string;
+  unitTitle: string;
+  durationMinutes: number;
+  sections: unknown[];
+  attachments: unknown[];
+  status: string;
+}
+
+const SUBJECT_NAMES: Record<string, string> = {
+  arabic: 'اللغة العربية',
+  civics: 'التربية الوطنية',
+  english: 'الإنجليزية',
+  ict: 'تكنولوجيا المعلومات',
+  islamic: 'التربية الإسلامية',
+  math: 'الرياضيات',
+  science: 'العلوم',
+  social: 'الاجتماعيات',
+};
+
 export const ContentPage: React.FC = () => {
-  const { data: lessons, loading } = useSimulatedData(allLessons());
+  /* الدروس من **قاعدة البيانات** — والملفات المضمّنة ملاذ أخير إن غاب الخادم */
+  const [rows, setRows] = useState<LessonRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [offline, setOffline] = useState(false);
   const [q, setQ] = useState('');
 
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      setLoading(true);
+      try {
+        const { lessons } = await api.listLessons();
+        if (!alive) return;
+        setRows(
+          lessons.map((l) => ({
+            id: l.id,
+            title: l.title,
+            summary: l.summary,
+            subjectId: l.subjectId,
+            subjectName: SUBJECT_NAMES[l.subjectId] ?? l.subjectId,
+            unitTitle: l.unit?.title ?? '—',
+            durationMinutes: l.durationMinutes,
+            sections: [],
+            attachments: [],
+            status: l.status,
+          }))
+        );
+        setOffline(false);
+      } catch (e) {
+        if (!alive) return;
+        setOffline(api.isOffline(e));
+        // لا خادم → نعرض الملفات المضمّنة للاستعراض فقط
+        setRows(allLessons() as unknown as LessonRow[]);
+      } finally {
+        if (alive) setLoading(false);
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, []);
+
   const filtered = useMemo(() => {
-    const list = lessons ?? [];
+    const list = rows;
     return list.filter((l) => {
       const term = q.trim();
       if (!term) return true;
@@ -30,7 +93,7 @@ export const ContentPage: React.FC = () => {
         l.unitTitle.includes(term)
       );
     });
-  }, [lessons, q]);
+  }, [rows, q]);
 
   return (
     <div className="space-y-5">
@@ -76,7 +139,7 @@ export const ContentPage: React.FC = () => {
           />
         ) : (
           <>
-            <Table head={['الدرس', 'المادة', 'الوحدة', 'المدة', 'أقسام', 'مرفقات', 'الحالة']}>
+            <Table head={['الدرس', 'المادة', 'الوحدة', 'المدة', 'أقسام', 'مرفقات', 'الحالة', '']}>
               {filtered.map((l) => (
                 <tr key={`${l.subjectId}-${l.id}`} className="hover:bg-slate-50/70">
                   <td className="py-2.5 px-3">
@@ -94,23 +157,39 @@ export const ContentPage: React.FC = () => {
                     </span>
                   </td>
                   <td className="py-2.5 px-3">
-                    <StatusBadge status={CONTENT_STATUS} />
+                    <StatusBadge status={l.status as never} />
+                  </td>
+                  <td className="py-2.5 px-3 text-left">
+                    <Link
+                      to={`/content/${l.id}`}
+                      className="inline-flex items-center gap-1 text-[11px] font-bold text-navy-800 hover:text-gold-600"
+                    >
+                      <SquarePen className="w-3.5 h-3.5" />
+                      تحرير
+                    </Link>
                   </td>
                 </tr>
               ))}
             </Table>
             <p className="text-[10px] text-slate-400 mt-3">
               عدد النتائج: <span className="nums">{filtered.length}</span> من{' '}
-              <span className="nums">{(lessons ?? []).length}</span>
+              <span className="nums">{rows.length}</span>
             </p>
           </>
         )}
       </Card>
 
-      <NotConnectedNote>
-        الحفظ والتحرير والنشر <strong>غير مُفعّلة</strong> في هذه المرحلة (لا قاعدة بيانات). الواجهة
-        معدة لاستقبالها لاحقاً دون تغيير التصميم.
-      </NotConnectedNote>
+      {offline ? (
+        <NotConnectedNote>
+          لا يمكن الوصول إلى الخادم، فتُعرض الملفات المضمّنة <strong>للاستعراض فقط</strong>.
+          شغّل الخادم لتحرير المحتوى وحفظه في قاعدة البيانات.
+        </NotConnectedNote>
+      ) : (
+        <p className="text-[10px] text-slate-400 leading-relaxed px-1">
+          هذه الدروس مقروءة من <strong>قاعدة البيانات</strong> — أي تعديل تحفظه here يراه
+          الطلاب فور تحميلهم المنهج.
+        </p>
+      )}
 
       <div className="flex flex-wrap gap-2">
         <Link

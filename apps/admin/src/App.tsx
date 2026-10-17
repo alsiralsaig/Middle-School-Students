@@ -7,6 +7,7 @@ import { RatingsPage } from './pages/RatingsPage';
 import { SubjectDetailPage, SubjectsPage } from './pages/SubjectsPage';
 import { ActivitiesPage, SettingsPage, StudentsPage } from './pages/MiscPages';
 import CodesPage from './pages/CodesPage';
+import LessonEditorPage from './pages/LessonEditorPage';
 import { EmptyState } from './components/ui';
 
 export default function App() {
@@ -18,6 +19,7 @@ export default function App() {
           <Route path="/subjects" element={<SubjectsPage />} />
           <Route path="/subjects/:subjectId" element={<SubjectDetailPage />} />
           <Route path="/content" element={<ContentPage />} />
+          <Route path="/content/:lessonId" element={<LessonEditorPage />} />
           <Route path="/library" element={<LibraryPage />} />
           <Route path="/ratings" element={<RatingsPage />} />
           <Route path="/codes" element={<CodesPage />} />
