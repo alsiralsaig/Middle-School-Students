@@ -70,7 +70,7 @@ async function ask(history: Array<{ sender: Role; text: string }>, question: str
   });
   contents.push({ role: 'user', parts: [{ text: question }] });
 
-  for (const model of ['gemini-2.5-flash', 'gemini-2.0-flash']) {
+  for (const model of ['gemini-flash-latest', 'gemini-flash-lite-latest']) {
     try {
       const res = await ai.models.generateContent({
         model,
@@ -137,7 +137,7 @@ aiRouter.post('/ai/voice', requireAuth, async (req, res) => {
   const parts: Array<Record<string, unknown>> = [{ text: instruction }];
   parts.push({ inlineData: { mimeType, data: audioB64 } });
 
-  for (const model of ['gemini-2.5-flash', 'gemini-2.0-flash']) {
+  for (const model of ['gemini-flash-latest', 'gemini-flash-lite-latest']) {
     for (const mime of [mimeType, mimeType === 'audio/webm' ? 'audio/ogg' : mimeType]) {
       try {
         parts[1] = { inlineData: { mimeType: mime, data: audioB64 } };
