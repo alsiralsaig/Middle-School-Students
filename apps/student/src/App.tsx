@@ -5,7 +5,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { ViewMode, Lesson, Subject } from './types';
-import { SUBJECTS_DATA, RESOURCES_DATA } from './data/curriculumData';
+import { RESOURCES_DATA, useSubjects, refreshCurriculum } from './data/curriculumData';
 import { Header } from './components/Header';
 import { MobileBottomNav } from './components/MobileBottomNav';
 import { Footer } from './components/Footer';
@@ -30,6 +30,14 @@ import { AchievementsView } from './views/AchievementsView';
 import { StudyRoomsView } from './views/StudyRoomsView';
 
 function AppContent() {
+  /* المنهج من قاعدة البيانات (مع نسخة محفوظة تعمل دون اتصال) */
+  const SUBJECTS_DATA = useSubjects();
+
+  useEffect(() => {
+    // يُحمّل من الخادم عند الإقلاع؛ الفشل يُبقي النسخة المحفوظة محلياً
+    void refreshCurriculum();
+  }, []);
+
   const [currentView, setCurrentView] = useState<ViewMode>('home');
   const [selectedSubjectId, setSelectedSubjectId] = useState<string>('math');
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);

@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { CalendarPlus, Clock3, GraduationCap, Repeat, Trash2 } from 'lucide-react';
-import { SUBJECTS_DATA } from '../data/curriculumData';
+import { useSubjects } from '../data/curriculumData';
 import { PlannerEvent, addEvents, getAllEvents, removeGroup, subscribePlanner } from '../utils/plannerStore';
 import { showToast } from '../utils/toastBus';
 import { relativeArabic } from '../utils/toastBus';
@@ -29,7 +29,8 @@ function nextWeekday(weekday: number, from = new Date()): Date {
  * والمواعيد تُحفظ محلياً في متصفح الطالب فقط.
  */
 export const WeeklyExamPlanner: React.FC = () => {
-  const [subjectId, setSubjectId] = useState(SUBJECTS_DATA[0]?.id ?? 'math');
+  const subjects = useSubjects();
+  const [subjectId, setSubjectId] = useState(subjects[0]?.id ?? 'math');
   const [weekday, setWeekday] = useState<number>(new Date().getDay());
   const [time, setTime] = useState('19:00');
   const [weeks, setWeeks] = useState(4);
@@ -53,7 +54,7 @@ export const WeeklyExamPlanner: React.FC = () => {
 
   const handleSchedule = (e: React.FormEvent) => {
     e.preventDefault();
-    const subject = SUBJECTS_DATA.find((s) => s.id === subjectId);
+    const subject = subjects.find((s) => s.id === subjectId);
     if (!subject) return;
 
     const groupId = `trial-${Date.now()}`;
@@ -111,7 +112,7 @@ export const WeeklyExamPlanner: React.FC = () => {
             onChange={(e) => setSubjectId(e.target.value)}
             className="w-full mt-1 px-3 py-2.5 rounded-xl border border-slate-200 dark:border-[#24406B] bg-white dark:bg-[#0A1B30] text-xs font-semibold text-slate-800 dark:text-slate-100 outline-none"
           >
-            {SUBJECTS_DATA.map((s) => (
+            {subjects.map((s) => (
               <option key={s.id} value={s.id}>
                 {s.name}
               </option>

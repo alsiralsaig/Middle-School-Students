@@ -7,6 +7,8 @@
  * في النشر (Vercel مثلاً) لا وجود لهذا التحويل، فيُقرأ العنوان من المتغيّر
  * `VITE_API_URL` — وإلا فالمسار النسبي كالسابق.
  */
+import type { Subject } from '@shared/curriculumTypes';
+
 const BASE = (
   (import.meta.env.VITE_API_URL as string | undefined) || '/backend'
 ).replace(/\/+$/, '');
@@ -107,6 +109,12 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 export const api = {
   /** فحص بسيط لمعرفة إن كان الخادم متاحاً */
   health: () => request<{ ok: boolean; stage?: string }>('/api/health'),
+
+  /**
+   * المنهج كما في **قاعدة البيانات** — لا كما في الملفات المضمّنة.
+   * هذا هو المصدر الموثوق: ما تعدّله الإدارة يظهر هنا مباشرة.
+   */
+  subjects: () => request<{ subjects: Subject[] }>('/api/subjects'),
 
   me: () => request<{ user: SessionUser }>('/api/auth/me'),
 

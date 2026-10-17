@@ -16,7 +16,7 @@ import {
   BookOpen
 } from 'lucide-react';
 import { StudyReminder } from '../types';
-import { SUBJECTS_DATA } from '../data/curriculumData';
+import { useSubjects } from '../data/curriculumData';
 
 const INITIAL_REMINDERS: StudyReminder[] = [
   {
@@ -69,7 +69,8 @@ export const StudyReminderWidget: React.FC = () => {
 
   // Form states
   const [formTime, setFormTime] = useState('18:00');
-  const [formSubject, setFormSubject] = useState(SUBJECTS_DATA[0].name);
+  const subjects = useSubjects();
+  const [formSubject, setFormSubject] = useState(subjects[0]?.name ?? '');
   const [formLabel, setFormLabel] = useState('');
   const [formDays, setFormDays] = useState<string[]>(['يومياً']);
   const [formNotifyBrowser, setFormNotifyBrowser] = useState(true);
@@ -271,7 +272,7 @@ export const StudyReminderWidget: React.FC = () => {
                 onChange={(e) => setFormSubject(e.target.value)}
                 className="w-full px-3 py-2 rounded-xl bg-white dark:bg-[#10243C] border border-slate-200 dark:border-[#1E3A60] text-xs text-slate-800 dark:text-slate-100 outline-none"
               >
-                {SUBJECTS_DATA.map((s) => (
+                {subjects.map((s) => (
                   <option key={s.id} value={s.name}>
                     {s.name}
                   </option>
