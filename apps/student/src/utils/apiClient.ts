@@ -1,11 +1,15 @@
 /**
  * عميل الواجهة للتواصل مع خادم المنصة (apps/api).
  *
- * كل الطلبات تمر عبر مسار نسبي /backend حتى تعمل داخل معاينة المتصفح
- * (المتصفح لا يصل إلى localhost في بيئة التطوير) — ويقوم خادم Vite
- * بتحويلها إلى http://localhost:5000.
+ * في التطوير يمرّ عبر المسار النسبي `/backend` الذي يحوّله خادم Vite إلى
+ * http://localhost:5000 (المتصفح لا يصل إلى المنفذ مباشرة).
+ *
+ * في النشر (Vercel مثلاً) لا وجود لهذا التحويل، فيُقرأ العنوان من المتغيّر
+ * `VITE_API_URL` — وإلا فالمسار النسبي كالسابق.
  */
-const BASE = '/backend';
+const BASE = (
+  (import.meta.env.VITE_API_URL as string | undefined) || '/backend'
+).replace(/\/+$/, '');
 
 export interface SessionUser {
   id: string;
@@ -76,6 +80,13 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   }
 
   const text = await res.text();
+
+  /* إن أعاد المسار صفحة HTML بدل بيانات، فالمسار خاطئ أو الخادم غير منشور
+     (مثل نشر الواجهة على Vercel بلا API) — نبلغ بوضوح لا بخطأ مبهم. */
+  if (text.trimStart().startsWith('<')) {
+    throw new ApiError('الخادم غير متاح — يعمل التطبيق الآن دون اتصال', 0);
+  }
+
   let data: unknown = null;
   try {
     data = text ? JSON.parse(text) : null;

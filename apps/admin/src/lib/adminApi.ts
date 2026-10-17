@@ -11,7 +11,13 @@ import { useState, useEffect, useCallback } from 'react';
  * الطلبات تمرّ عبر المسار النسبي `/backend` (وكيل Vite → :5000) حتى تعمل
  * داخل المعاينة: متصفح المستخدم لا يصل إلى منفذ آخر مباشرة.
  */
-const BASE = '/backend';
+/**
+ * في التطوير: المسار النسبي `/backend` الذي يحوّله Vite إلى :5000.
+ * في النشر: يُقرأ من `VITE_API_URL`، وإلا فالمسار النسبي.
+ */
+const BASE = (
+  (import.meta.env.VITE_API_URL as string | undefined) || '/backend'
+).replace(/\/+$/, '');
 
 export interface AdminUser {
   id: string;
@@ -64,6 +70,12 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   }
 
   const text = await res.text().catch(() => '');
+
+  /* صفحة HTML بدل JSON = الخادم غير منشور أو العنوان خطأ */
+  if (text.trimStart().startsWith('<')) {
+    throw new ApiError('الخادم غير متاح — تعذّر الاتصال به', 0, true);
+  }
+
   let data: unknown = null;
   try {
     data = text ? JSON.parse(text) : null;
