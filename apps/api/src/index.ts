@@ -13,6 +13,7 @@ import { uploadsRouter } from './routes/uploads.js';
 import { syncRouter } from './routes/sync.js';
 import { adminCodesRouter } from './routes/adminCodes.js';
 import { adminContentRouter } from './routes/adminContent.js';
+import { adminStudentsRouter } from './routes/adminStudents.js';
 import { assertEnv } from './lib/envCheck.js';
 
 /* فحص بيئة التشغيل قبل أي شيء: يوقف الخادم إن كان الإنتاج بسرّ افتراضي */
@@ -86,6 +87,7 @@ app.use('/api', syncRouter);
 // مسارات الإدارة — وراء requireAdmin (دور مدير + رمز صادر عن لوحة الإدارة)
 app.use('/api/admin', adminCodesRouter);
 app.use('/api/admin', adminContentRouter);
+app.use('/api/admin', adminStudentsRouter);
 
 app.use('/api', (_req, res) => {
   res.status(404).json({ error: 'المسار غير موجود' });

@@ -7,51 +7,150 @@ import {
   hasCustomApiBase,
   getDefaultApiBase,
 } from '../lib/serverUrl';
-import { EmptyState, NotConnectedNote, StatusBadge, Table } from '../components/ui';
+import { EmptyState, NotConnectedNote, Table } from '../components/ui';
 import { useSimulatedData } from '../hooks/useSimulatedData';
-import { SAMPLE_STUDENTS, SAMPLE_ACTIVITIES } from '@shared/sampleContent';
+import { SAMPLE_ACTIVITIES } from '@shared/sampleContent';
 
 /* ============================ الطلاب ============================ */
 
+interface StudentRow {
+  id: string;
+  code: string;
+  name: string;
+  phone: string | null;
+  grade: string;
+  school: string;
+  state: string;
+  lastActivity: string;
+  progressPercent: number;
+  completedLessons: number;
+  totalLessons: number;
+  studyMinutes: number;
+  examAttempts: number;
+  status: string;
+}
+
+interface StudentsSummary {
+  total: number;
+  active: number;
+  idle: number;
+  totalLessons: number;
+  averageProgress: number;
+}
+
 export const StudentsPage: React.FC = () => {
-  const { data: students, loading } = useSimulatedData(SAMPLE_STUDENTS);
+  const [rows, setRows] = React.useState<StudentRow[] | null>(null);
+  const [summary, setSummary] = React.useState<StudentsSummary | null>(null);
+  const [offline, setOffline] = React.useState(false);
+
+  React.useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const res = await fetch(`${getApiBase()}/api/admin/students`, {
+          headers: { Accept: 'application/json', 'X-App': 'admin' },
+          credentials: 'include',
+        });
+        if (!res.ok) throw new Error(String(res.status));
+        const data = (await res.json()) as {
+          students: StudentRow[];
+          summary: StudentsSummary;
+        };
+        if (!alive) return;
+        setRows(data.students);
+        setSummary(data.summary);
+        setOffline(false);
+      } catch {
+        if (alive) {
+          setRows(null);
+          setOffline(true);
+        }
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   return (
     <div className="space-y-5">
       <header>
         <h1 className="text-xl font-black text-navy-800">الطلاب</h1>
         <p className="text-xs text-slate-500 mt-1">
-          عرض تجريبي لشكل القائمة — الحسابات الحقيقية وتتبّع التقدّم يأتيان مع قاعدة البيانات.
+          حسابات حقيقية من قاعدة البيانات، وتقدّم كل طالب محسوب من دروسه
+          المكتملة وجلسات دراسته.
         </p>
       </header>
 
-      <NotConnectedNote>
-        هذه القائمة <strong>ليست حسابات حقيقية</strong>. لا يوجد تسجيل دخول أو حفظ لتقدّم الطالب في
-        هذه المرحلة، والأرقام المعروضة تجريبية.
-      </NotConnectedNote>
+      {summary && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {[
+            ['إجمالي الطلاب', summary.total],
+            ['نشطون هذا الأسبوع', summary.active],
+            ['خاملون', summary.idle],
+            ['متوسط الإكمال', `${summary.averageProgress}%`],
+          ].map(([label, value]) => (
+            <div
+              key={label as string}
+              className="bg-white border border-slate-200 rounded-2xl p-3"
+            >
+              <div className="text-lg font-black text-navy-800 nums">{value}</div>
+              <div className="text-[11px] text-slate-500">{label}</div>
+            </div>
+          ))}
+        </div>
+      )}
 
-      {loading ? (
+      {offline && (
+        <NotConnectedNote>
+          تعذّر الوصول إلى الخادم — لا يمكن عرض الطلاب. احفظ عنوان الخادم
+          الصحيح من صفحة <strong>الإعدادات</strong>.
+        </NotConnectedNote>
+      )}
+
+      {!offline && rows === null && (
         <div className="space-y-2">
           {[0, 1, 2].map((i) => (
             <div key={i} className="h-12 rounded-xl bg-slate-100 animate-pulse" />
           ))}
         </div>
-      ) : (students ?? []).length === 0 ? (
+      )}
+
+      {rows !== null && rows.length === 0 && (
         <div className="bg-white border border-slate-200 rounded-2xl">
           <EmptyState
             title="لا يوجد طلاب مسجّلون"
-            description="عند إضافة خدمة الحسابات ستظهر بيانات الطلاب وتقدّمهم هنا."
-            hint="المرحلة القادمة: ربط قاعدة البيانات"
+            description="يظهر الطلاب هنا بعد إنشاء حساب بتسجيل الدخول أو برمز دخول."
+            hint="رموز الدخول ← أنشئ رمزاً وشاركه مع الطالب"
           />
         </div>
-      ) : (
+      )}
+
+      {rows !== null && rows.length > 0 && (
         <div className="bg-white border border-slate-200 rounded-2xl p-4">
-          <Table head={['#', 'الاسم', 'الصف', 'آخر نشاط', 'نسبة الإكمال', 'الحالة']}>
-            {(students ?? []).map((s) => (
+          <Table
+            head={[
+              '#',
+              'الاسم',
+              'الصف',
+              'الدروس',
+              'وقت الدراسة',
+              'آخر نشاط',
+              'الإكمال',
+              'الحالة',
+            ]}
+          >
+            {rows.map((s) => (
               <tr key={s.id} className="hover:bg-slate-50/70">
-                <td className="py-2.5 px-3 nums text-slate-500">{s.id.replace(/\D/g, '')}</td>
+                <td className="py-2.5 px-3 nums text-slate-500">{s.code}</td>
                 <td className="py-2.5 px-3 font-bold text-navy-800">{s.name}</td>
                 <td className="py-2.5 px-3 text-slate-600">{s.grade}</td>
+                <td className="py-2.5 px-3 nums text-slate-500">
+                  {s.completedLessons}/{s.totalLessons}
+                </td>
+                <td className="py-2.5 px-3 nums text-slate-500">
+                  {s.studyMinutes} د
+                </td>
                 <td className="py-2.5 px-3 text-slate-500">{s.lastActivity}</td>
                 <td className="py-2.5 px-3">
                   <div className="flex items-center gap-2">
@@ -61,11 +160,21 @@ export const StudentsPage: React.FC = () => {
                         style={{ width: `${s.progressPercent}%` }}
                       />
                     </div>
-                    <span className="nums text-[10px] text-slate-500">{s.progressPercent}%</span>
+                    <span className="nums text-[10px] text-slate-500">
+                      {s.progressPercent}%
+                    </span>
                   </div>
                 </td>
                 <td className="py-2.5 px-3">
-                  <StatusBadge status={s.status} />
+                  <span
+                    className={
+                      s.status === 'active'
+                        ? 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700'
+                        : 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-500'
+                    }
+                  >
+                    {s.status === 'active' ? 'نشط' : 'خامل'}
+                  </span>
                 </td>
               </tr>
             ))}
@@ -73,10 +182,14 @@ export const StudentsPage: React.FC = () => {
         </div>
       )}
 
-      <div className="flex items-center gap-2 text-[11px] text-slate-500">
-        <Users className="w-4 h-4 text-navy-800" />
-        <span>تظهر هذه البيانات للأغراض التجريبية فقط ويمكن حذفها لاحقاً.</span>
-      </div>
+      {rows !== null && rows.length > 0 && (
+        <div className="flex items-center gap-2 text-[11px] text-slate-500">
+          <Users className="w-4 h-4 text-navy-800" />
+          <span>
+            كل رقم في هذا الجدول محسوب من قاعدة البيانات — لا قيم تجريبية.
+          </span>
+        </div>
+      )}
     </div>
   );
 };
