@@ -41,7 +41,6 @@ export const AdminLayout: React.FC = () => {
     error: sessionError,
     login,
     logout,
-    enterPreview,
   } = useAdminSession();
 
   /* بوابة الدخول: مسارات الإدارة على الخادم لا تُفتح إلا بجلسة إدارة */
@@ -58,7 +57,6 @@ export const AdminLayout: React.FC = () => {
         onLogin={login}
         error={sessionError}
         offline={offline}
-        onPreview={enterPreview}
       />
     );
   }
