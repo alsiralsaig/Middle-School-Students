@@ -28,6 +28,9 @@ import { StudentDashboardView } from './views/StudentDashboardView';
 import { LeaderboardView } from './views/LeaderboardView';
 import { AchievementsView } from './views/AchievementsView';
 import { StudyRoomsView } from './views/StudyRoomsView';
+import { AuthGate } from './components/AuthGate';
+import { AIAssistantFab } from './components/AIAssistantFab';
+import { useSession } from './hooks/useSession';
 import { ServerSetupDialog } from './components/ServerSetupDialog';
 
 function AppContent() {
@@ -144,6 +147,10 @@ function AppContent() {
     (u) => u.lessons
   );
 
+  /* بوابة الدخول: التطبيق لا يُفتح إلا بحساب مُفعَّل برمز من الإدارة */
+  const { user: gateUser } = useSession();
+  if (!gateUser) return <AuthGate />;
+
   return (
     <div 
       className={`min-h-screen flex flex-col font-sans transition-colors duration-200 ${
@@ -258,6 +265,9 @@ function AppContent() {
 
       {/* نافذة ضبط عنوان الخادم — تُفتح تلقائياً داخل حزمة APK أول مرة */}
       <ServerSetupDialog />
+
+      {/* المساعد الذكي العائم — في كل الصفحات */}
+      <AIAssistantFab />
 
       {/* التنبيهات المنبثقة (Toasts) — تُدار عبر ناقل الأحداث */}
       <ToastHost

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { AI_ASSISTANT_PRESETS } from '../data/curriculumData';
+import { getApiBase } from '../utils/serverUrl';
 import { 
   Sparkles, 
   Send, 
@@ -26,7 +27,7 @@ export const AIAssistantView: React.FC = () => {
     {
       id: 'welcome',
       sender: 'assistant',
-      text: `مرحباً بك يا بطل الصف الثالث المتوسط! 🇸🇩\nأنا المساعد الدراسي الاسترشادي لمنصة الطالب السوداني الذكية.\n\nتنويه هام: هذه واجهة تجريبية تفاعلية لعرض إمكانيات المساعد. في هذا الإصدار الأول (Frontend Prototype) تم تزويدي بنماذج إجابات نموذجية معتمدة على المنهج السوداني. يمكنك تجربة الأسئلة الجاهزة أدناه أو كتابة استفسارك لمشاهدة آلية الردود.`,
+      text: `مرحباً بك يا بطل الصف الثالث المتوسط! 🇸🇩\nأنا المساعد الدراسي الاسترشادي لمنصة الطالب السوداني الذكية.\n\nاسألني أي سؤال دراسي — شرح، تلخيص، تدريب، أو مفاهيم المنهج السوداني. اضغط على الأسئلة الجاهزة أدناه أو اكتب استفسارك مباشرة.`,
       timestamp: 'الآن',
       isSimulatedDemo: true
     }
@@ -50,15 +51,21 @@ export const AIAssistantView: React.FC = () => {
     setIsTyping(true);
 
     try {
-      const response = await fetch('/api/gemini/chat', {
+      const history = messages
+        .filter((m) => m.id !== 'welcome')
+        .slice(-6)
+        .map((m) => ({ sender: m.sender === 'user' ? 'user' : 'assistant', text: m.text }));
+      const response = await fetch(`${getApiBase()}/api/ai/chat`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: query }),
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json', 'X-App': 'student' },
+        body: JSON.stringify({ prompt: query, history }),
       });
 
       if (response.ok) {
         const data = await response.json();
-        if (data.reply) {
+        /* «غير مضبوط» = مفتاح الخادم غير مفعّل → نعتمد الردود التربوية المحلية */
+        if (data.reply && !String(data.reply).includes('غير مضبوط')) {
           const botMsg: ChatMessage = {
             id: `bot-${Date.now()}`,
             sender: 'assistant',

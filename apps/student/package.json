@@ -1,7 +1,7 @@
 {
   "name": "student-app",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "تطبيق الطالب — منصة الطالب السوداني الذكية (الصف الثالث المتوسط)",
   "scripts": {
     "dev": "tsx server.ts",
