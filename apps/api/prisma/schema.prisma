@@ -31,6 +31,7 @@ model User {
   events      PlannerEvent[]
   attempts    ExamAttempt[]
   notifications Notification[]
+  accessCodes AccessCode[]
 }
 
 /* ============================ المنهج ============================ */
@@ -238,4 +239,27 @@ model ExamAnswer {
   correct     Boolean
 
   attempt ExamAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+}
+
+/// رمز دخول تُصدره الإدارة ليستخدمه الطالب **مرة واحدة** عند إنشاء حسابه.
+///
+/// لماذا موجود: تطبيق الطالب مخصّص للطلاب، والإدارة هي من يأذن بالدخول.
+/// الرمز قد يكون موجّهاً لطالب بعينه (عبر `phone`) أو حراً لأول طالب يستخدمه.
+model AccessCode {
+  id          String    @id @default(cuid())
+  /// ٦ خانات من أبجدية لا تُلتبس فيها الأرقام بالحروف
+  code        String    @unique
+  studentName String?
+  /// إن حُدِّد، فلا يقبل الرمز إلا من يسجّل بهذا الهاتف
+  phone       String?
+  grade       String?
+  school      String?
+  /// active | used | revoked
+  status      String    @default("active")
+  usedAt      DateTime?
+  expiresAt   DateTime?
+  createdAt   DateTime  @default(now())
+
+  usedById String?
+  usedBy   User?   @relation(fields: [usedById], references: [id])
 }

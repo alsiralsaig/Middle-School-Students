@@ -1,5 +1,9 @@
 import React, { useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
+import { LogOut } from 'lucide-react';
+import { LoadingState } from '../components/ui';
+import AdminLogin from '../components/AdminLogin';
+import { useAdminSession } from '../lib/adminApi';
 import {
   BookOpen,
   ExternalLink,
@@ -7,6 +11,7 @@ import {
   GraduationCap,
   LayoutDashboard,
   Library,
+  KeyRound,
   Menu,
   Star,
   Settings,
@@ -20,6 +25,7 @@ const NAV = [
   { to: '/content', label: 'إدارة المحتوى', icon: GraduationCap },
   { to: '/library', label: 'المكتبة', icon: Library },
   { to: '/ratings', label: 'تقييمات المحتوى', icon: Star },
+  { to: '/codes', label: 'رموز الدخول', icon: KeyRound },
   { to: '/students', label: 'الطلاب', icon: Users },
   { to: '/activities', label: 'الأنشطة والتقارير', icon: FileText },
   { to: '/settings', label: 'الإعدادات', icon: Settings },
@@ -27,6 +33,20 @@ const NAV = [
 
 export const AdminLayout: React.FC = () => {
   const [open, setOpen] = useState(false);
+  const { user, loading, error: sessionError, login, logout } = useAdminSession();
+
+  /* بوابة الدخول: مسارات الإدارة على الخادم لا تُفتح إلا بجلسة إدارة */
+  if (loading) {
+    return (
+      <div className="min-h-screen grid place-items-center bg-slate-50" dir="rtl">
+        <LoadingState label="جارٍ التحقق من الجلسة…" />
+      </div>
+    );
+  }
+  if (!user) {
+    return <AdminLogin onLogin={login} error={sessionError} />;
+  }
+
 
   /**
    * رابط تطبيق الطالب: يُقرأ من المتغير VITE_STUDENT_URL إن وُجد،
@@ -83,6 +103,24 @@ export const AdminLayout: React.FC = () => {
           </a>
         </div>
       )}
+
+      {/* حساب المدير */}
+      <div className="px-3 pt-1">
+        <div className="bg-white/10 rounded-xl p-3 flex items-center justify-between gap-2">
+          <div className="min-w-0">
+            <p className="text-white text-[11px] font-bold truncate">{user.name}</p>
+            <p className="text-white/50 text-[10px] nums">{user.phone || user.email || ''}</p>
+          </div>
+          <button
+            onClick={() => void logout()}
+            title="تسجيل الخروج"
+            aria-label="تسجيل الخروج"
+            className="shrink-0 p-1.5 rounded-lg bg-white/10 text-white/80 hover:bg-white/20 cursor-pointer"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      </div>
 
       {/* تنويه المرحلة */}
       <div className="p-3 border-t border-white/10">

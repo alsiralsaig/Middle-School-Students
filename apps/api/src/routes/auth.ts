@@ -44,6 +44,8 @@ authRouter.post('/register', async (req, res) => {
     const password = typeof req.body?.password === 'string' ? req.body.password : '';
     const grade = cleanText(req.body?.grade, 40) || null;
     const school = cleanText(req.body?.school, 80) || null;
+    // رمز الدخول الذي أصدرته الإدارة — شرط لإنشاء الحساب
+    const codeRaw = cleanText(req.body?.accessCode, 20).toUpperCase().replace(/[\s-]/g, '');
 
     if (name.length < 3) {
       res.status(400).json({ error: 'الاسم يجب أن يكون ٣ أحرف على الأقل' });
@@ -51,6 +53,10 @@ authRouter.post('/register', async (req, res) => {
     }
     if (password.length < 6) {
       res.status(400).json({ error: 'كلمة المرور يجب أن تكون ٦ أحرف على الأقل' });
+      return;
+    }
+    if (!codeRaw) {
+      res.status(400).json({ error: 'أدخل رمز الدخول الذي استلمته من الإدارة' });
       return;
     }
 
@@ -69,6 +75,31 @@ authRouter.post('/register', async (req, res) => {
       return;
     }
 
+    /* ---- التحقق من رمز الدخول ---- */
+    const accessCode = await prisma.accessCode.findUnique({ where: { code: codeRaw } });
+    if (!accessCode) {
+      res.status(400).json({ error: 'رمز الدخول غير صحيح' });
+      return;
+    }
+    if (accessCode.status === 'revoked') {
+      res.status(400).json({ error: 'هذا الرمز ألغته الإدارة' });
+      return;
+    }
+    if (accessCode.status === 'used') {
+      res.status(400).json({ error: 'هذا الرمز استُخدم بالفعل — كل رمز يصلح لمرة واحدة' });
+      return;
+    }
+    if (accessCode.expiresAt && accessCode.expiresAt < new Date()) {
+      res.status(400).json({ error: 'انتهت صلاحية هذا الرمز' });
+      return;
+    }
+    if (accessCode.phone && phone !== accessCode.phone) {
+      res.status(400).json({
+        error: 'هذا الرمز مخصّص لرقم هاتف آخر — تأكد من الرقم أو راجع الإدارة',
+      });
+      return;
+    }
+
     const user = await prisma.user.create({
       data: {
         name,
@@ -82,6 +113,12 @@ authRouter.post('/register', async (req, res) => {
     });
 
     // التسجيل via هذا المسار طلابي دائماً — حساب الإدارة لا يُنشأ من هنا
+    // يُستهلك الرمز الآن — مرّة واحدة ولا يعود صالحاً
+    await prisma.accessCode.update({
+      where: { id: accessCode.id },
+      data: { status: 'used', usedAt: new Date(), usedById: user.id },
+    });
+
     const token = signToken({ uid: user.id, role: 'student', name: user.name, app: 'student' });
     setAuthCookie(res, token);
     res.status(201).json({ user: publicUser(user), token });

@@ -16,6 +16,7 @@ export const PlatformAuthCard: React.FC = () => {
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
+  const [accessCode, setAccessCode] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [busy, setBusy] = useState(false);
@@ -39,6 +40,10 @@ export const PlatformAuthCard: React.FC = () => {
       setError('الاسم يجب أن يكون ٣ أحرف على الأقل');
       return;
     }
+    if (mode === 'register' && !accessCode.trim()) {
+      setError('أدخل رمز الدخول الذي استلمته من الإدارة');
+      return;
+    }
 
     setBusy(true);
     try {
@@ -50,6 +55,7 @@ export const PlatformAuthCard: React.FC = () => {
         await register({
           name: name.trim(),
           password,
+          accessCode: accessCode.trim(),
           ...(isMail ? { email: identifier.trim() } : { phone: identifier.trim() }),
         });
         setSuccess('تم إنشاء الحساب ✓');
@@ -156,6 +162,22 @@ export const PlatformAuthCard: React.FC = () => {
             placeholder="الاسم الثلاثي"
             className="w-full min-h-[44px] rounded-lg bg-[#0E2440] border border-[#1B3658] px-3 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-[#F1AC12]/60"
           />
+        )}
+        {mode === 'register' && (
+          <div>
+            <input
+              value={accessCode}
+              onChange={(e) => setAccessCode(e.target.value.toUpperCase())}
+              placeholder="رمز الدخول من الإدارة"
+              autoCapitalize="characters"
+              inputMode="text"
+              maxLength={8}
+              className="w-full min-h-[44px] rounded-lg bg-[#0E2440] border border-[#1B3658] px-3 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-[#F1AC12]/60 tracking-[0.2em] font-mono"
+            />
+            <p className="text-[10px] text-slate-400 mt-1 leading-relaxed px-1">
+              تستلمه من إدارة المدرسة — يُستخدم مرة واحدة عند إنشاء الحساب
+            </p>
+          </div>
         )}
         <input
           value={identifier}

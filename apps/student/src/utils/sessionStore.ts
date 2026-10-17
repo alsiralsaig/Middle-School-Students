@@ -115,6 +115,8 @@ export async function register(data: {
   password: string;
   grade?: string;
   school?: string;
+  /** رمز الدخول الذي أصدرته الإدارة — مطلوب، ويُستهلك مرة واحدة */
+  accessCode: string;
 }): Promise<SessionUser> {
   const { user } = await api.register(data);
   sessionStore.setUser(user);

@@ -112,6 +112,8 @@ export const api = {
     password: string;
     grade?: string;
     school?: string;
+    /** رمز الدخول من الإدارة — مطلوب مرة واحدة عند إنشاء الحساب */
+    accessCode: string;
   }) =>
     request<{ user: SessionUser }>('/api/auth/register', {
       method: 'POST',
