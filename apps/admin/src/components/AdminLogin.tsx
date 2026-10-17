@@ -13,7 +13,10 @@ import { KeyRound, LogIn, ShieldCheck } from 'lucide-react';
 export const AdminLogin: React.FC<{
   onLogin: (identifier: string, password: string) => Promise<unknown>;
   error?: string;
-}> = ({ onLogin, error }) => {
+  /** true = تعذّر الوصول إلى الخادم — نعرض زر المعاينة */
+  offline?: boolean;
+  onPreview?: () => void;
+}> = ({ onLogin, error, offline, onPreview }) => {
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
@@ -106,6 +109,22 @@ export const AdminLogin: React.FC<{
               </>
             )}
           </button>
+
+          {offline && onPreview && (
+            <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 space-y-2">
+              <p className="text-[10px] text-amber-800 leading-relaxed">
+                لا يمكن الوصول إلى الخادم من هذا الجهاز. يمكنك استعراض
+                اللوحة الآن، لكن <strong>لن يُحفظ شيء</strong>.
+              </p>
+              <button
+                type="button"
+                onClick={onPreview}
+                className="w-full bg-amber-500 text-white font-extrabold text-xs px-4 py-2.5 rounded-xl hover:bg-amber-600 cursor-pointer"
+              >
+                استعراض اللوحة بدون خادم
+              </button>
+            </div>
+          )}
 
           <p className="text-[10px] text-slate-400 text-center leading-relaxed flex items-center justify-center gap-1.5">
             <KeyRound className="w-3 h-3" />

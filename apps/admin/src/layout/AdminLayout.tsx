@@ -33,7 +33,16 @@ const NAV = [
 
 export const AdminLayout: React.FC = () => {
   const [open, setOpen] = useState(false);
-  const { user, loading, error: sessionError, login, logout } = useAdminSession();
+  const {
+    user,
+    mode,
+    offline,
+    loading,
+    error: sessionError,
+    login,
+    logout,
+    enterPreview,
+  } = useAdminSession();
 
   /* بوابة الدخول: مسارات الإدارة على الخادم لا تُفتح إلا بجلسة إدارة */
   if (loading) {
@@ -44,7 +53,14 @@ export const AdminLayout: React.FC = () => {
     );
   }
   if (!user) {
-    return <AdminLogin onLogin={login} error={sessionError} />;
+    return (
+      <AdminLogin
+        onLogin={login}
+        error={sessionError}
+        offline={offline}
+        onPreview={enterPreview}
+      />
+    );
   }
 
 
@@ -135,7 +151,12 @@ export const AdminLayout: React.FC = () => {
   );
 
   return (
-    <div className="min-h-screen flex bg-slate-50" dir="rtl">
+    <div className="min-h-screen flex bg-slate-50 flex-col" dir="rtl">
+      {mode === 'preview' && (
+        <div className="bg-amber-500 text-white text-[11px] font-bold px-4 py-2 text-center">
+          وضع المعاينة — لا يوجد اتصال بالخادم، ولن يُحفظ أي تعديل
+        </div>
+      )}
       {/* شريط جانبي — سطح المكتب */}
       <aside
         className="hidden lg:flex w-64 shrink-0 flex-col fixed inset-y-0 right-0 z-30"
