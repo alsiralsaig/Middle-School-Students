@@ -43,9 +43,11 @@ function guard(key: string): { ok: boolean; retryMinutes?: number; daily?: boole
 
 const SYSTEM_PROMPT =
   'أنت معلم سوداني خبير ومحبوب للصف الثالث المتوسط (الشهادة المتوسطة — جمهورية السودان). ' +
-  'أجب بالعربية الفصحى الواضحة بأسلوب تربوي لطيف ومشجع (يا بطل، أحسنت، خطوة بخطوة). ' +
-  'اربط الشرح بالمنهج السوداني، وحل المسائل والقواعد خطوة بخطوة. ' +
-  'استخدم تنسيقاً واضحاً بالعناوين والنقاط يناسب شاشة الهاتف. ' +
+  'اتكلم بالعامية السودانية البسيطة والودية (كلام الناس اليومي في السودان: يا بطل، خلاص، دي، بقول لك، ' +
+  'أوشة، شديد، تمام؟) عشان الطالب يحس إنك أخوه الأكبر، بس خلّي المصطلحات العلمية والقواعد ' +
+  'بالعربية الفصحى المبسطة عشان المنهج. ' +
+  'اربط الشرح بالمنهج السوداني، وحل المسائل والقواعد خطوة بخطوة، وشجّع الطالب دايماً. ' +
+  'استخدم تنسيقاً واضحاً بالعناوين والنقاط يناسب شاشة الهاتف، وخلّي الرد قصير ومباشر قدر الإمكان. ' +
   'لا تتجاوز حدود المنهج، ولا تخترع معلومات خارج المقرر، وإن لم تعرف قل ذلك بصراحة.';
 
 function getClient(): GoogleGenAI | null {
@@ -83,6 +85,79 @@ async function ask(history: Array<{ sender: Role; text: string }>, question: str
   }
   return null;
 }
+
+
+/* ============================ السؤال الصوتي ============================ */
+
+/**
+ * POST /api/ai/voice — الطالب يتكلم، Gemini يفهم العامية السودانية ويجاوب بها.
+ * الجسم: { audio: base64 (بدون أو مع بادئة data:)، mimeType?: string }
+ */
+aiRouter.post('/ai/voice', requireAuth, async (req, res) => {
+  const uid = currentUser(req).uid;
+  const rawAudio = typeof req.body?.audio === 'string' ? req.body.audio : '';
+  const audioB64 = rawAudio.replace(/^data:[^,]+,/, '');
+  const mimeTypeRaw = cleanText(req.body?.mimeType, 60) || 'audio/webm';
+  // غلاف webm مع كودك أوبس — نبقيه كما هو إن كان مدعوماً
+  const mimeType = mimeTypeRaw.startsWith('audio/') ? mimeTypeRaw.split(';')[0] : 'audio/webm';
+
+  if (!audioB64) {
+    res.status(400).json({ error: 'التسجيل الصوتي مطلوب' });
+    return;
+  }
+  // حد أقصى معقول (~650KB بعد فك base64 — دقائق بالأوبس)
+  if (audioB64.length > 900_000) {
+    res.status(413).json({ error: 'التسجيل طويل — اذكر سؤالك في أقل من دقيقة يا بطل' });
+    return;
+  }
+
+  const limit = guard(uid);
+  if (!limit.ok) {
+    res.status(limit.daily ? 503 : 429).json({
+      reply: limit.daily
+        ? 'وصلنا الحد الأقصى لطلبات اليوم، جرّب غداً يا بطل 🌙'
+        : `استخدمت كل الأسئلة المتاحة حالياً 😊 جرّب بعد ${limit.retryMinutes} دقيقة.`,
+    });
+    return;
+  }
+  dayCount += 1;
+
+  const ai = getClient();
+  if (!ai) {
+    res.json({ reply: null, unconfigured: true });
+    return;
+  }
+
+  const instruction =
+    'هذا تسجيل صوتي لطالب سوداني بيتكلم بالعامية السودانية (ممكن تتداخل معاها فصحى). ' +
+    'افهم سؤاله من الصوت مباشرة (انتبه للمفردات اللهجية: إش/شنو = ماذا، ليش = لماذا، ' +
+    'داير/عاوز = يريد، زول = شخص، لفّة = مرة، شديد = كثير...). ' +
+    'لا تكتب نص التحويل ولا تشرح إنك فهمت — جاوب سؤاله مباشرة وفق أسلوبك التربوي.';
+
+  const parts: Array<Record<string, unknown>> = [{ text: instruction }];
+  parts.push({ inlineData: { mimeType, data: audioB64 } });
+
+  for (const model of ['gemini-2.5-flash', 'gemini-2.0-flash']) {
+    for (const mime of [mimeType, mimeType === 'audio/webm' ? 'audio/ogg' : mimeType]) {
+      try {
+        parts[1] = { inlineData: { mimeType: mime, data: audioB64 } };
+        const res2 = await ai.models.generateContent({
+          model,
+          contents: [{ role: 'user', parts }],
+          config: { systemInstruction: SYSTEM_PROMPT },
+        });
+        const text = (res2 as { text?: string }).text;
+        if (text) {
+          res.json({ reply: text });
+          return;
+        }
+      } catch (e) {
+        console.warn(`[ai-voice] ${model}/${mime} فشل:`, (e as Error).message);
+      }
+    }
+  }
+  res.json({ reply: null, unconfigured: true });
+});
 
 /* ============================ المحادثة العامة ============================ */
 

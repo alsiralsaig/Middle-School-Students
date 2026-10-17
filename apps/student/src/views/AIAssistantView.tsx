@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { AI_ASSISTANT_PRESETS } from '../data/curriculumData';
 import { getApiBase } from '../utils/serverUrl';
 import { 
@@ -11,7 +11,11 @@ import {
   HelpCircle, 
   BookOpen, 
   CheckCircle2,
-  Clock
+  Clock,
+  Mic,
+  Square,
+  Volume2,
+  VolumeX
 } from 'lucide-react';
 
 interface ChatMessage {
@@ -34,6 +38,171 @@ export const AIAssistantView: React.FC = () => {
   ]);
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+
+  /* ═══ الصوت: تسجيل بالميك + قراءة الردود صوتياً ═══ */
+  const [voiceOut, setVoiceOut] = useState<boolean>(() => {
+    try { return localStorage.getItem('ssp.aiVoiceOut') === '1'; } catch { return false; }
+  });
+  const [recording, setRecording] = useState(false);
+  const [recSeconds, setRecSeconds] = useState(0);
+  const mediaRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+  const streamRef = useRef<MediaStream | null>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const spokenRef = useRef<string>('');
+
+  /** قراءة الرد صوتياً (صوت عربي إن وُجد) */
+  const speak = (text: string) => {
+    try {
+      if (!('speechSynthesis' in window)) return;
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text.replace(/[#*_•\-]/g, ' ').slice(0, 600));
+      const voices = window.speechSynthesis.getVoices();
+      const ar = voices.find((v) => v.lang && v.lang.toLowerCase().startsWith('ar'));
+      if (ar) u.voice = ar;
+      u.lang = ar ? ar.lang : 'ar-SA';
+      u.rate = 0.95;
+      window.speechSynthesis.speak(u);
+    } catch { /* القراءة الصوتية غير متاحة — الرد النصي يبقى ظاهراً */ }
+  };
+
+  /* نطق آخر رد جديد عند تفعيل الصوت */
+  useEffect(() => {
+    const last = messages[messages.length - 1];
+    if (voiceOut && last && last.sender === 'assistant' && spokenRef.current !== last.id) {
+      spokenRef.current = last.id;
+      speak(last.text);
+    }
+  }, [messages, voiceOut]);
+
+  const toggleVoiceOut = () => {
+    const nv = !voiceOut;
+    setVoiceOut(nv);
+    try { localStorage.setItem('ssp.aiVoiceOut', nv ? '1' : '0'); } catch { /* تجاهل */ }
+    if (!nv) { try { window.speechSynthesis?.cancel(); } catch { /* تجاهل */ } }
+  };
+
+  const cleanupRecording = () => {
+    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+    streamRef.current?.getTracks().forEach((t) => t.stop());
+    streamRef.current = null;
+    mediaRef.current = null;
+    setRecording(false);
+  };
+
+  const startRecording = async () => {
+    if (recording) return;
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
+      chunksRef.current = [];
+      const mime = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+        ? 'audio/webm;codecs=opus'
+        : MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : '';
+      const rec = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream);
+      rec.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data); };
+      rec.onstop = () => { void sendVoice(new Blob(chunksRef.current, { type: rec.mimeType || 'audio/webm' })); };
+      mediaRef.current = rec;
+      rec.start();
+      setRecording(true);
+      setRecSeconds(0);
+      timerRef.current = setInterval(() => {
+        setRecSeconds((sec) => {
+          if (sec >= 44) { stopRecording(); return sec; }
+          return sec + 1;
+        });
+      }, 1000);
+    } catch {
+      setMessages((prev) => [...prev, {
+        id: `mic-err-${Date.now()}`,
+        sender: 'assistant',
+        text: 'ما قدرتش أفتح الميكروفون 🎙️\nاسمح بالوصول للميكروفون من إعدادات التطبيق وحاول تاني.',
+        timestamp: 'الآن',
+        isError: true,
+      }]);
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRef.current && mediaRef.current.state !== 'inactive') mediaRef.current.stop();
+    cleanupRecording();
+  };
+
+  /** إرسال التسجيل للخادم — Gemini يفهم العامية ويرد بها */
+  const sendVoice = async (blob: Blob) => {
+    if (!blob.size) return;
+    if (blob.size > 650_000) {
+      setMessages((prev) => [...prev, {
+        id: `mic-long-${Date.now()}`,
+        sender: 'assistant',
+        text: 'التسجيل طويل شوية — اذكر سؤالك في أقل من دقيقة يا بطل 🙏',
+        timestamp: 'الآن',
+        isError: true,
+      }]);
+      return;
+    }
+    const userMsg: ChatMessage = {
+      id: `voice-${Date.now()}`,
+      sender: 'user',
+      text: '🎙️ سؤال صوتي — باللهجة السودانية',
+      timestamp: 'الآن',
+    };
+    setMessages((prev) => [...prev, userMsg]);
+    setIsTyping(true);
+
+    try {
+      const dataUrl: string = await new Promise((resolve, reject) => {
+        const fr = new FileReader();
+        fr.onload = () => resolve(String(fr.result));
+        fr.onerror = () => reject(new Error('read-fail'));
+        fr.readAsDataURL(blob);
+      });
+      const res = await fetch(`${getApiBase()}/api/ai/voice`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json', 'X-App': 'student' },
+        body: JSON.stringify({ audio: dataUrl, mimeType: blob.type }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const reply = data?.reply;
+        if (reply) {
+          setMessages((prev) => [...prev, {
+            id: `bot-${Date.now()}`,
+            sender: 'assistant',
+            text: String(reply),
+            timestamp: 'الآن',
+          }]);
+          setIsTyping(false);
+          return;
+        }
+        if (data?.unconfigured) {
+          setMessages((prev) => [...prev, {
+            id: `bot-${Date.now()}`,
+            sender: 'assistant',
+            text: 'المساعد الصوتي يحتاج تفعيل مفتاح الذكاء الاصطناعي على الخادم — جرّب تاني بعد شوية 🙏',
+            timestamp: 'الآن',
+            isError: true,
+          }]);
+          setIsTyping(false);
+          return;
+        }
+      }
+      throw new Error(String(res.status));
+    } catch (e) {
+      const status = (e as { message?: string }).message;
+      setMessages((prev) => [...prev, {
+        id: `bot-${Date.now()}`,
+        sender: 'assistant',
+        text: status === '404'
+          ? 'الإجابة الصوتية تحتاج تحديث بسيط في الخادم — جرّب الكتابة لحد ما الإدارة تفعّلها 🙏'
+          : 'تعذّر إرسال الصوت — تأكد من الإنترنت وحاول تاني 🙏',
+        timestamp: 'الآن',
+        isError: true,
+      }]);
+      setIsTyping(false);
+    }
+  };
 
   const handleSend = async (textToSend?: string) => {
     const query = (textToSend || inputText).trim();
@@ -143,24 +312,33 @@ export const AIAssistantView: React.FC = () => {
         </div>
 
         <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-          المساعد الدراسي الذكي (واجهة استعراضية)
+          المساعد الدراسي الذكي 🇸🇩
         </h1>
 
         <p className="text-xs sm:text-sm text-slate-300 leading-relaxed max-w-2xl">
           واجهة تفاعلية مصممة لإرشاد طلاب الشهادة المتوسطة والإجابة على تساؤلات المنهج السوداني.
         </p>
 
-        {/* Explicit Honest Notice */}
-        <div className="p-4 rounded-2xl bg-[#122844] border border-amber-400/30 flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
-          <div className="text-xs text-slate-200 space-y-1">
-            <span className="font-bold text-amber-300">
-              تنويه هندسي معتمد (Phase 1 Frontend Prototype):
-            </span>
-            <p className="text-slate-300 leading-relaxed">
-              هذه الواجهة غير متصلة حالياً بأي واجهة برمجية خارجية للذكاء الاصطناعي (External AI API) التزاماً بمتطلبات المرحلة الأولى. الردود المعروضة هي نماذج تربوية حقيقية مبرمجة مسبقاً لعرض كيفية تفاعل المساعد مستقبلاً.
-            </p>
+        {/* الصوت: قراءة الردود */}
+        <div className="p-4 rounded-2xl bg-[#122844] border border-amber-400/30 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <Mic className="w-5 h-5 text-amber-400 shrink-0" />
+            <div className="text-xs text-slate-200 leading-relaxed">
+              <span className="font-bold text-amber-300">اتكلم بالسوداني:</span>
+              <span className="text-slate-300"> دوس على الميك وسلّم سؤالك صوتي — وأنا بردّ عليك صوتياً وباللهجة السودانية.</span>
+            </div>
           </div>
+          <button
+            onClick={toggleVoiceOut}
+            title={voiceOut ? 'إيقاف القراءة الصوتية' : 'قراءة الردود صوتياً'}
+            className={`shrink-0 w-10 h-10 rounded-xl flex items-center justify-center border transition-colors cursor-pointer ${
+              voiceOut
+                ? 'bg-amber-400/20 border-amber-400/60 text-amber-300'
+                : 'bg-[#0E2440] border-[#21436F] text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            {voiceOut ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
+          </button>
         </div>
       </div>
 
@@ -242,6 +420,12 @@ export const AIAssistantView: React.FC = () => {
 
         {/* Chat Input Bar */}
         <div className="p-3 sm:p-4 bg-slate-50 dark:bg-[#091524] border-t border-slate-200 dark:border-slate-800">
+          {recording && (
+            <div className="mb-2 flex items-center justify-center gap-2 text-[12px] font-bold text-red-400">
+              <span className="inline-block w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse" />
+              بتسجل… {recSeconds} ثانية — دوس ⏹ لو خلصت سؤالك
+            </div>
+          )}
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -256,6 +440,18 @@ export const AIAssistantView: React.FC = () => {
               placeholder="اكتب سؤالك في الرياضيات، النحو، العلوم، أو التاريخ..."
               className="flex-1 bg-white dark:bg-[#10243C] border border-slate-300 dark:border-[#1E3A60] rounded-xl py-3 px-4 text-xs sm:text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-blue-900 dark:focus:border-amber-400 focus:ring-1 focus:ring-blue-900 dark:focus:ring-amber-400"
             />
+            <button
+              type="button"
+              onClick={recording ? stopRecording : startRecording}
+              title={recording ? 'إيقاف وإرسال' : 'سؤال صوتي'}
+              className={`p-3 rounded-xl flex items-center justify-center transition-all cursor-pointer min-h-[44px] min-w-[44px] ${
+                recording
+                  ? 'bg-red-500 text-white shadow-lg shadow-red-500/30 animate-pulse'
+                  : 'bg-[#122844] text-amber-400 border border-[#21436F] hover:border-amber-400/50'
+              }`}
+            >
+              {recording ? <Square className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+            </button>
             <button
               type="submit"
               disabled={!inputText.trim()}
