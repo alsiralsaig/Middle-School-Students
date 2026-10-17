@@ -2,7 +2,9 @@
 // PostgreSQL — تُقرأ من المتغيّر DATABASE_URL (Neon للإنتاج)
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  // بيئات التنفيذ: الخادم المحلي، وVercel ‏(Amazon Linux 2023)، وDebian
+  binaryTargets = ["native", "rhel-openssl-3.0.x", "debian-openssl-3.0.x"]
 }
 
 datasource db {

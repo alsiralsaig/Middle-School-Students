@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "start": "tsx src/index.ts",
+    "start": "node dist/index.js",
     "lint": "tsc --noEmit",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate deploy",
@@ -18,7 +18,7 @@
     "db:backup": "node prisma/db-tool.mjs backup",
     "db:restore": "node prisma/db-tool.mjs restore",
     "db:backups": "node prisma/db-tool.mjs list",
-    "build": "tsc -p tsconfig.json --noEmit"
+    "build": "prisma generate && tsc -p tsconfig.build.json"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
@@ -42,5 +42,6 @@
     "prisma": "^6.1.0",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2"
-  }
+  },
+  "main": "dist/index.js"
 }
