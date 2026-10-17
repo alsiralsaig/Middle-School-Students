@@ -5,7 +5,7 @@
  * ملفّه المنهج نفسه. كلاهما يرسل `X-App: admin` — بدونه يرفض الخادم
  * دخول الإدارة أصلاً.
  */
-const BASE = '/backend';
+import { getApiBase } from './serverUrl';
 
 export interface LessonRecord {
   id: string;
@@ -50,7 +50,7 @@ export const isOffline = (e: unknown): boolean => e instanceof ApiError && e.off
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   let res: Response;
   try {
-    res = await fetch(`${BASE}${path}`, {
+    res = await fetch(`${getApiBase()}${path}`, {
       ...init,
       credentials: 'include',
       headers: {

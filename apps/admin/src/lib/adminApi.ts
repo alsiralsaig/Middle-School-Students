@@ -15,9 +15,7 @@ import { useState, useEffect, useCallback } from 'react';
  * في التطوير: المسار النسبي `/backend` الذي يحوّله Vite إلى :5000.
  * في النشر: يُقرأ من `VITE_API_URL`، وإلا فالمسار النسبي.
  */
-const BASE = (
-  (import.meta.env.VITE_API_URL as string | undefined) || '/backend'
-).replace(/\/+$/, '');
+import { getApiBase } from './serverUrl';
 
 export interface AdminUser {
   id: string;
@@ -64,7 +62,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
       ...(init?.body ? { 'Content-Type': 'application/json' } : {}),
       ...((init?.headers as Record<string, string> | undefined) ?? {}),
     };
-    res = await fetch(`${BASE}${path}`, { ...init, credentials: 'include', headers });
+    res = await fetch(`${getApiBase()}${path}`, { ...init, credentials: 'include', headers });
   } catch {
     throw new ApiError('تعذّر الوصول إلى الخادم', 0, true);
   }

@@ -28,6 +28,7 @@ import { StudentDashboardView } from './views/StudentDashboardView';
 import { LeaderboardView } from './views/LeaderboardView';
 import { AchievementsView } from './views/AchievementsView';
 import { StudyRoomsView } from './views/StudyRoomsView';
+import { ServerSetupDialog } from './components/ServerSetupDialog';
 
 function AppContent() {
   /* المنهج من قاعدة البيانات (مع نسخة محفوظة تعمل دون اتصال) */
@@ -254,6 +255,9 @@ function AppContent() {
 
       {/* Student Account Switcher and Creator Modal */}
       <AccountManagerModal />
+
+      {/* نافذة ضبط عنوان الخادم — تُفتح تلقائياً داخل حزمة APK أول مرة */}
+      <ServerSetupDialog />
 
       {/* التنبيهات المنبثقة (Toasts) — تُدار عبر ناقل الأحداث */}
       <ToastHost

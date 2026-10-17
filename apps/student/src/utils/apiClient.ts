@@ -9,9 +9,7 @@
  */
 import type { Subject } from '@shared/curriculumTypes';
 
-const BASE = (
-  (import.meta.env.VITE_API_URL as string | undefined) || '/backend'
-).replace(/\/+$/, '');
+import { getApiBase } from './serverUrl';
 
 export interface SessionUser {
   id: string;
@@ -72,7 +70,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
       ...(init?.body ? { 'Content-Type': 'application/json' } : {}),
       ...((init?.headers as Record<string, string> | undefined) ?? {}),
     };
-    res = await fetch(`${BASE}${path}`, {
+    res = await fetch(`${getApiBase()}${path}`, {
       ...init,
       credentials: 'include',
       headers,
