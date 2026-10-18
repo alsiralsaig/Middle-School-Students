@@ -21,6 +21,7 @@ import socialContent from './content/social.json';
 import englishContent from './content/english.json';
 import ictContent from './content/ict.json';
 import civicsContent from './content/civics.json';
+import technicalContent from './content/technical.json';
 
 const CONTENT_FILES = [
   mathContent,
@@ -31,6 +32,7 @@ const CONTENT_FILES = [
   englishContent,
   ictContent,
   civicsContent,
+  technicalContent,
 ];
 
 export const SUBJECTS_DATA: Subject[] = CONTENT_FILES.map((raw) => {
@@ -337,6 +339,7 @@ const SUBJECT_EMOJI: Record<string, string> = {
   english: '🔤',
   ict: '💻',
   civics: '🇸🇩',
+  technical: '🛠️',
 };
 
 export const subjectEmoji = (id: string) => SUBJECT_EMOJI[id] ?? '📚';

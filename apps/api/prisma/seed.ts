@@ -21,6 +21,7 @@ const CONTENT_FILES = [
   'math.json',
   'science.json',
   'social.json',
+  'technical.json',
 ];
 
 async function main() {
@@ -69,7 +70,7 @@ async function main() {
         // الرقمان مختلفان قصداً (العلوم: ٧ وحدات رسمية مقابل وحدتين مؤلَّفتين).
         syllabus: subject.syllabus ? JSON.stringify(subject.syllabus) : null,
         gradeWarning: subject.gradeWarning ?? null,
-        status: 'sample',
+        status: subject.status ?? 'sample',
       },
     });
     subjects++;
@@ -102,7 +103,7 @@ async function main() {
             attachments: JSON.stringify(lesson.attachments ?? []),
             faq: JSON.stringify(lesson.faq ?? []),
             examTips: JSON.stringify(lesson.examTips ?? []),
-            status: 'sample',
+            status: lesson.status ?? 'sample',
           },
         });
         lessons++;
