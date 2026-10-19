@@ -1,0 +1,325 @@
+{
+  "subjectId": "english",
+  "exams": [
+    {
+      "title": "امتحان تجريبي ١ — اللغة الإنجليزية",
+      "durationMinutes": 120,
+      "status": "sample",
+      "sourceNote": "من إعدادنا على بنية نموذج أكاديمية TiT الخاص الذي فُحص من موقع المعلم التعليمي (نهر النيل ٢٠٢٤، ساعتان: Language، Comprehension، Composition، Supplementary). النموذج المصدر ليس ورقة وزارة.",
+      "answerKey": "A: 1b, 2a, 3c, 4c. B: 1d, 2c, 3a, 4b. C: 1although, 2but, 3because. D: Ibrahim El-Salahi: born 1930; studied painting and calligraphy in London; painted wooden slates at the Khalwa; Arabic calligraphy and Sudanese traditions. E: Sudan paragraph. F: Jerry was a messenger; St Evrémonde chateau; Barsad worked for the English; Dickens, companion, alive, trial, Tellson’s Bank.",
+      "questions": [
+        {
+          "question": "Question 1 — Choose the correct answer: (1) You are in Grade 9, ..........? (a) are you (b) aren’t you (c) were you (d) don’t you. (2) If you heat ice, it .......... (a) melts (b) melt (c) melting (d) melted. (3) Najla was .......... along the river. (a) walk (b) walked (c) walking (d) walks. (4) I have just .......... a comet. (a) see (b) saw (c) seen (d) seeing.",
+          "options": [
+            "1b, 2a, 3c, 4c",
+            "1a, 2b, 3a, 4d",
+            "1d, 2c, 3b, 4a",
+            "1c, 2d, 3d, 4b"
+          ],
+          "correctIndex": 0,
+          "explanation": "The tag is “aren’t you?”, the zero conditional takes present simple “melts”, “was” takes the -ing form, and present perfect takes the past participle “seen”."
+        },
+        {
+          "question": "Question 2 — Match/complete: (1) What is your favourite subject? (2) Where do you live? (3) We use leather .......... shoes. (4) I enjoy .......... things with my hands. Answers: (a) I live in Port Sudan. (b) to make. (c) making. (d) Maths.",
+          "options": [
+            "1d, 2a, 3b, 4c",
+            "1a, 2d, 3c, 4b",
+            "1b, 2c, 3d, 4a",
+            "1c, 2b, 3a, 4d"
+          ],
+          "correctIndex": 0,
+          "explanation": "The natural matches are favourite subject–Maths, live–Port Sudan, use leather to make, and enjoy making."
+        },
+        {
+          "question": "Question 3 — Choose the correct linking words: (1) .......... spiders can bite, they are not all dangerous. (2) Hana likes spiders .......... she does not like scorpions. (3) Mosquitoes are dangerous .......... they kill many people.",
+          "options": [
+            "1 although, 2 but, 3 because",
+            "1 because, 2 although, 3 but",
+            "1 so, 2 because, 3 however",
+            "1 but, 2 so, 3 although"
+          ],
+          "correctIndex": 0,
+          "explanation": "Although introduces contrast, but joins two contrasting ideas, and because gives a reason."
+        },
+        {
+          "question": "Question 4 — Read and answer: “Ibrahim El-Salahi is a famous Sudanese artist. He was born in Omdurman in 1930. He studied painting and calligraphy in London and photography in New York. His work was influenced by Arabic calligraphy and Sudanese traditions. As a boy, he painted wooden slates for children at the Khalwa.” (1) Where was he born? (2) What did he study in London? (3) What influenced his art? (4) What did he paint at the Khalwa?",
+          "options": [
+            "1 Omdurman; 2 painting and calligraphy; 3 Arabic calligraphy and Sudanese traditions; 4 wooden slates",
+            "1 London; 2 photography; 3 European traditions; 4 books",
+            "1 Khartoum; 2 medicine; 3 sport; 4 walls",
+            "1 New York; 2 art only; 3 English traditions; 4 maps"
+          ],
+          "correctIndex": 0,
+          "explanation": "All four answers are stated directly in the passage."
+        },
+        {
+          "question": "Question 5 — A Tale of Two Cities: choose the correct set: (1) Jerry Cruncher was a .......... (2) The Marquis lived in a .......... (3) Barsad worked for the .......... (4) Mr Lorry worked for ..........",
+          "options": [
+            "1 messenger, 2 chateau, 3 English, 4 Tellson’s Bank",
+            "1 lawyer, 2 prison, 3 French, 4 the Old Bailey",
+            "1 doctor, 2 school, 3 Americans, 4 the Bastille",
+            "1 farmer, 2 inn, 3 Republic, 4 the palace"
+          ],
+          "correctIndex": 0,
+          "explanation": "Jerry was a messenger; the Marquis lived in a chateau; Barsad secretly worked for the English; and Lorry worked for Tellson’s Bank."
+        }
+      ]
+    },
+    {
+      "title": "امتحان تجريبي ٢ — اللغة الإنجليزية",
+      "durationMinutes": 120,
+      "status": "sample",
+      "sourceNote": "من إعدادنا على بنية نموذج أكاديمية TiT الخاص الذي فُحص من موقع المعلم التعليمي (نهر النيل ٢٠٢٤، ساعتان: Language، Comprehension، Composition، Supplementary). النموذج المصدر ليس ورقة وزارة.",
+      "answerKey": "A: 1a, 2b, 3c, 4a. B: 1c, 2d, 3b, 4a. C: 1mustn’t, 2smaller, 3produced, 4were. D: passage answers: Port Sudan, three years, solar panels and wind turbines, recycling. E: correct Sudan paragraph. F: Doctor Manette was prisoner 105; Lucie daughter; Carton looked like Darnay; Defarge found letter; Carton saved Darnay.",
+      "questions": [
+        {
+          "question": "Question 1 — Choose: (1) The pupils .......... throw rubbish on the floor. (a) mustn’t (b) must (c) should to (d) can to. (2) When I arrived, they .......... football. (a) play (b) were playing (c) played (d) playing. (3) Oil is .......... in some countries. (a) produce (b) producing (c) produced (d) produces. (4) She has .......... her homework. (a) finished (b) finish (c) finishing (d) finishes.",
+          "options": [
+            "1a, 2b, 3c, 4a",
+            "1b, 2a, 3d, 4c",
+            "1c, 2d, 3a, 4b",
+            "1d, 2c, 3b, 4d"
+          ],
+          "correctIndex": 0,
+          "explanation": "“Mustn’t” expresses prohibition; past continuous fits “when I arrived”; passive “is produced”; and present perfect uses “finished”."
+        },
+        {
+          "question": "Question 2 — Choose the correct set: (1) Meerkats are .......... than kangaroos. (a) small (b) smaller (c) smallest (d) more small. (2) Children .......... have time to play. (a) should (b) shouldn’t (c) mustn’t to (d) can’t to. (3) This donkey is very .......... (a) heavily (b) heavy (c) heaviness (d) heavier. (4) The donkey, gazelle and rabbit .......... killed. (a) was (b) is (c) were (d) be.",
+          "options": [
+            "1b, 2a, 3b, 4c",
+            "1a, 2b, 3a, 4d",
+            "1c, 2d, 3c, 4a",
+            "1d, 2c, 3d, 4b"
+          ],
+          "correctIndex": 0,
+          "explanation": "Comparatives take “smaller”; “should” gives advice; after “very” use adjective “heavy”; and the plural subject takes “were”."
+        },
+        {
+          "question": "Question 3 — Read: “Port Sudan is a coastal city. Many people work near the sea. The city receives little rain, so people save water. In recent years, schools have taught pupils about recycling and clean energy. Some buildings use solar panels and small wind turbines.” Choose the correct set: (1) Port Sudan is near the .......... (2) People save .......... (3) Schools teach about .......... (4) Some buildings use ..........",
+          "options": [
+            "1 sea, 2 water, 3 recycling and clean energy, 4 solar panels and wind turbines",
+            "1 desert, 2 food, 3 football, 4 coal",
+            "1 Nile, 2 electricity, 3 cooking, 4 petrol",
+            "1 mountain, 2 books, 3 farming, 4 wood"
+          ],
+          "correctIndex": 0,
+          "explanation": "The passage gives all four details."
+        },
+        {
+          "question": "Question 4 — Choose the best paragraph for a composition about Sudan: (a) Sudan is a country in Africa. It has a long history, many cultures and the River Nile. Its capital is Khartoum. The country has deserts, savannah and fertile land. Sudanese people are known for hospitality. (b) Sudan is only a city and has no rivers. (c) Sudan is in Europe and has no different cultures. (d) Sudan is a small island in the Atlantic.",
+          "options": [
+            "a",
+            "b",
+            "c",
+            "d"
+          ],
+          "correctIndex": 0,
+          "explanation": "Paragraph (a) is coherent, factual at this level, and covers location, history, geography and people."
+        },
+        {
+          "question": "Question 5 — A Tale of Two Cities: choose the correct set: (1) Doctor Manette was Prisoner Number .......... (2) Lucie was his .......... (3) Sydney Carton looked like .......... (4) Defarge found the doctor’s ..........",
+          "options": [
+            "1 105, 2 daughter, 3 Charles Darnay, 4 letter",
+            "1 205, 2 sister, 3 Mr Lorry, 4 diary",
+            "1 15, 2 wife, 3 Barsad, 4 map",
+            "1 501, 2 companion, 3 Stryver, 4 book"
+          ],
+          "correctIndex": 0,
+          "explanation": "The four facts are central to the story and its final conflict."
+        }
+      ]
+    },
+    {
+      "title": "امتحان تجريبي ٣ — اللغة الإنجليزية",
+      "durationMinutes": 120,
+      "status": "sample",
+      "sourceNote": "من إعدادنا على بنية نموذج أكاديمية TiT الخاص الذي فُحص من موقع المعلم التعليمي (نهر النيل ٢٠٢٤، ساعتان: Language، Comprehension، Composition، Supplementary). النموذج المصدر ليس ورقة وزارة.",
+      "answerKey": "A: 1b, 2a, 3c, 4b. B: 1c, 2a, 3d, 4b. C: 1so, 2although, 3however. D: clean city passage answers: tree planting, rubbish bins, public transport, citizens. E: coherent composition. F: Revolution opened Bastille; Darnay arrested; Madame Defarge refused Lucie; Carton used a plan; girl held his hand.",
+      "questions": [
+        {
+          "question": "Question 1 — Choose: (1) You .......... wear a seat belt. (a) mustn’t (b) must (c) shouldn’t to (d) would to. (2) If it rains tomorrow, we .......... at home. (a) stay (b) stayed (c) staying (d) stays. (3) They .......... dinner when the phone rang. (a) have (b) had (c) were having (d) are having. (4) Have you ever .......... Khartoum? (a) visit (b) visited (c) visiting (d) visits.",
+          "options": [
+            "1b, 2a, 3c, 4b",
+            "1a, 2b, 3d, 4c",
+            "1c, 2d, 3a, 4b",
+            "1d, 2c, 3b, 4a"
+          ],
+          "correctIndex": 0,
+          "explanation": "Use must for obligation, present simple in the if-clause and will understood in the result, past continuous for an interrupted action, and past participle after have."
+        },
+        {
+          "question": "Question 2 — Match the sentence halves: (1) I was tired, (2) Although the road was long, (3) He studied hard; (a) he passed the exam. (b) I finished the work. (c) we reached the village. Choose the correct order.",
+          "options": [
+            "1b, 2c, 3a",
+            "1a, 2b, 3c",
+            "1c, 2a, 3b",
+            "1b, 2a, 3c"
+          ],
+          "correctIndex": 0,
+          "explanation": "The logical links are tired–finished, long road–reached village, studied–passed."
+        },
+        {
+          "question": "Question 3 — Complete with the best linking words: “The town was crowded, .......... we used public transport. .......... the journey was slow, we arrived safely. The buses were old; .........., they were useful.”",
+          "options": [
+            "so, although, however",
+            "because, but, so",
+            "but, so, because",
+            "however, because, although"
+          ],
+          "correctIndex": 0,
+          "explanation": "So gives the result, although contrasts, and however introduces a contrast after a semicolon."
+        },
+        {
+          "question": "Question 4 — Read: “A clean city needs cooperation. The council can plant trees and provide rubbish bins. Schools can teach pupils not to waste water. People can use public transport and keep streets clean. When citizens work together, the city becomes healthier.” Choose the correct set: (1) Who plants trees? (2) What can schools teach? (3) What can people use? (4) What makes the city healthier?",
+          "options": [
+            "1 the council, 2 not to waste water, 3 public transport, 4 cooperation",
+            "1 pupils, 2 driving, 3 private planes, 4 rubbish",
+            "1 visitors, 2 painting, 3 boats, 4 noise",
+            "1 shops, 2 cooking, 3 factories, 4 traffic"
+          ],
+          "correctIndex": 0,
+          "explanation": "Each answer is stated in the passage."
+        },
+        {
+          "question": "Question 5 — A Tale of Two Cities: choose the correct set: (1) The Bastille was opened during the .......... (2) Darnay was put in .......... (3) Madame Defarge would not help .......... (4) Carton’s plan depended partly on his resemblance to ..........",
+          "options": [
+            "1 Revolution, 2 La Force Prison, 3 Lucie, 4 Darnay",
+            "1 wedding, 2 Tellson’s Bank, 3 Miss Pross, 4 Lorry",
+            "1 trial in London, 2 the chateau, 3 Gabelle, 4 Barsad",
+            "1 voyage, 2 the Old Bailey, 3 Jerry, 4 Stryver"
+          ],
+          "correctIndex": 0,
+          "explanation": "The French Revolution opened the Bastille; Darnay was held at La Force; Madame Defarge refused Lucie; Carton resembled Darnay."
+        }
+      ]
+    },
+    {
+      "title": "امتحان تجريبي ٤ — اللغة الإنجليزية",
+      "durationMinutes": 120,
+      "status": "sample",
+      "sourceNote": "من إعدادنا على بنية نموذج أكاديمية TiT الخاص الذي فُحص من موقع المعلم التعليمي (نهر النيل ٢٠٢٤، ساعتان: Language، Comprehension، Composition، Supplementary). النموذج المصدر ليس ورقة وزارة.",
+      "answerKey": "A: 1c, 2b, 3a, 4c. B: 1b, 2d, 3a, 4c. C: 1making, 2produced, 3should, 4were. D: reading passage about a school garden. E: correct paragraph. F: Marquis killed a child; Darnay rejected aristocratic title; Lucie married Darnay; Carton loved Lucie; ending sacrifice.",
+      "questions": [
+        {
+          "question": "Question 1 — Choose: (1) I enjoy .......... stories. (a) read (b) to read (c) reading (d) reads. (2) The bridge was .......... in 2010. (a) build (b) built (c) building (d) builds. (3) You .......... respect other people. (a) should (b) shouldn’t to (c) can to (d) mustn’t to. (4) The children .......... happy yesterday. (a) is (b) was (c) were (d) be.",
+          "options": [
+            "1c, 2b, 3a, 4c",
+            "1a, 2c, 3b, 4d",
+            "1b, 2a, 3d, 4c",
+            "1d, 2b, 3c, 4a"
+          ],
+          "correctIndex": 0,
+          "explanation": "Enjoy takes -ing; passive past is built; should gives advice; plural children takes were."
+        },
+        {
+          "question": "Question 2 — Choose the correct order: (1) the / largest / island / in / the world / Greenland / is. (2) did / start / swimming / When / you? (3) is / a habit / something / you / often / do.",
+          "options": [
+            "1 Greenland is the largest island in the world. 2 When did you start swimming? 3 A habit is something you often do.",
+            "1 The island Greenland largest is. 2 When you swimming start did? 3 A habit something do often.",
+            "1 Greenland is island largest. 2 Did when swimming? 3 Habit is do.",
+            "1 Is Greenland largest the. 2 You start when. 3 Something habit often."
+          ],
+          "correctIndex": 0,
+          "explanation": "The first option forms grammatical sentences and questions."
+        },
+        {
+          "question": "Question 3 — Complete: (1) I enjoy .......... things with my hands. (2) Oil is .......... in many countries. (3) Children .......... have the chance to play. (4) The animals .......... dangerous.",
+          "options": [
+            "1 making, 2 produced, 3 should, 4 were",
+            "1 make, 2 producing, 3 shouldn’t, 4 was",
+            "1 to make, 2 produce, 3 mustn’t, 4 is",
+            "1 made, 2 produces, 3 can to, 4 be"
+          ],
+          "correctIndex": 0,
+          "explanation": "Enjoy takes making; passive is produced; should is advice; plural animals takes were."
+        },
+        {
+          "question": "Question 4 — Read: “A school garden can teach more than science. Pupils prepare the soil, plant seeds and water the plants. They learn patience because plants need time to grow. The garden can also provide vegetables for the school kitchen.” Choose the correct set: (1) What do pupils prepare? (2) Why do they learn patience? (3) What can the garden provide?",
+          "options": [
+            "1 the soil, 2 plants need time to grow, 3 vegetables",
+            "1 the kitchen, 2 lessons are short, 3 books",
+            "1 the road, 2 plants are fast, 3 clothes",
+            "1 the exam, 2 pupils are tired, 3 phones"
+          ],
+          "correctIndex": 0,
+          "explanation": "The answers follow the passage."
+        },
+        {
+          "question": "Question 5 — A Tale of Two Cities: choose the correct set: (1) The Marquis killed a .......... with his coach. (2) Darnay did not want to be an .......... (3) Lucie married .......... (4) Carton finally made the great ..........",
+          "options": [
+            "1 child, 2 aristocrat, 3 Darnay, 4 sacrifice",
+            "1 spy, 2 doctor, 3 Lorry, 4 journey",
+            "1 soldier, 2 banker, 3 Barsad, 4 trial",
+            "1 horse, 2 citizen, 3 Defarge, 4 escape"
+          ],
+          "correctIndex": 0,
+          "explanation": "These are the key events of Chapters 5–14."
+        }
+      ]
+    },
+    {
+      "title": "امتحان تجريبي ٥ — اللغة الإنجليزية",
+      "durationMinutes": 120,
+      "status": "sample",
+      "sourceNote": "من إعدادنا على بنية نموذج أكاديمية TiT الخاص الذي فُحص من موقع المعلم التعليمي (نهر النيل ٢٠٢٤، ساعتان: Language، Comprehension، Composition، Supplementary). النموذج المصدر ليس ورقة وزارة.",
+      "answerKey": "A: 1a, 2c, 3b, 4a. B: 1d, 2b, 3c, 4a. C: 1because, 2but, 3although. D: reading passage about a Sudanese inventor. E: best Sudan paragraph. F: Carton and Darnay looked alike; Doctor Manette defended Darnay; Barsad was Solomon; Madame Defarge died; Carton died at the guillotine.",
+      "questions": [
+        {
+          "question": "Question 1 — Choose: (1) She .......... to school every day. (a) goes (b) go (c) going (d) went. (2) If you study, you .......... learn more. (a) learned (b) will (c) learning (d) would to. (3) Ahmed was .......... a book. (a) read (b) reading (c) reads (d) to read. (4) We have .......... the work. (a) finished (b) finish (c) finishing (d) finishes.",
+          "options": [
+            "1a, 2b, 3b, 4a",
+            "1b, 2a, 3c, 4d",
+            "1c, 2d, 3a, 4b",
+            "1d, 2c, 3d, 4a"
+          ],
+          "correctIndex": 0,
+          "explanation": "Third-person singular takes goes; the first conditional uses will; was takes -ing; present perfect uses finished."
+        },
+        {
+          "question": "Question 2 — Match: (1) Why are you late? (2) What does your father do? (3) How often do you read? (4) Where is the library? (a) He is a farmer. (b) It is near the school. (c) Because the bus was late. (d) Twice a week.",
+          "options": [
+            "1c, 2a, 3d, 4b",
+            "1a, 2c, 3b, 4d",
+            "1d, 2b, 3a, 4c",
+            "1b, 2d, 3c, 4a"
+          ],
+          "correctIndex": 0,
+          "explanation": "Each question matches its natural answer."
+        },
+        {
+          "question": "Question 3 — Choose the correct connectors: “The boy ran home .......... he saw a snake. Hana likes spiders, .......... she dislikes scorpions. .......... the task was difficult, the pupils completed it.”",
+          "options": [
+            "because, but, although",
+            "although, because, so",
+            "so, however, because",
+            "but, so, although"
+          ],
+          "correctIndex": 0,
+          "explanation": "Because gives the reason, but contrasts, and although introduces a contrast."
+        },
+        {
+          "question": "Question 4 — Read: “A young Sudanese inventor designed a simple device to save water. The device collects rainwater from the roof and stores it in a clean tank. Families can use the water for gardens. The inventor tested the design at school and improved it after listening to the community.” Choose the correct set: (1) What does the device collect? (2) Where is water stored? (3) What can families use it for? (4) How did the inventor improve the design?",
+          "options": [
+            "1 rainwater, 2 a clean tank, 3 gardens, 4 by listening to the community",
+            "1 oil, 2 a river, 3 cars, 4 by ignoring people",
+            "1 dust, 2 a box, 3 roads, 4 by copying a book",
+            "1 seawater, 2 a bottle, 3 factories, 4 by stopping tests"
+          ],
+          "correctIndex": 0,
+          "explanation": "All four details are given in the passage."
+        },
+        {
+          "question": "Question 5 — A Tale of Two Cities: choose the correct set: (1) Carton and Darnay looked .......... (2) Doctor Manette defended Darnay at the .......... (3) Barsad was also called .......... (4) Carton died at the ..........",
+          "options": [
+            "1 alike, 2 trial, 3 Solomon, 4 guillotine",
+            "1 different, 2 wedding, 3 Jerry, 4 prison",
+            "1 brothers, 2 bank, 3 Gaspard, 4 chateau",
+            "1 old, 2 school, 3 Stryver, 4 ship"
+          ],
+          "correctIndex": 0,
+          "explanation": "The resemblance enables the escape; the doctor speaks at the trial; Barsad is Solomon; Carton goes to the guillotine."
+        }
+      ]
+    }
+  ]
+}
