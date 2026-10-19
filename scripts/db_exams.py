@@ -35,6 +35,7 @@ db_exams.py — يستورد الامتحانات التجريبية ومفات�
     python3 scripts/db_exams.py            # كل الملفات
     python3 scripts/db_exams.py math       # مادة واحدة
 """
+import hashlib
 import json
 import os
 import re
@@ -59,7 +60,10 @@ def database_url():
 
 
 def slug(text):
-    return re.sub(r'[^a-z0-9]+', '-', (text or '').lower()).strip('-')[:60] or 'key'
+    """معرّف ثابت لأي عنوان (عربياً كان أم لا) — حرف + بصمة تجزئة."""
+    s = re.sub(r'[^a-z0-9]+', '-', (text or '').lower()).strip('-')[:40]
+    h = hashlib.md5((text or '').encode('utf-8')).hexdigest()[:8]
+    return f'{s}-{h}' if s else h
 
 
 def upsert_exam(cur, subject_id, exam):
@@ -100,23 +104,17 @@ def main():
         data = json.load(open(os.path.join(EXAMS_DIR, fname), encoding='utf-8'))
         subject_id = data['subjectId']
         for exam in data.get('exams', []):
-            # مفتاح تكرار صريح: نبحث عن الامتحان أولاً
+            # معرّف ثابت من المادة والعنوان — رفع آمن قابل للتكرار
+            exam_id = f'exam-{subject_id}-{slug(exam["title"])}'
             cur.execute(
-                'SELECT id FROM "Exam" WHERE "subjectId"=%s AND title=%s',
-                (subject_id, exam['title']))
-            row = cur.fetchone()
-            if row:
-                exam_id = row[0]
-                cur.execute(
-                    'UPDATE "Exam" SET "durationMinutes"=%s, status=%s WHERE id=%s',
-                    (exam.get('durationMinutes', 30), exam.get('status', 'sample'), exam_id))
-            else:
-                cur.execute(
-                    'INSERT INTO "Exam" ("subjectId", title, "durationMinutes", status) '
-                    'VALUES (%s,%s,%s,%s) RETURNING id',
-                    (subject_id, exam['title'], exam.get('durationMinutes', 30),
-                     exam.get('status', 'sample')))
-                exam_id = cur.fetchone()[0]
+                """INSERT INTO "Exam" (id, "subjectId", title, "durationMinutes", status)
+                   VALUES (%s,%s,%s,%s,%s)
+                   ON CONFLICT (id) DO UPDATE SET
+                     title = EXCLUDED.title,
+                     "durationMinutes" = EXCLUDED."durationMinutes",
+                     status = EXCLUDED.status""",
+                (exam_id, subject_id, exam['title'],
+                 exam.get('durationMinutes', 30), exam.get('status', 'sample')))
 
             # الأسئلة: فقط إن لم يكن للامتحان أسئلة (حماية المحاولات السابقة)
             cur.execute('SELECT COUNT(*) FROM "ExamQuestion" WHERE "examId"=%s', (exam_id,))
@@ -127,7 +125,8 @@ def main():
                     cur.execute(
                         """INSERT INTO "ExamQuestion"
                            (id, "examId", "lessonId", question, options, "correctIndex", explanation)
-                           VALUES (%s,%s,NULL,%s,%s,%s,%s)""",
+                           VALUES (%s,%s,NULL,%s,%s,%s,%s)
+                           ON CONFLICT (id) DO NOTHING""",
                         (f'{exam_id}-q{i}', exam_id, q['question'],
                          json.dumps(q['options'], ensure_ascii=False),
                          q['correctIndex'], q.get('explanation', '')))
