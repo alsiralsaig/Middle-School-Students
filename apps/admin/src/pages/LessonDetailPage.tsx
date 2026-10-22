@@ -1,11 +1,11 @@
 import React from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ArrowRight, Clock3, Pencil, Trash2 } from 'lucide-react';
+import { ArrowRight, Clock3, FileText, Pencil, Trash2, Upload } from 'lucide-react';
 import { Badge, Card, EmptyState, ErrorState, LoadingState, NotConnectedNote } from '../components/ui';
 import { api, type LessonRecord } from '../lib/contentApi';
 import { getApiBase } from '../lib/serverUrl';
 
-interface LessonFile { title?: string; name?: string; url?: string; path?: string; filePath?: string; type?: string }
+interface LessonFile { id?: string; title?: string; name?: string; url?: string; path?: string; filePath?: string; type?: string; fileType?: string; fileSize?: string }
 type FullLesson = LessonRecord & { attachments: LessonFile[] };
 
 export const LessonDetailPage: React.FC = () => {
@@ -16,6 +16,9 @@ export const LessonDetailPage: React.FC = () => {
   const [offline, setOffline] = React.useState(false);
   const [error, setError] = React.useState('');
   const [deleting, setDeleting] = React.useState(false);
+  const [uploading, setUploading] = React.useState(false);
+  const [deletingFile, setDeletingFile] = React.useState<string | null>(null);
+  const fileInput = React.useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {
     let alive = true;
@@ -27,6 +30,38 @@ export const LessonDetailPage: React.FC = () => {
     })();
     return () => { alive = false; };
   }, [lessonId]);
+
+  const uploadAttachment = async (file?: File) => {
+    if (!file || !lesson || uploading) return;
+    if (file.size > 20 * 1024 * 1024) { setError('حجم الملف يتجاوز الحد الأقصى 20 ميغابايت'); return; }
+    setUploading(true); setError('');
+    try {
+      const form = new FormData(); form.append('file', file);
+      const response = await fetch(`${getApiBase()}/api/admin/lessons/${encodeURIComponent(lesson.id)}/attachments`, {
+        method: 'POST', credentials: 'include', headers: { 'X-App': 'admin', Accept: 'application/json' }, body: form,
+      });
+      const data = await response.json().catch(() => null) as { error?: string; attachment?: LessonFile } | null;
+      if (!response.ok) throw new Error(data?.error || 'تعذّر رفع الملف');
+      if (data?.attachment) setLesson((current) => current ? { ...current, attachments: [...current.attachments, data.attachment!] } : current);
+      if (fileInput.current) fileInput.current.value = '';
+    } catch (e) { setError(e instanceof Error ? e.message : 'تعذّر رفع الملف'); }
+    finally { setUploading(false); }
+  };
+
+  const removeAttachment = async (file: LessonFile) => {
+    if (!lesson || !file.id || deletingFile) return;
+    if (!window.confirm(`حذف المرفق «${file.title ?? file.name ?? 'ملف'}»؟`)) return;
+    setDeletingFile(file.id); setError('');
+    try {
+      const response = await fetch(`${getApiBase()}/api/admin/lessons/${encodeURIComponent(lesson.id)}/attachments/${encodeURIComponent(file.id)}`, {
+        method: 'DELETE', credentials: 'include', headers: { 'X-App': 'admin', Accept: 'application/json' },
+      });
+      const data = await response.json().catch(() => null) as { error?: string } | null;
+      if (!response.ok) throw new Error(data?.error || 'تعذّر حذف المرفق');
+      setLesson((current) => current ? { ...current, attachments: current.attachments.filter((x) => x.id !== file.id) } : current);
+    } catch (e) { setError(e instanceof Error ? e.message : 'تعذّر حذف المرفق'); }
+    finally { setDeletingFile(null); }
+  };
 
   const removeLesson = async () => {
     if (!lesson || deleting) return;
@@ -53,6 +88,27 @@ export const LessonDetailPage: React.FC = () => {
     <Card title="الشرح الكامل">{lesson.sections.length ? <div className="p-4 space-y-4">{lesson.sections.map((s, i) => <section key={i} className="border-b border-slate-100 pb-4 last:border-0"><h3 className="font-black text-navy-800 mb-2">{s.heading}</h3><p className="text-sm leading-8 text-slate-700 whitespace-pre-wrap">{s.body}</p></section>)}</div> : <EmptyState title="لا توجد أقسام شرح بعد" description="لا يحتوي الدرس على أقسام شرح حتى الآن." />}</Card>
     <div className="grid md:grid-cols-2 gap-4"><Card title="القواعد الأساسية">{lesson.keyRules.length ? <ul className="p-4 list-disc list-inside space-y-2 text-sm leading-7">{lesson.keyRules.map((x,i)=><li key={i}>{x}</li>)}</ul> : <div className="p-4 text-xs text-slate-400">لا توجد قواعد مسجلة.</div>}</Card><Card title="نصائح الامتحان">{lesson.examTips.length ? <ul className="p-4 list-disc list-inside space-y-2 text-sm leading-7">{lesson.examTips.map((x,i)=><li key={i}>{x}</li>)}</ul> : <div className="p-4 text-xs text-slate-400">لا توجد نصائح مسجلة.</div>}</Card></div>
     <Card title="أسئلة شائعة">{lesson.faq.length ? <div className="p-4 space-y-3">{lesson.faq.map((f,i)=><div key={i}><h3 className="font-bold text-navy-800">{f.q}</h3><p className="text-sm text-slate-600 mt-1">{f.a}</p></div>)}</div> : <div className="p-4 text-xs text-slate-400">لا توجد أسئلة شائعة.</div>}</Card>
-    {lesson.attachments.length > 0 && <Card title="مرفقات الدرس"><ul className="p-4 space-y-2">{lesson.attachments.map((f,i)=>{const url=f.url ?? f.filePath ?? f.path; return <li key={i}>{url ? <a href={url.startsWith('/') ? `${getApiBase()}${url}` : url} target="_blank" rel="noreferrer" className="text-sm text-navy-800 underline">{f.title ?? f.name ?? url}</a> : <span className="text-sm">{f.title ?? f.name ?? 'مرفق'}</span>}</li>;})}</ul></Card>}
+    <Card title="مرفقات الدرس">
+      <div className="p-4 space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-xs text-slate-500">PDF وWord وExcel وPowerPoint وTXT وCSV والصور، حتى 20 ميغابايت للملف.</p>
+          <input ref={fileInput} type="file" className="hidden" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.jpg,.jpeg,.png,.webp" onChange={(event) => void uploadAttachment(event.currentTarget.files?.[0])} />
+          <button type="button" onClick={() => fileInput.current?.click()} disabled={uploading} className="inline-flex items-center gap-2 rounded-xl bg-navy-800 px-3 py-2 text-xs font-bold text-white disabled:opacity-60">
+            <Upload className="w-3.5 h-3.5" />{uploading ? 'جارٍ الرفع…' : 'رفع ملف'}
+          </button>
+        </div>
+        {lesson.attachments.length === 0 ? <p className="rounded-xl border border-dashed border-slate-200 p-4 text-center text-xs text-slate-400">لا توجد مرفقات لهذا الدرس بعد.</p> :
+          <ul className="space-y-2">{lesson.attachments.map((f, i) => {
+            const url = f.url ?? f.filePath ?? f.path;
+            return <li key={f.id ?? i} className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 p-3">
+              <div className="flex min-w-0 items-center gap-2"><FileText className="h-4 w-4 shrink-0 text-navy-700" /><div className="min-w-0">
+                {url ? <a href={url.startsWith('/') ? `${getApiBase()}${url}` : url} target="_blank" rel="noreferrer" className="block truncate text-sm font-bold text-navy-800 underline">{f.title ?? f.name ?? 'مرفق'}</a> : <span className="text-sm">{f.title ?? f.name ?? 'مرفق'}</span>}
+                <span className="text-[11px] text-slate-400">{[f.fileType ?? f.type, f.fileSize].filter(Boolean).join(' · ')}</span>
+              </div></div>
+              {f.id && <button type="button" aria-label="حذف المرفق" onClick={() => void removeAttachment(f)} disabled={deletingFile === f.id} className="rounded-lg p-2 text-rose-600 hover:bg-rose-50 disabled:opacity-50"><Trash2 className="h-4 w-4" /></button>}
+            </li>;
+          })}</ul>}
+      </div>
+    </Card>
   </div>;
 };

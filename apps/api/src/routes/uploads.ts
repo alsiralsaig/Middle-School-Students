@@ -1,6 +1,7 @@
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 import fs from 'node:fs';
+import { put, del } from '@vercel/blob';
 import { Router, type Request, type Response } from 'express';
 import multer from 'multer';
 import { prisma } from '../lib/prisma.js';
@@ -9,7 +10,7 @@ import { UPLOAD_DIR, ensureUploadDir } from '../lib/paths.js';
 
 export const uploadsRouter = Router();
 
-ensureUploadDir();
+if (!process.env.VERCEL) ensureUploadDir();
 
 const MAX_SIZE = 20 * 1024 * 1024; // 20 ميغابايت
 const ALLOWED = new Map([
@@ -27,23 +28,20 @@ const ALLOWED = new Map([
   ['image/webp', 'webp'],
 ]);
 
-const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => cb(null, UPLOAD_DIR),
-  filename: (_req, file, cb) => {
-    const safe = path
-      .basename(file.originalname)
-      .replace(/[^\p{L}\p{N}._-]/gu, '_')
-      .slice(0, 80);
-    cb(null, `${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${safe}`);
-  },
-});
+const ALLOWED_EXTENSIONS = new Set(ALLOWED.values());
+const fileExtension = (file: Express.Multer.File): string | undefined => {
+  const byMime = ALLOWED.get(file.mimetype);
+  if (byMime) return byMime;
+  const byName = path.extname(file.originalname).slice(1).toLowerCase();
+  return file.mimetype === 'application/octet-stream' && ALLOWED_EXTENSIONS.has(byName) ? byName : undefined;
+};
 
 const upload = multer({
-  storage,
+  storage: multer.memoryStorage(),
   limits: { fileSize: MAX_SIZE, files: 1 },
   fileFilter: (_req, file, cb) => {
-    if (ALLOWED.has(file.mimetype)) cb(null, true);
-    else cb(new Error('نوع الملف غير مدعوم — PDF أو Word أو صورة فقط'));
+    if (fileExtension(file)) cb(null, true);
+    else cb(new Error('نوع الملف غير مدعوم — PDF أو Office أو TXT/CSV أو صورة'));
   },
 });
 
@@ -65,6 +63,32 @@ const humanSize = (bytes: number) => {
   return `${(bytes / (1024 * 1024)).toFixed(1)} ميغابايت`;
 };
 
+/** تخزين دائم على Vercel Blob في الإنتاج؛ ملفات محلية للتطوير فقط. */
+async function storeUploadedFile(file: Express.Multer.File): Promise<string> {
+  const safe = path.basename(file.originalname).replace(/[^\p{L}\p{N}._-]/gu, '_').slice(0, 80) || 'file';
+  const token = process.env.BLOB_READ_WRITE_TOKEN;
+  if (token) {
+    const result = await put(`uploads/${Date.now()}-${randomUUID()}-${safe}`, file.buffer, { access: 'public', token });
+    return result.url;
+  }
+  if (process.env.VERCEL) throw new Error('تخزين الملفات الدائم غير مُعدّ: أضف BLOB_READ_WRITE_TOKEN في إعدادات API على Vercel.');
+  ensureUploadDir();
+  const filename = `${Date.now()}-${randomUUID()}-${safe}`;
+  fs.writeFileSync(path.join(UPLOAD_DIR, filename), file.buffer);
+  return `/uploads/${filename}`;
+}
+
+async function deleteStoredFile(fileUrl: string): Promise<void> {
+  if (fileUrl.startsWith('/uploads/')) {
+    const full = path.join(UPLOAD_DIR, path.basename(fileUrl));
+    if (fs.existsSync(full)) fs.unlinkSync(full);
+    return;
+  }
+  if (fileUrl.startsWith('https://') && process.env.BLOB_READ_WRITE_TOKEN) {
+    await del(fileUrl, { token: process.env.BLOB_READ_WRITE_TOKEN });
+  }
+}
+
 /* ============================ رفع ملف للمكتبة ============================ */
 
 uploadsRouter.post('/uploads/resource', requireAuth, async (req, res) => {
@@ -82,8 +106,11 @@ uploadsRouter.post('/uploads/resource', requireAuth, async (req, res) => {
     const author = cleanText(req.body?.author, 80) || null;
     const user = currentUser(req);
 
-    const ext = ALLOWED.get(req.file.mimetype) ?? 'bin';
-    const resource = await prisma.resource.create({
+    const ext = fileExtension(req.file) ?? 'bin';
+    const filePath = await storeUploadedFile(req.file);
+    let resource;
+    try {
+      resource = await prisma.resource.create({
       data: {
         id: `upl-${Date.now().toString(36)}`,
         subjectId,
@@ -98,10 +125,14 @@ uploadsRouter.post('/uploads/resource', requireAuth, async (req, res) => {
         downloadCount: 0,
         description,
         previewSummary: '[]',
-        filePath: `/uploads/${req.file.filename}`,
+        filePath,
         status: 'sample',
       },
-    });
+      });
+    } catch (e) {
+      await deleteStoredFile(filePath).catch(() => undefined);
+      throw e;
+    }
 
     console.log(`📤 ${user.name} رفع ملفاً: ${title}`);
     res.status(201).json({ resource: { ...resource, previewSummary: [] } });
@@ -119,22 +150,23 @@ uploadsRouter.post('/admin/exams/:examId/attachments', requireAdmin, async (req,
   await runUpload(req, res);
   if (res.headersSent) return;
   if (!req.file) { res.status(400).json({ error: 'اختر ملفاً أولاً' }); return; }
+  let filePath = '';
   try {
-    const ext = ALLOWED.get(req.file.mimetype) ?? 'bin';
+    const ext = fileExtension(req.file) ?? 'bin';
+    filePath = await storeUploadedFile(req.file);
     const attachment = await prisma.resource.create({ data: {
       id: `examfile-${exam.id}-${randomUUID()}`, subjectId: exam.subjectId,
       title: cleanText(req.file.originalname, 150) || 'ملف الامتحان', category: 'exam-attachment',
       fileType: ext.toUpperCase(), fileSize: humanSize(req.file.size), pageCount: 0,
       author: currentUser(req).name, publishYear: null, isVerifiedCurriculum: false,
       downloadCount: 0, description: `مرفق للامتحان ${exam.title}`, previewSummary: '[]',
-      filePath: `/uploads/${req.file.filename}`, status: 'sample',
+      filePath, status: 'sample',
     }, select: { id: true, title: true, fileType: true, fileSize: true, filePath: true } });
     res.status(201).json({ attachment });
   } catch (e) {
-    const full = path.join(UPLOAD_DIR, path.basename(req.file.path));
-    if (fs.existsSync(full)) fs.unlinkSync(full);
+    if (filePath) await deleteStoredFile(filePath).catch(() => undefined);
     console.error('exam attachment create error:', e);
-    res.status(500).json({ error: 'تعذّر حفظ مرفق الامتحان' });
+    res.status(500).json({ error: e instanceof Error ? e.message : 'تعذّر حفظ مرفق الامتحان' });
   }
 });
 
@@ -143,12 +175,53 @@ uploadsRouter.delete('/admin/exams/:examId/attachments/:attachmentId', requireAd
   if (!req.params.attachmentId.startsWith(prefix)) { res.status(400).json({ error: 'المرفق لا يتبع هذا الامتحان' }); return; }
   const attachment = await prisma.resource.findUnique({ where: { id: req.params.attachmentId } });
   if (!attachment || attachment.category !== 'exam-attachment') { res.status(404).json({ error: 'الملف غير موجود' }); return; }
-  if (attachment.filePath) {
-    const full = path.join(UPLOAD_DIR, path.basename(attachment.filePath));
-    if (fs.existsSync(full)) fs.unlinkSync(full);
-  }
   await prisma.resource.delete({ where: { id: attachment.id } });
+  if (attachment.filePath) await deleteStoredFile(attachment.filePath).catch((e) => console.error('exam attachment storage delete error:', e));
   res.json({ ok: true });
+});
+
+/* ============================ مرفقات الدروس (الإدارة) ============================ */
+
+uploadsRouter.post('/admin/lessons/:lessonId/attachments', requireAdmin, async (req, res) => {
+  const lesson = await prisma.lesson.findUnique({ where: { id: req.params.lessonId }, select: { id: true, attachments: true } });
+  if (!lesson) { res.status(404).json({ error: 'الدرس غير موجود' }); return; }
+  await runUpload(req, res);
+  if (res.headersSent) return;
+  if (!req.file) { res.status(400).json({ error: 'اختر ملفاً أولاً' }); return; }
+  let filePath = '';
+  try {
+    filePath = await storeUploadedFile(req.file);
+    let existing: Array<Record<string, unknown>> = [];
+    try { const parsed: unknown = JSON.parse(lesson.attachments); if (Array.isArray(parsed)) existing = parsed as Array<Record<string, unknown>>; } catch { /* إصلاح قيمة قديمة غير صالحة */ }
+    const attachment = {
+      id: `lessonfile-${lesson.id}-${randomUUID()}`,
+      title: cleanText(req.file.originalname, 150) || 'مرفق الدرس',
+      filePath,
+      fileType: (fileExtension(req.file) ?? 'file').toUpperCase(),
+      fileSize: humanSize(req.file.size),
+    };
+    await prisma.lesson.update({ where: { id: lesson.id }, data: { attachments: JSON.stringify([...existing, attachment]) } });
+    res.status(201).json({ attachment });
+  } catch (e) {
+    if (filePath) await deleteStoredFile(filePath).catch(() => undefined);
+    console.error('lesson attachment create error:', e);
+    res.status(500).json({ error: e instanceof Error ? e.message : 'تعذّر حفظ مرفق الدرس' });
+  }
+});
+
+uploadsRouter.delete('/admin/lessons/:lessonId/attachments/:attachmentId', requireAdmin, async (req, res) => {
+  try {
+    const lesson = await prisma.lesson.findUnique({ where: { id: req.params.lessonId }, select: { id: true, attachments: true } });
+    if (!lesson) { res.status(404).json({ error: 'الدرس غير موجود' }); return; }
+    let existing: Array<Record<string, unknown>> = [];
+    try { const parsed: unknown = JSON.parse(lesson.attachments); if (Array.isArray(parsed)) existing = parsed as Array<Record<string, unknown>>; } catch { /* قيمة قديمة غير صالحة */ }
+    const target = existing.find((item) => item.id === req.params.attachmentId);
+    if (!target) { res.status(404).json({ error: 'المرفق غير موجود' }); return; }
+    const remaining = existing.filter((item) => item.id !== req.params.attachmentId);
+    await prisma.lesson.update({ where: { id: lesson.id }, data: { attachments: JSON.stringify(remaining) } });
+    if (typeof target.filePath === 'string') await deleteStoredFile(target.filePath).catch((e) => console.error('lesson attachment storage delete error:', e));
+    res.json({ ok: true });
+  } catch (e) { console.error('lesson attachment delete error:', e); res.status(500).json({ error: 'تعذّر حذف المرفق' }); }
 });
 
 /* ============================ حذف ملف (الإدارة) ============================ */
@@ -159,10 +232,7 @@ uploadsRouter.delete('/uploads/resource/:id', requireAdmin, async (req, res) => 
     res.status(404).json({ error: 'الملف غير موجود' });
     return;
   }
-  if (resource.filePath) {
-    const full = path.join(UPLOAD_DIR, path.basename(resource.filePath));
-    if (fs.existsSync(full)) fs.unlinkSync(full);
-  }
   await prisma.resource.delete({ where: { id: req.params.id } });
+  if (resource.filePath) await deleteStoredFile(resource.filePath).catch((e) => console.error('resource storage delete error:', e));
   res.json({ ok: true });
 });

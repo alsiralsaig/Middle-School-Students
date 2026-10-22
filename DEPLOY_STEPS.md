@@ -101,13 +101,21 @@ DATABASE_URL="الرابط_المنسوخ" npx tsx prisma/seed.ts
 DATABASE_URL = الرابط Pooled من Neon
 JWT_SECRET   = ولّده: node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"
 NODE_ENV     = production
+BLOB_READ_WRITE_TOKEN = رمز Blob من Vercel Storage (لرفع الملفات الدائم)
 ```
 
-اختبار:
+قبل النشر، أنشئ Blob Store من Vercel Storage وانسخ رمز القراءة والكتابة إلى
+`BLOB_READ_WRITE_TOKEN`. الرفع في الإنتاج يستخدم التخزين الدائم؛ إن غاب الرمز
+سيرفض الرفع بدلاً من حفظ ملفات مؤقتة قد تختفي عند إعادة تشغيل Vercel.
+
+اختبارات بعد النشر:
 ```bash
 curl https://your-api.vercel.app/api/subjects
+curl -i https://your-api.vercel.app/api/admin/exams/test
 ```
-يجب أن يردّ JSON فيه ٨ مواد.
+يجب أن يردّ الأول JSON فيه المواد، والثاني `401` بلا تسجيل دخول (أي أن مسار
+تفاصيل الامتحان موجود ومحمي). إذا أعاد الثاني `404` فأعد نشر **مشروع API**
+ذو Root Directory=`apps/api`؛ نشر لوحة الإدارة وحدها لا يحدّث الخادم.
 
 ---
 
