@@ -58,6 +58,57 @@ adminContentRouter.get('/lessons/:id', requireAdmin, async (req, res) => {
   }
 });
 
+/* ============================ إدارة الامتحانات ============================ */
+adminContentRouter.get('/exams/:id', requireAdmin, async (req, res) => {
+  try {
+    const exam = await prisma.exam.findUnique({
+      where: { id: req.params.id },
+      include: { subject: { select: { id: true, name: true } }, questions: true },
+    });
+    if (!exam) { res.status(404).json({ error: 'الامتحان غير موجود' }); return; }
+    res.json({ exam: {
+      id: exam.id, title: exam.title, subjectId: exam.subjectId, subjectName: exam.subject.name,
+      durationMinutes: exam.durationMinutes, status: exam.status,
+      questions: exam.questions.map((q) => {
+        let options: unknown[] = [];
+        try { const value: unknown = JSON.parse(q.options); if (Array.isArray(value)) options = value; } catch { /* بيانات قديمة غير صالحة */ }
+        return { id: q.id, question: q.question, options, correctIndex: q.correctIndex, explanation: q.explanation ?? '' };
+      }),
+    } });
+  } catch (e) { console.error('admin exam get error:', e); res.status(500).json({ error: 'تعذّر تحميل الامتحان' }); }
+});
+
+adminContentRouter.post('/exams', requireAdmin, async (req, res) => {
+  try {
+    const title = cleanText(req.body?.title, 200);
+    const subjectId = cleanText(req.body?.subjectId, 60);
+    const durationMinutes = Math.max(5, Math.min(180, Number(req.body?.durationMinutes) || 30));
+    const drafts = Array.isArray(req.body?.questions) ? req.body.questions : [];
+    const subject = await prisma.subject.findUnique({ where: { id: subjectId } });
+    if (!subject) { res.status(400).json({ error: 'اختر مادة صحيحة' }); return; }
+    if (title.length < 3) { res.status(400).json({ error: 'عنوان الامتحان يجب أن يكون ٣ أحرف على الأقل' }); return; }
+    if (!drafts.length) { res.status(400).json({ error: 'أضف سؤالاً واحداً على الأقل' }); return; }
+    const questions = drafts.map((raw: unknown) => {
+      const q = (raw ?? {}) as Record<string, unknown>;
+      const options = Array.isArray(q.options) ? q.options.map((x) => cleanText(x, 500)) : [];
+      const correctIndex = Number(q.correctIndex);
+      if (cleanText(q.question, 2000).length < 2 || options.length < 2 || options.some((x) => !x) || !Number.isInteger(correctIndex) || correctIndex < 0 || correctIndex >= options.length) {
+        throw new Error('تحقق من نص السؤال والخيارات والإجابة الصحيحة');
+      }
+      return { question: cleanText(q.question, 2000), options: JSON.stringify(options), correctIndex, explanation: cleanText(q.explanation, 2000) || null };
+    });
+    const exam = await prisma.exam.create({ data: {
+      subjectId, title, durationMinutes, status: 'sample',
+      questions: { create: questions },
+    }, select: { id: true, title: true } });
+    res.status(201).json({ exam });
+  } catch (e) {
+    console.error('admin exam create error:', e);
+    const message = e instanceof Error && e.message.startsWith('تحقق') ? e.message : 'تعذّر إنشاء الامتحان';
+    res.status(400).json({ error: message });
+  }
+});
+
 /* ============================ إدارة المواد والوحدات وإنشاء الدروس ============================ */
 adminContentRouter.post('/subjects', requireAdmin, async (req, res) => {
   try {

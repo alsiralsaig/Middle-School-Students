@@ -9,6 +9,7 @@ import { ActivitiesPage, SettingsPage, StudentsPage } from './pages/MiscPages';
 import CodesPage from './pages/CodesPage';
 import LessonEditorPage from './pages/LessonEditorPage';
 import { ExamsPage } from './pages/ExamsPage';
+import { ExamDetailPage } from './pages/ExamDetailPage';
 import { UnitsPage } from './pages/UnitsPage';
 import { EmptyState } from './components/ui';
 
@@ -28,6 +29,7 @@ export default function App() {
           <Route path="/codes" element={<CodesPage />} />
           <Route path="/students" element={<StudentsPage />} />
           <Route path="/exams" element={<ExamsPage />} />
+          <Route path="/exams/:examId" element={<ExamDetailPage />} />
           <Route path="/activities" element={<ActivitiesPage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route
