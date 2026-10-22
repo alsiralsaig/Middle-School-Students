@@ -1,0 +1,490 @@
+diff --git a/apps/admin/src/App.tsx b/apps/admin/src/App.tsx
+index 798939e..9470118 100644
+--- a/apps/admin/src/App.tsx
++++ b/apps/admin/src/App.tsx
+@@ -8,6 +8,7 @@ import { SubjectDetailPage, SubjectsPage } from './pages/SubjectsPage';
+ import { ActivitiesPage, SettingsPage, StudentsPage } from './pages/MiscPages';
+ import CodesPage from './pages/CodesPage';
+ import LessonEditorPage from './pages/LessonEditorPage';
++import { LessonDetailPage } from './pages/LessonDetailPage';
+ import { ExamsPage } from './pages/ExamsPage';
+ import { ExamDetailPage } from './pages/ExamDetailPage';
+ import { UnitsPage } from './pages/UnitsPage';
+@@ -23,7 +24,8 @@ export default function App() {
+           <Route path="/units" element={<UnitsPage />} />
+           <Route path="/subjects/:subjectId" element={<SubjectDetailPage />} />
+           <Route path="/content" element={<ContentPage />} />
+-          <Route path="/content/:lessonId" element={<LessonEditorPage />} />
++          <Route path="/content/:lessonId" element={<LessonDetailPage />} />
++          <Route path="/content/:lessonId/edit" element={<LessonEditorPage />} />
+           <Route path="/library" element={<LibraryPage />} />
+           <Route path="/ratings" element={<RatingsPage />} />
+           <Route path="/codes" element={<CodesPage />} />
+diff --git a/apps/admin/src/pages/ContentPage.tsx b/apps/admin/src/pages/ContentPage.tsx
+index f092c43..e6705f2 100644
+--- a/apps/admin/src/pages/ContentPage.tsx
++++ b/apps/admin/src/pages/ContentPage.tsx
+@@ -157,7 +157,7 @@ export const ContentPage: React.FC = () => {
+               {filtered.map((l) => (
+                 <tr key={`${l.subjectId}-${l.id}`} className="hover:bg-slate-50/70">
+                   <td className="py-2.5 px-3">
+-                    <p className="font-bold text-navy-800">{l.title}</p>
++                    <Link to={`/content/${encodeURIComponent(l.id)}`} className="font-bold text-navy-800 hover:text-gold-600 hover:underline">{l.title}</Link>
+                     <p className="text-[10px] text-slate-500 line-clamp-1">{l.summary}</p>
+                   </td>
+                   <td className="py-2.5 px-3 text-slate-600">{l.subjectName}</td>
+@@ -175,7 +175,7 @@ export const ContentPage: React.FC = () => {
+                   </td>
+                   <td className="py-2.5 px-3 text-left">
+                     <Link
+-                      to={`/content/${l.id}`}
++                      to={`/content/${encodeURIComponent(l.id)}/edit`}
+                       className="inline-flex items-center gap-1 text-[11px] font-bold text-navy-800 hover:text-gold-600"
+                     >
+                       <SquarePen className="w-3.5 h-3.5" />
+diff --git a/apps/admin/src/pages/ExamDetailPage.tsx b/apps/admin/src/pages/ExamDetailPage.tsx
+index c9b5a46..323ca8e 100644
+--- a/apps/admin/src/pages/ExamDetailPage.tsx
++++ b/apps/admin/src/pages/ExamDetailPage.tsx
+@@ -1,11 +1,12 @@
+ import React from 'react';
+ import { Link, useParams } from 'react-router-dom';
+-import { ArrowRight, CheckCircle2 } from 'lucide-react';
++import { ArrowRight, CheckCircle2, FilePlus2, Loader2, Trash2 } from 'lucide-react';
+ import { Badge, Card, EmptyState, ErrorState, LoadingState, NotConnectedNote } from '../components/ui';
+ import { getApiBase } from '../lib/serverUrl';
+ 
+ interface Question { id: string; question: string; options: string[]; correctIndex: number; explanation: string }
+-interface ExamDetail { id: string; title: string; subjectName: string; durationMinutes: number; status: string; questions: Question[] }
++interface Attachment { id: string; title: string; fileType: string; fileSize: string; filePath: string | null }
++interface ExamDetail { id: string; title: string; subjectName: string; durationMinutes: number; status: string; questions: Question[]; attachments: Attachment[] }
+ 
+ export const ExamDetailPage: React.FC = () => {
+   const { examId = '' } = useParams();
+@@ -13,24 +14,52 @@ export const ExamDetailPage: React.FC = () => {
+   const [loading, setLoading] = React.useState(true);
+   const [offline, setOffline] = React.useState(false);
+   const [error, setError] = React.useState('');
++  const [uploading, setUploading] = React.useState(false);
++  const [fileError, setFileError] = React.useState('');
+ 
+-  React.useEffect(() => {
+-    let alive = true;
+-    (async () => {
+-      setLoading(true); setError('');
+-      try {
+-        const response = await fetch(`${getApiBase()}/api/admin/exams/${encodeURIComponent(examId)}`, {
+-          headers: { Accept: 'application/json', 'X-App': 'admin' }, credentials: 'include',
+-        });
+-        const data = await response.json().catch(() => null) as { exam?: ExamDetail; error?: string } | null;
+-        if (!response.ok || !data?.exam) throw new Error(data?.error || 'تعذّر تحميل الامتحان');
+-        if (alive) { setExam(data.exam); setOffline(false); }
+-      } catch (e) {
+-        if (alive) { setExam(null); setOffline(e instanceof TypeError); setError(e instanceof Error ? e.message : 'تعذّر تحميل الامتحان'); }
+-      } finally { if (alive) setLoading(false); }
+-    })();
+-    return () => { alive = false; };
++  const load = React.useCallback(async () => {
++    setLoading(true); setError('');
++    try {
++      const response = await fetch(`${getApiBase()}/api/admin/exams/${encodeURIComponent(examId)}`, {
++        headers: { Accept: 'application/json', 'X-App': 'admin' }, credentials: 'include',
++      });
++      const data = await response.json().catch(() => null) as { exam?: ExamDetail; error?: string } | null;
++      if (!response.ok || !data?.exam) throw new Error(data?.error || 'تعذّر تحميل الامتحان');
++      setExam(data.exam); setOffline(false);
++    } catch (e) { setExam(null); setOffline(e instanceof TypeError); setError(e instanceof Error ? e.message : 'تعذّر تحميل الامتحان'); }
++    finally { setLoading(false); }
+   }, [examId]);
++  React.useEffect(() => { void load(); }, [load]);
++
++  const upload = async (e: React.ChangeEvent<HTMLInputElement>) => {
++    const file = e.target.files?.[0]; e.target.value = '';
++    if (!file) return;
++    if (file.size > 20 * 1024 * 1024) { setFileError('حجم الملف أكبر من ٢٠ ميغابايت'); return; }
++    setUploading(true); setFileError('');
++    try {
++      const body = new FormData(); body.append('file', file);
++      const response = await fetch(`${getApiBase()}/api/admin/exams/${encodeURIComponent(examId)}/attachments`, {
++        method: 'POST', credentials: 'include', headers: { 'X-App': 'admin', Accept: 'application/json' }, body,
++      });
++      const data = await response.json().catch(() => null) as { error?: string } | null;
++      if (!response.ok) throw new Error(data?.error || 'تعذّر رفع الملف');
++      await load();
++    } catch (e2) { setFileError(e2 instanceof Error ? e2.message : 'تعذّر رفع الملف'); }
++    finally { setUploading(false); }
++  };
++
++  const removeAttachment = async (attachment: Attachment) => {
++    if (!window.confirm(`حذف الملف «${attachment.title}» من هذا الامتحان؟`)) return;
++    setFileError('');
++    try {
++      const response = await fetch(`${getApiBase()}/api/admin/exams/${encodeURIComponent(examId)}/attachments/${encodeURIComponent(attachment.id)}`, {
++        method: 'DELETE', credentials: 'include', headers: { 'X-App': 'admin', Accept: 'application/json' },
++      });
++      const data = await response.json().catch(() => null) as { error?: string } | null;
++      if (!response.ok) throw new Error(data?.error || 'تعذّر حذف الملف');
++      await load();
++    } catch (e) { setFileError(e instanceof Error ? e.message : 'تعذّر حذف الملف'); }
++  };
+ 
+   if (loading) return <div className="space-y-3" dir="rtl"><Link to="/exams" className="inline-flex items-center gap-1 text-xs font-bold text-navy-800"><ArrowRight className="w-4 h-4" /> رجوع للامتحانات</Link><LoadingState label="جارٍ تحميل الامتحان…" /></div>;
+   if (!exam) return <div className="space-y-3" dir="rtl"><Link to="/exams" className="inline-flex items-center gap-1 text-xs font-bold text-navy-800"><ArrowRight className="w-4 h-4" /> رجوع للامتحانات</Link>{offline ? <NotConnectedNote>تعذّر الاتصال بالخادم.</NotConnectedNote> : <ErrorState title="تعذّر فتح الامتحان" description={error || 'الامتحان غير موجود'} />}</div>;
+@@ -38,10 +67,21 @@ export const ExamDetailPage: React.FC = () => {
+   return <div className="space-y-5" dir="rtl">
+     <Link to="/exams" className="inline-flex items-center gap-1 text-xs font-bold text-navy-800"><ArrowRight className="w-4 h-4" /> رجوع للامتحانات</Link>
+     <header className="flex flex-wrap items-start justify-between gap-3"><div><h1 className="text-xl font-black text-navy-800">{exam.title}</h1><p className="text-xs text-slate-500 mt-1">{exam.subjectName} · {exam.questions.length} أسئلة · {exam.durationMinutes} دقيقة</p></div><Badge tone="amber">نموذج تدريبي — غير وزاري</Badge></header>
+-    {exam.questions.length === 0 ? <Card><EmptyState title="لا توجد أسئلة بعد" description="هذا الامتحان لا يحتوي أسئلة مسجلة." /></Card> : exam.questions.map((q, index) => <Card key={q.id} title={`السؤال ${index + 1}`} subtitle={q.question}>
+-      <div className="p-4 space-y-2">{q.options.map((option, optionIndex) => <div key={optionIndex} className={`rounded-xl border px-3 py-2 text-sm ${optionIndex === q.correctIndex ? 'border-emerald-300 bg-emerald-50 text-emerald-800 font-bold' : 'border-slate-200 text-slate-700'}`}><span className="nums ml-2">{optionIndex + 1}.</span>{option}{optionIndex === q.correctIndex && <CheckCircle2 className="inline w-4 h-4 mr-2" />}</div>)}
+-        {q.explanation && <p className="text-xs text-slate-600 bg-slate-50 rounded-xl p-3">التفسير: {q.explanation}</p>}
++
++    <Card title="ملفات الامتحان" subtitle="PDF وWord وExcel وPowerPoint والنصوص والصور، حتى ٢٠ ميغابايت؛ دوام الملفات يتطلب خادماً بقرص دائم.">
++      <div className="p-4 space-y-3">
++        <label className="inline-flex items-center gap-2 cursor-pointer rounded-xl bg-navy-800 text-white px-4 py-2.5 text-xs font-bold hover:bg-navy-700">
++          {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <FilePlus2 className="w-4 h-4" />}
++          {uploading ? 'جارٍ رفع الملف…' : 'إضافة ملف'}
++          <input type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.jpg,.jpeg,.png,.webp,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,text/plain,text/csv,image/jpeg,image/png,image/webp" onChange={upload} disabled={uploading} className="sr-only" />
++        </label>
++        {fileError && <p role="alert" className="text-xs text-rose-700 bg-rose-50 border border-rose-200 rounded-xl px-3 py-2">{fileError}</p>}
++        {exam.attachments.length === 0 ? <p className="text-xs text-slate-400">لا توجد ملفات مرفقة.</p> : <ul className="divide-y divide-slate-100">{exam.attachments.map((a) => <li key={a.id} className="flex items-center justify-between gap-3 py-2"><div className="min-w-0"><a href={a.filePath ? `${getApiBase()}${a.filePath}` : '#'} target="_blank" rel="noreferrer" className="font-bold text-xs text-navy-800 hover:underline break-all">{a.title}</a><p className="text-[10px] text-slate-500">{a.fileType} · {a.fileSize}</p></div><button type="button" onClick={() => void removeAttachment(a)} aria-label="حذف المرفق" className="shrink-0 p-2 text-rose-600 hover:bg-rose-50 rounded-lg"><Trash2 className="w-4 h-4" /></button></li>)}</ul>}
+       </div>
++    </Card>
++
++    {exam.questions.length === 0 ? <Card><EmptyState title="لا توجد أسئلة بعد" description="هذا الامتحان لا يحتوي أسئلة مسجلة." /></Card> : exam.questions.map((q, index) => <Card key={q.id} title={`السؤال ${index + 1}`} subtitle={q.question}>
++      <div className="p-4 space-y-2">{q.options.map((option, optionIndex) => <div key={optionIndex} className={`rounded-xl border px-3 py-2 text-sm ${optionIndex === q.correctIndex ? 'border-emerald-300 bg-emerald-50 text-emerald-800 font-bold' : 'border-slate-200 text-slate-700'}`}><span className="nums ml-2">{optionIndex + 1}.</span>{option}{optionIndex === q.correctIndex && <CheckCircle2 className="inline w-4 h-4 mr-2" />}</div>)}{q.explanation && <p className="text-xs text-slate-600 bg-slate-50 rounded-xl p-3">التفسير: {q.explanation}</p>}</div>
+     </Card>)}
+   </div>;
+ };
+diff --git a/apps/admin/src/pages/ExamsPage.tsx b/apps/admin/src/pages/ExamsPage.tsx
+index a069335..7f5bc26 100644
+--- a/apps/admin/src/pages/ExamsPage.tsx
++++ b/apps/admin/src/pages/ExamsPage.tsx
+@@ -19,6 +19,8 @@ export const ExamsPage: React.FC = () => {
+   const [subjectId, setSubjectId] = React.useState('');
+   const [durationMinutes, setDurationMinutes] = React.useState(30);
+   const [questions, setQuestions] = React.useState<DraftQuestion[]>([emptyQuestion()]);
++  const [attachmentFile, setAttachmentFile] = React.useState<File | null>(null);
++  const [createdExamId, setCreatedExamId] = React.useState('');
+   const [saving, setSaving] = React.useState(false);
+   const [error, setError] = React.useState('');
+ 
+@@ -30,19 +32,32 @@ export const ExamsPage: React.FC = () => {
+ 
+   const openCreate = () => {
+     setTitle(''); setSubjectId(subjects?.[0]?.id ?? ''); setDurationMinutes(30);
+-    setQuestions([emptyQuestion()]); setError(''); setDialog(true);
++    setQuestions([emptyQuestion()]); setAttachmentFile(null); setCreatedExamId(''); setError(''); setDialog(true);
+   };
+   const updateQuestion = (index: number, update: Partial<DraftQuestion>) => setQuestions((current) => current.map((q, i) => i === index ? { ...q, ...update } : q));
+   const submit = async (e: React.FormEvent<HTMLFormElement>) => {
+     e.preventDefault(); if (saving) return; setSaving(true); setError('');
+     try {
+-      const response = await fetch(`${getApiBase()}/api/admin/exams`, {
+-        method: 'POST', credentials: 'include', headers: { 'X-App': 'admin', 'Content-Type': 'application/json', Accept: 'application/json' },
+-        body: JSON.stringify({ title, subjectId, durationMinutes, questions }),
+-      });
+-      const data = await response.json().catch(() => null) as { exam?: { id: string }; error?: string } | null;
+-      if (!response.ok || !data?.exam?.id) throw new Error(data?.error || 'تعذّر إنشاء الامتحان');
+-      setDialog(false); navigate(`/exams/${encodeURIComponent(data.exam.id)}`);
++      let targetId = createdExamId;
++      if (!targetId) {
++        const response = await fetch(`${getApiBase()}/api/admin/exams`, {
++          method: 'POST', credentials: 'include', headers: { 'X-App': 'admin', 'Content-Type': 'application/json', Accept: 'application/json' },
++          body: JSON.stringify({ title, subjectId, durationMinutes, questions }),
++        });
++        const data = await response.json().catch(() => null) as { exam?: { id: string }; error?: string } | null;
++        if (!response.ok || !data?.exam?.id) throw new Error(data?.error || 'تعذّر إنشاء الامتحان');
++        targetId = data.exam.id;
++        setCreatedExamId(targetId);
++      }
++      if (attachmentFile) {
++        const body = new FormData(); body.append('file', attachmentFile);
++        const fileResponse = await fetch(`${getApiBase()}/api/admin/exams/${encodeURIComponent(targetId)}/attachments`, {
++          method: 'POST', credentials: 'include', headers: { 'X-App': 'admin', Accept: 'application/json' }, body,
++        });
++        const fileData = await fileResponse.json().catch(() => null) as { error?: string } | null;
++        if (!fileResponse.ok) throw new Error(`تم إنشاء الامتحان لكن تعذّر رفع الملف: ${fileData?.error || 'أعد المحاولة'}`);
++      }
++      setDialog(false); navigate(`/exams/${encodeURIComponent(targetId)}`);
+     } catch (e2) { setError(e2 instanceof Error ? e2.message : 'تعذّر إنشاء الامتحان'); }
+     finally { setSaving(false); }
+   };
+@@ -62,9 +77,13 @@ export const ExamsPage: React.FC = () => {
+         <div className="grid sm:grid-cols-2 gap-3"><label className="block text-xs font-bold text-slate-600">المادة<select required value={subjectId} onChange={(e) => setSubjectId(e.target.value)} className="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm"><option value="">اختر المادة</option>{subjects?.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</select></label><label className="block text-xs font-bold text-slate-600">المدة (دقيقة)<input required type="number" min={5} max={180} value={durationMinutes} onChange={(e) => setDurationMinutes(Number(e.target.value))} className="mt-1 w-full rounded-xl border border-slate-300 p-2.5 text-sm" /></label></div>
+         <div className="flex items-center justify-between"><h3 className="text-sm font-black text-navy-800">الأسئلة ومفتاح الإجابة</h3><button type="button" onClick={() => setQuestions((q) => [...q, emptyQuestion()])} className="text-xs font-bold text-navy-800 border border-slate-300 rounded-lg px-3 py-2"><Plus className="inline w-3.5 h-3.5" /> سؤال</button></div>
+         {questions.map((q, qi) => <section key={qi} className="rounded-xl border border-slate-200 p-3 space-y-3"><div className="flex justify-between items-center"><strong className="text-xs text-navy-800">السؤال {qi + 1}</strong>{questions.length > 1 && <button type="button" onClick={() => setQuestions((all) => all.filter((_, i) => i !== qi))} aria-label="حذف السؤال" className="text-rose-600"><Trash2 className="w-4 h-4" /></button>}</div><label className="block text-xs font-bold text-slate-600">نص السؤال<textarea required minLength={2} rows={2} value={q.question} onChange={(e) => updateQuestion(qi, { question: e.target.value })} className="mt-1 w-full rounded-lg border border-slate-300 p-2 text-sm" /></label><div className="grid sm:grid-cols-2 gap-2">{q.options.map((option, oi) => <label key={oi} className="text-[11px] font-bold text-slate-600">الخيار {oi + 1}<div className="flex gap-2 mt-1"><input required value={option} onChange={(e) => updateQuestion(qi, { options: q.options.map((x, i) => i === oi ? e.target.value : x) })} className="min-w-0 flex-1 rounded-lg border border-slate-300 p-2 text-sm" /><input type="radio" name={`correct-${qi}`} aria-label={`الخيار الصحيح ${oi + 1}`} checked={q.correctIndex === oi} onChange={() => updateQuestion(qi, { correctIndex: oi })} /></div></label>)}</div><label className="block text-xs font-bold text-slate-600">تفسير الإجابة (اختياري)<textarea rows={2} value={q.explanation} onChange={(e) => updateQuestion(qi, { explanation: e.target.value })} className="mt-1 w-full rounded-lg border border-slate-300 p-2 text-sm" /></label></section>)}
++        <label className="block rounded-xl border border-dashed border-slate-300 p-3 text-xs font-bold text-slate-700">مرفق اختياري (PDF وWord وExcel وPowerPoint ونصوص وصور، حتى ٢٠ ميغابايت)
++          <input type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.jpg,.jpeg,.png,.webp,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,text/plain,text/csv,image/jpeg,image/png,image/webp" onChange={(e) => { const file = e.target.files?.[0] ?? null; if (file && file.size > 20 * 1024 * 1024) { setError('حجم الملف أكبر من ٢٠ ميغابايت'); setAttachmentFile(null); } else { setError(''); setAttachmentFile(file); } }} className="mt-2 block w-full text-xs" />
++          {attachmentFile && <span className="block mt-1 text-[10px] text-emerald-700">تم اختيار: {attachmentFile.name}</span>}
++        </label>
+         {error && <p role="alert" className="rounded-xl bg-rose-50 border border-rose-200 px-3 py-2 text-xs text-rose-700">{error}</p>}
+       </div>
+-      <div className="sticky bottom-0 bg-white border-t border-slate-100 p-4 flex justify-end gap-2"><button type="button" onClick={() => setDialog(false)} className="px-4 py-2 rounded-xl border border-slate-300 text-xs font-bold">إلغاء</button><button type="submit" disabled={saving || !subjectId} className="px-4 py-2 rounded-xl bg-navy-800 text-white text-xs font-bold disabled:opacity-50">{saving ? 'جارٍ الحفظ…' : 'حفظ الامتحان وفتحه'}</button></div>
++      <div className="sticky bottom-0 bg-white border-t border-slate-100 p-4 flex justify-end gap-2"><button type="button" onClick={() => setDialog(false)} className="px-4 py-2 rounded-xl border border-slate-300 text-xs font-bold">إلغاء</button><button type="submit" disabled={saving || !subjectId} className="px-4 py-2 rounded-xl bg-navy-800 text-white text-xs font-bold disabled:opacity-50">{saving ? 'جارٍ الحفظ…' : createdExamId ? 'إعادة رفع الملف وفتح الامتحان' : 'حفظ الامتحان وفتحه'}</button></div>
+     </form></div>}
+   </div>;
+ };
+diff --git a/apps/admin/src/pages/LessonDetailPage.tsx b/apps/admin/src/pages/LessonDetailPage.tsx
+new file mode 100644
+index 0000000..0842791
+--- /dev/null
++++ b/apps/admin/src/pages/LessonDetailPage.tsx
+@@ -0,0 +1,58 @@
++import React from 'react';
++import { Link, useNavigate, useParams } from 'react-router-dom';
++import { ArrowRight, Clock3, Pencil, Trash2 } from 'lucide-react';
++import { Badge, Card, EmptyState, ErrorState, LoadingState, NotConnectedNote } from '../components/ui';
++import { api, type LessonRecord } from '../lib/contentApi';
++import { getApiBase } from '../lib/serverUrl';
++
++interface LessonFile { title?: string; name?: string; url?: string; path?: string; filePath?: string; type?: string }
++type FullLesson = LessonRecord & { attachments: LessonFile[] };
++
++export const LessonDetailPage: React.FC = () => {
++  const { lessonId = '' } = useParams();
++  const navigate = useNavigate();
++  const [lesson, setLesson] = React.useState<FullLesson | null>(null);
++  const [loading, setLoading] = React.useState(true);
++  const [offline, setOffline] = React.useState(false);
++  const [error, setError] = React.useState('');
++  const [deleting, setDeleting] = React.useState(false);
++
++  React.useEffect(() => {
++    let alive = true;
++    (async () => {
++      setLoading(true); setError('');
++      try { const data = await api.getLesson(lessonId) as FullLesson; if (alive) { setLesson({ ...data, attachments: Array.isArray(data.attachments) ? data.attachments : [] }); setOffline(false); } }
++      catch (e) { if (alive) { setLesson(null); setOffline(api.isOffline(e)); setError(e instanceof Error ? e.message : 'تعذّر تحميل الدرس'); } }
++      finally { if (alive) setLoading(false); }
++    })();
++    return () => { alive = false; };
++  }, [lessonId]);
++
++  const removeLesson = async () => {
++    if (!lesson || deleting) return;
++    if (!window.confirm(`حذف «${lesson.title}»؟ لن تُحذف تقدّمات الطلاب أو تقييماتهم؛ إذا كان للدرس سجلات طلابية سيمنع الخادم حذفه.`)) return;
++    setDeleting(true); setError('');
++    try {
++      const response = await fetch(`${getApiBase()}/api/admin/lessons/${encodeURIComponent(lesson.id)}`, { method: 'DELETE', credentials: 'include', headers: { 'X-App': 'admin', Accept: 'application/json' } });
++      const data = await response.json().catch(() => null) as { error?: string } | null;
++      if (!response.ok) throw new Error(data?.error || 'تعذّر حذف الدرس');
++      navigate('/content', { replace: true });
++    } catch (e) { setError(e instanceof Error ? e.message : 'تعذّر حذف الدرس'); }
++    finally { setDeleting(false); }
++  };
++
++  if (loading) return <div className="space-y-3" dir="rtl"><Link to="/content" className="inline-flex items-center gap-1 text-xs font-bold text-navy-800"><ArrowRight className="w-4 h-4" /> رجوع للدروس</Link><LoadingState label="جارٍ تحميل الدرس كاملاً…" /></div>;
++  if (!lesson) return <div className="space-y-3" dir="rtl"><Link to="/content" className="inline-flex items-center gap-1 text-xs font-bold text-navy-800"><ArrowRight className="w-4 h-4" /> رجوع للدروس</Link>{offline ? <NotConnectedNote>تعذّر الاتصال بالخادم.</NotConnectedNote> : <ErrorState title="تعذّر فتح الدرس" description={error || 'الدرس غير موجود'} />}</div>;
++
++  return <div className="space-y-5" dir="rtl">
++    <Link to="/content" className="inline-flex items-center gap-1 text-xs font-bold text-navy-800"><ArrowRight className="w-4 h-4" /> رجوع للدروس</Link>
++    <header className="flex flex-wrap items-start justify-between gap-3"><div><h1 className="text-xl font-black text-navy-800">{lesson.title}</h1><p className="text-xs text-slate-500 mt-1 flex items-center gap-2"><Clock3 className="w-3.5 h-3.5" /> الدرس {lesson.lessonNumber} · {lesson.durationMinutes} دقيقة · {lesson.subjectId}</p></div><div className="flex items-center gap-2"><Badge tone={lesson.status === 'verified' ? 'green' : 'amber'}>{lesson.status === 'verified' ? 'مراجَع' : 'تجريبي'}</Badge><Link to={`/content/${encodeURIComponent(lesson.id)}/edit`} className="inline-flex items-center gap-1.5 rounded-xl bg-navy-800 px-3 py-2 text-xs font-bold text-white"><Pencil className="w-3.5 h-3.5" /> تعديل</Link><button type="button" onClick={() => void removeLesson()} disabled={deleting} className="inline-flex items-center gap-1.5 rounded-xl border border-rose-200 px-3 py-2 text-xs font-bold text-rose-700 disabled:opacity-60"><Trash2 className="w-3.5 h-3.5" />{deleting ? 'جارٍ الحذف…' : 'حذف'}</button></div></header>
++    {error && <p role="alert" className="rounded-xl bg-rose-50 border border-rose-200 px-3 py-2 text-xs text-rose-700">{error}</p>}
++    <Card title="ملخص الدرس"><div className="p-4 text-sm leading-8 text-slate-700 whitespace-pre-wrap">{lesson.summary || 'لا يوجد ملخص بعد.'}</div></Card>
++    <Card title="الأهداف التعليمية">{lesson.learningObjectives.length ? <ul className="p-4 list-disc list-inside space-y-2 text-sm text-slate-700">{lesson.learningObjectives.map((x, i) => <li key={i}>{x}</li>)}</ul> : <EmptyState title="لا توجد أهداف مسجلة" description="لم تُسجل أهداف تعليمية لهذا الدرس بعد." />}</Card>
++    <Card title="الشرح الكامل">{lesson.sections.length ? <div className="p-4 space-y-4">{lesson.sections.map((s, i) => <section key={i} className="border-b border-slate-100 pb-4 last:border-0"><h3 className="font-black text-navy-800 mb-2">{s.heading}</h3><p className="text-sm leading-8 text-slate-700 whitespace-pre-wrap">{s.body}</p></section>)}</div> : <EmptyState title="لا توجد أقسام شرح بعد" description="لا يحتوي الدرس على أقسام شرح حتى الآن." />}</Card>
++    <div className="grid md:grid-cols-2 gap-4"><Card title="القواعد الأساسية">{lesson.keyRules.length ? <ul className="p-4 list-disc list-inside space-y-2 text-sm leading-7">{lesson.keyRules.map((x,i)=><li key={i}>{x}</li>)}</ul> : <div className="p-4 text-xs text-slate-400">لا توجد قواعد مسجلة.</div>}</Card><Card title="نصائح الامتحان">{lesson.examTips.length ? <ul className="p-4 list-disc list-inside space-y-2 text-sm leading-7">{lesson.examTips.map((x,i)=><li key={i}>{x}</li>)}</ul> : <div className="p-4 text-xs text-slate-400">لا توجد نصائح مسجلة.</div>}</Card></div>
++    <Card title="أسئلة شائعة">{lesson.faq.length ? <div className="p-4 space-y-3">{lesson.faq.map((f,i)=><div key={i}><h3 className="font-bold text-navy-800">{f.q}</h3><p className="text-sm text-slate-600 mt-1">{f.a}</p></div>)}</div> : <div className="p-4 text-xs text-slate-400">لا توجد أسئلة شائعة.</div>}</Card>
++    {lesson.attachments.length > 0 && <Card title="مرفقات الدرس"><ul className="p-4 space-y-2">{lesson.attachments.map((f,i)=>{const url=f.url ?? f.filePath ?? f.path; return <li key={i}>{url ? <a href={url.startsWith('/') ? `${getApiBase()}${url}` : url} target="_blank" rel="noreferrer" className="text-sm text-navy-800 underline">{f.title ?? f.name ?? url}</a> : <span className="text-sm">{f.title ?? f.name ?? 'مرفق'}</span>}</li>;})}</ul></Card>}
++  </div>;
++};
+diff --git a/apps/admin/src/pages/LessonEditorPage.tsx b/apps/admin/src/pages/LessonEditorPage.tsx
+index bd7acc1..9e182ca 100644
+--- a/apps/admin/src/pages/LessonEditorPage.tsx
++++ b/apps/admin/src/pages/LessonEditorPage.tsx
+@@ -93,13 +93,13 @@ const LessonEditorPage: React.FC = () => {
+     }
+   };
+ 
+-  if (loading) return <div className="space-y-3" dir="rtl"><button onClick={() => navigate('/content')} className="inline-flex items-center gap-1 rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-bold text-navy-800"><ArrowRight className="w-3.5 h-3.5" /> رجوع إلى إدارة المحتوى</button><LoadingState label="جارٍ تحميل الدرس…" /></div>;
++  if (loading) return <div className="space-y-3" dir="rtl"><button onClick={() => navigate(`/content/${encodeURIComponent(lessonId)}`)} className="inline-flex items-center gap-1 rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-bold text-navy-800"><ArrowRight className="w-3.5 h-3.5" /> رجوع إلى عرض الدرس</button><LoadingState label="جارٍ تحميل الدرس…" /></div>;
+   if (!lesson) {
+     return (
+       <div className="p-4">
+         <ErrorState title="تعذّر تحميل الدرس" description={error || 'الدرس غير موجود'} />
+         <button
+-          onClick={() => navigate('/content')}
++          onClick={() => navigate(`/content/${encodeURIComponent(lessonId)}`)}
+           className="mt-3 text-xs font-bold text-navy-800 border border-slate-300 rounded-xl px-3 py-2"
+         >
+           رجوع
+@@ -119,11 +119,11 @@ const LessonEditorPage: React.FC = () => {
+       <div className="flex items-start justify-between gap-3 flex-wrap">
+         <div>
+           <button
+-            onClick={() => navigate('/content')}
++            onClick={() => navigate(`/content/${encodeURIComponent(lessonId)}`)}
+             className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-500 hover:text-navy-800 mb-1"
+           >
+             <ArrowRight className="w-3.5 h-3.5" />
+-            رجوع إلى إدارة المحتوى
++            رجوع إلى عرض الدرس
+           </button>
+           <h1 className="text-lg font-black text-navy-800">تحرير الدرس</h1>
+           <p className="text-[11px] text-slate-500 mt-0.5 nums">
+diff --git a/apps/admin/src/pages/SubjectsPage.tsx b/apps/admin/src/pages/SubjectsPage.tsx
+index 7b58e3f..42ab61e 100644
+--- a/apps/admin/src/pages/SubjectsPage.tsx
++++ b/apps/admin/src/pages/SubjectsPage.tsx
+@@ -222,7 +222,7 @@ export const SubjectDetailPage: React.FC = () => {
+                     <tr key={l.id} className="hover:bg-slate-50/70">
+                       <td className="py-2.5 px-3 nums text-slate-500">{l.lessonNumber}</td>
+                       <td className="py-2.5 px-3">
+-                        <p className="font-bold text-navy-800">{l.title}</p>
++                        <Link to={`/content/${encodeURIComponent(l.id)}`} className="font-bold text-navy-800 hover:text-gold-600 hover:underline">{l.title}</Link>
+                         <p className="text-[10px] text-slate-500 line-clamp-1">{l.summary}</p>
+                       </td>
+                       <td className="py-2.5 px-3 nums">{l.durationMinutes} د</td>
+diff --git a/apps/api/src/routes/adminContent.ts b/apps/api/src/routes/adminContent.ts
+index 5c771f8..d6092f3 100644
+--- a/apps/api/src/routes/adminContent.ts
++++ b/apps/api/src/routes/adminContent.ts
+@@ -66,9 +66,15 @@ adminContentRouter.get('/exams/:id', requireAdmin, async (req, res) => {
+       include: { subject: { select: { id: true, name: true } }, questions: true },
+     });
+     if (!exam) { res.status(404).json({ error: 'الامتحان غير موجود' }); return; }
++    const attachments = await prisma.resource.findMany({
++      where: { id: { startsWith: `examfile-${exam.id}-` } },
++      orderBy: { id: 'asc' },
++      select: { id: true, title: true, fileType: true, fileSize: true, filePath: true },
++    });
+     res.json({ exam: {
+       id: exam.id, title: exam.title, subjectId: exam.subjectId, subjectName: exam.subject.name,
+       durationMinutes: exam.durationMinutes, status: exam.status,
++      attachments,
+       questions: exam.questions.map((q) => {
+         let options: unknown[] = [];
+         try { const value: unknown = JSON.parse(q.options); if (Array.isArray(value)) options = value; } catch { /* بيانات قديمة غير صالحة */ }
+@@ -240,6 +246,24 @@ adminContentRouter.put('/lessons/:id', requireAdmin, async (req, res) => {
+   }
+ });
+ 
++/** DELETE /api/admin/lessons/:id — حذف الدرس مع حماية تقدّم وتقييمات الطلاب */
++adminContentRouter.delete('/lessons/:id', requireAdmin, async (req, res) => {
++  try {
++    const lesson = await prisma.lesson.findUnique({ where: { id: req.params.id } });
++    if (!lesson) { res.status(404).json({ error: 'الدرس غير موجود' }); return; }
++    const [progressCount, ratingCount] = await Promise.all([
++      prisma.lessonProgress.count({ where: { lessonId: lesson.id } }),
++      prisma.lessonRating.count({ where: { lessonId: lesson.id } }),
++    ]);
++    if (progressCount || ratingCount) {
++      res.status(409).json({ error: 'لا يمكن حذف الدرس لأنه مرتبط بتقدّم أو تقييمات طلاب. حُفظت سجلات الطلاب كما هي.' });
++      return;
++    }
++    await prisma.lesson.delete({ where: { id: lesson.id } });
++    res.json({ ok: true });
++  } catch (e) { console.error('admin lesson delete error:', e); res.status(500).json({ error: 'تعذّر حذف الدرس' }); }
++});
++
+ /* ============================ مساعدات ============================ */
+ 
+ type Json = Record<string, unknown>;
+diff --git a/apps/api/src/routes/adminData.ts b/apps/api/src/routes/adminData.ts
+index 174773e..219c9b6 100644
+--- a/apps/api/src/routes/adminData.ts
++++ b/apps/api/src/routes/adminData.ts
+@@ -19,6 +19,7 @@ export const adminDataRouter = Router();
+ adminDataRouter.get('/library', requireAdmin, async (_req, res) => {
+   try {
+     const resources = await prisma.resource.findMany({
++      where: { category: { not: 'exam-attachment' } },
+       orderBy: [{ category: 'asc' }, { title: 'asc' }],
+       include: { subject: { select: { id: true, name: true } } },
+     });
+diff --git a/apps/api/src/routes/adminOverview.ts b/apps/api/src/routes/adminOverview.ts
+index 121796c..bb140fc 100644
+--- a/apps/api/src/routes/adminOverview.ts
++++ b/apps/api/src/routes/adminOverview.ts
+@@ -34,7 +34,7 @@ adminOverviewRouter.get('/overview', requireAdmin, async (_req, res) => {
+       prisma.unit.count(),
+       prisma.lesson.count(),
+       prisma.lesson.count({ where: { status: 'verified' } }),
+-      prisma.resource.count(),
++      prisma.resource.count({ where: { category: { not: 'exam-attachment' } } }),
+       prisma.user.count({ where: { role: 'student' } }),
+       prisma.accessCode.count({ where: { status: 'active' } }),
+       prisma.exam.count(),
+diff --git a/apps/api/src/routes/learn.ts b/apps/api/src/routes/learn.ts
+index 59f4544..ab410f4 100644
+--- a/apps/api/src/routes/learn.ts
++++ b/apps/api/src/routes/learn.ts
+@@ -252,7 +252,7 @@ learnRouter.delete('/planner/group/:groupId', requireAuth, async (req, res) => {
+ /* ============================ المكتبة ============================ */
+ 
+ learnRouter.get('/resources', async (_req, res) => {
+-  const resources = await prisma.resource.findMany({ orderBy: { id: 'asc' } });
++  const resources = await prisma.resource.findMany({ where: { category: { not: 'exam-attachment' } }, orderBy: { id: 'asc' } });
+   res.json({
+     resources: resources.map((r) => ({
+       ...r,
+diff --git a/apps/api/src/routes/uploads.ts b/apps/api/src/routes/uploads.ts
+index f09a319..b0be75e 100644
+--- a/apps/api/src/routes/uploads.ts
++++ b/apps/api/src/routes/uploads.ts
+@@ -1,4 +1,5 @@
+ import path from 'node:path';
++import { randomUUID } from 'node:crypto';
+ import fs from 'node:fs';
+ import { Router, type Request, type Response } from 'express';
+ import multer from 'multer';
+@@ -15,6 +16,12 @@ const ALLOWED = new Map([
+   ['application/pdf', 'pdf'],
+   ['application/msword', 'doc'],
+   ['application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'docx'],
++  ['application/vnd.ms-excel', 'xls'],
++  ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'xlsx'],
++  ['application/vnd.ms-powerpoint', 'ppt'],
++  ['application/vnd.openxmlformats-officedocument.presentationml.presentation', 'pptx'],
++  ['text/plain', 'txt'],
++  ['text/csv', 'csv'],
+   ['image/jpeg', 'jpg'],
+   ['image/png', 'png'],
+   ['image/webp', 'webp'],
+@@ -104,6 +111,46 @@ uploadsRouter.post('/uploads/resource', requireAuth, async (req, res) => {
+   }
+ });
+ 
++/* ============================ مرفقات الامتحانات (الإدارة) ============================ */
++
++uploadsRouter.post('/admin/exams/:examId/attachments', requireAdmin, async (req, res) => {
++  const exam = await prisma.exam.findUnique({ where: { id: req.params.examId }, select: { id: true, subjectId: true, title: true } });
++  if (!exam) { res.status(404).json({ error: 'الامتحان غير موجود' }); return; }
++  await runUpload(req, res);
++  if (res.headersSent) return;
++  if (!req.file) { res.status(400).json({ error: 'اختر ملفاً أولاً' }); return; }
++  try {
++    const ext = ALLOWED.get(req.file.mimetype) ?? 'bin';
++    const attachment = await prisma.resource.create({ data: {
++      id: `examfile-${exam.id}-${randomUUID()}`, subjectId: exam.subjectId,
++      title: cleanText(req.file.originalname, 150) || 'ملف الامتحان', category: 'exam-attachment',
++      fileType: ext.toUpperCase(), fileSize: humanSize(req.file.size), pageCount: 0,
++      author: currentUser(req).name, publishYear: null, isVerifiedCurriculum: false,
++      downloadCount: 0, description: `مرفق للامتحان ${exam.title}`, previewSummary: '[]',
++      filePath: `/uploads/${req.file.filename}`, status: 'sample',
++    }, select: { id: true, title: true, fileType: true, fileSize: true, filePath: true } });
++    res.status(201).json({ attachment });
++  } catch (e) {
++    const full = path.join(UPLOAD_DIR, path.basename(req.file.path));
++    if (fs.existsSync(full)) fs.unlinkSync(full);
++    console.error('exam attachment create error:', e);
++    res.status(500).json({ error: 'تعذّر حفظ مرفق الامتحان' });
++  }
++});
++
++uploadsRouter.delete('/admin/exams/:examId/attachments/:attachmentId', requireAdmin, async (req, res) => {
++  const prefix = `examfile-${req.params.examId}-`;
++  if (!req.params.attachmentId.startsWith(prefix)) { res.status(400).json({ error: 'المرفق لا يتبع هذا الامتحان' }); return; }
++  const attachment = await prisma.resource.findUnique({ where: { id: req.params.attachmentId } });
++  if (!attachment || attachment.category !== 'exam-attachment') { res.status(404).json({ error: 'الملف غير موجود' }); return; }
++  if (attachment.filePath) {
++    const full = path.join(UPLOAD_DIR, path.basename(attachment.filePath));
++    if (fs.existsSync(full)) fs.unlinkSync(full);
++  }
++  await prisma.resource.delete({ where: { id: attachment.id } });
++  res.json({ ok: true });
++});
++
+ /* ============================ حذف ملف (الإدارة) ============================ */
+ 
+ uploadsRouter.delete('/uploads/resource/:id', requireAdmin, async (req, res) => {
