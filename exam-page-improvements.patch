@@ -1,0 +1,215 @@
+diff --git a/apps/admin/src/App.tsx b/apps/admin/src/App.tsx
+index 2c3c2e8..798939e 100644
+--- a/apps/admin/src/App.tsx
++++ b/apps/admin/src/App.tsx
+@@ -9,6 +9,7 @@ import { ActivitiesPage, SettingsPage, StudentsPage } from './pages/MiscPages';
+ import CodesPage from './pages/CodesPage';
+ import LessonEditorPage from './pages/LessonEditorPage';
+ import { ExamsPage } from './pages/ExamsPage';
++import { ExamDetailPage } from './pages/ExamDetailPage';
+ import { UnitsPage } from './pages/UnitsPage';
+ import { EmptyState } from './components/ui';
+ 
+@@ -28,6 +29,7 @@ export default function App() {
+           <Route path="/codes" element={<CodesPage />} />
+           <Route path="/students" element={<StudentsPage />} />
+           <Route path="/exams" element={<ExamsPage />} />
++          <Route path="/exams/:examId" element={<ExamDetailPage />} />
+           <Route path="/activities" element={<ActivitiesPage />} />
+           <Route path="/settings" element={<SettingsPage />} />
+           <Route
+diff --git a/apps/admin/src/pages/ExamDetailPage.tsx b/apps/admin/src/pages/ExamDetailPage.tsx
+new file mode 100644
+index 0000000..c9b5a46
+--- /dev/null
++++ b/apps/admin/src/pages/ExamDetailPage.tsx
+@@ -0,0 +1,47 @@
++import React from 'react';
++import { Link, useParams } from 'react-router-dom';
++import { ArrowRight, CheckCircle2 } from 'lucide-react';
++import { Badge, Card, EmptyState, ErrorState, LoadingState, NotConnectedNote } from '../components/ui';
++import { getApiBase } from '../lib/serverUrl';
++
++interface Question { id: string; question: string; options: string[]; correctIndex: number; explanation: string }
++interface ExamDetail { id: string; title: string; subjectName: string; durationMinutes: number; status: string; questions: Question[] }
++
++export const ExamDetailPage: React.FC = () => {
++  const { examId = '' } = useParams();
++  const [exam, setExam] = React.useState<ExamDetail | null>(null);
++  const [loading, setLoading] = React.useState(true);
++  const [offline, setOffline] = React.useState(false);
++  const [error, setError] = React.useState('');
++
++  React.useEffect(() => {
++    let alive = true;
++    (async () => {
++      setLoading(true); setError('');
++      try {
++        const response = await fetch(`${getApiBase()}/api/admin/exams/${encodeURIComponent(examId)}`, {
++          headers: { Accept: 'application/json', 'X-App': 'admin' }, credentials: 'include',
++        });
++        const data = await response.json().catch(() => null) as { exam?: ExamDetail; error?: string } | null;
++        if (!response.ok || !data?.exam) throw new Error(data?.error || 'تعذّر تحميل الامتحان');
++        if (alive) { setExam(data.exam); setOffline(false); }
++      } catch (e) {
++        if (alive) { setExam(null); setOffline(e instanceof TypeError); setError(e instanceof Error ? e.message : 'تعذّر تحميل الامتحان'); }
++      } finally { if (alive) setLoading(false); }
++    })();
++    return () => { alive = false; };
++  }, [examId]);
++
++  if (loading) return <div className="space-y-3" dir="rtl"><Link to="/exams" className="inline-flex items-center gap-1 text-xs font-bold text-navy-800"><ArrowRight className="w-4 h-4" /> رجوع للامتحانات</Link><LoadingState label="جارٍ تحميل الامتحان…" /></div>;
++  if (!exam) return <div className="space-y-3" dir="rtl"><Link to="/exams" className="inline-flex items-center gap-1 text-xs font-bold text-navy-800"><ArrowRight className="w-4 h-4" /> رجوع للامتحانات</Link>{offline ? <NotConnectedNote>تعذّر الاتصال بالخادم.</NotConnectedNote> : <ErrorState title="تعذّر فتح الامتحان" description={error || 'الامتحان غير موجود'} />}</div>;
++
++  return <div className="space-y-5" dir="rtl">
++    <Link to="/exams" className="inline-flex items-center gap-1 text-xs font-bold text-navy-800"><ArrowRight className="w-4 h-4" /> رجوع للامتحانات</Link>
++    <header className="flex flex-wrap items-start justify-between gap-3"><div><h1 className="text-xl font-black text-navy-800">{exam.title}</h1><p className="text-xs text-slate-500 mt-1">{exam.subjectName} · {exam.questions.length} أسئلة · {exam.durationMinutes} دقيقة</p></div><Badge tone="amber">نموذج تدريبي — غير وزاري</Badge></header>
++    {exam.questions.length === 0 ? <Card><EmptyState title="لا توجد أسئلة بعد" description="هذا الامتحان لا يحتوي أسئلة مسجلة." /></Card> : exam.questions.map((q, index) => <Card key={q.id} title={`السؤال ${index + 1}`} subtitle={q.question}>
++      <div className="p-4 space-y-2">{q.options.map((option, optionIndex) => <div key={optionIndex} className={`rounded-xl border px-3 py-2 text-sm ${optionIndex === q.correctIndex ? 'border-emerald-300 bg-emerald-50 text-emerald-800 font-bold' : 'border-slate-200 text-slate-700'}`}><span className="nums ml-2">{optionIndex + 1}.</span>{option}{optionIndex === q.correctIndex && <CheckCircle2 className="inline w-4 h-4 mr-2" />}</div>)}
++        {q.explanation && <p className="text-xs text-slate-600 bg-slate-50 rounded-xl p-3">التفسير: {q.explanation}</p>}
++      </div>
++    </Card>)}
++  </div>;
++};
+diff --git a/apps/admin/src/pages/ExamsPage.tsx b/apps/admin/src/pages/ExamsPage.tsx
+index 8f437ad..a069335 100644
+--- a/apps/admin/src/pages/ExamsPage.tsx
++++ b/apps/admin/src/pages/ExamsPage.tsx
+@@ -1,22 +1,70 @@
+ import React from 'react';
+-import { Link } from 'react-router-dom';
+-import { ArrowRight, RotateCw } from 'lucide-react';
+-import { Badge, Card, EmptyState, NotConnectedNote, Table } from '../components/ui';
++import { Link, useNavigate } from 'react-router-dom';
++import { ArrowRight, Eye, Plus, RotateCw, Trash2 } from 'lucide-react';
++import { Badge, Button, Card, EmptyState, NotConnectedNote, Table } from '../components/ui';
+ import { getApiBase } from '../lib/serverUrl';
++import { useSubjects } from '../hooks/useSubjects';
+ 
+ interface ExamRow { id: string; title: string; subjectId: string; subjectName: string; durationMinutes: number; questionsCount: number; status: string }
++interface DraftQuestion { question: string; options: string[]; correctIndex: number; explanation: string }
++const emptyQuestion = (): DraftQuestion => ({ question: '', options: ['', '', '', ''], correctIndex: 0, explanation: '' });
++
+ export const ExamsPage: React.FC = () => {
++  const navigate = useNavigate();
++  const { subjects } = useSubjects();
+   const [rows, setRows] = React.useState<ExamRow[] | null>(null);
+   const [offline, setOffline] = React.useState(false);
++  const [dialog, setDialog] = React.useState(false);
++  const [title, setTitle] = React.useState('');
++  const [subjectId, setSubjectId] = React.useState('');
++  const [durationMinutes, setDurationMinutes] = React.useState(30);
++  const [questions, setQuestions] = React.useState<DraftQuestion[]>([emptyQuestion()]);
++  const [saving, setSaving] = React.useState(false);
++  const [error, setError] = React.useState('');
++
+   const load = React.useCallback(async () => {
+     try { const r = await fetch(`${getApiBase()}/api/exams`, { headers: { Accept: 'application/json' } }); if (!r.ok) throw new Error(); const data = await r.json() as { exams: ExamRow[] }; setRows(data.exams); setOffline(false); }
+     catch { setRows(null); setOffline(true); }
+   }, []);
+   React.useEffect(() => { void load(); }, [load]);
++
++  const openCreate = () => {
++    setTitle(''); setSubjectId(subjects?.[0]?.id ?? ''); setDurationMinutes(30);
++    setQuestions([emptyQuestion()]); setError(''); setDialog(true);
++  };
++  const updateQuestion = (index: number, update: Partial<DraftQuestion>) => setQuestions((current) => current.map((q, i) => i === index ? { ...q, ...update } : q));
++  const submit = async (e: React.FormEvent<HTMLFormElement>) => {
++    e.preventDefault(); if (saving) return; setSaving(true); setError('');
++    try {
++      const response = await fetch(`${getApiBase()}/api/admin/exams`, {
++        method: 'POST', credentials: 'include', headers: { 'X-App': 'admin', 'Content-Type': 'application/json', Accept: 'application/json' },
++        body: JSON.stringify({ title, subjectId, durationMinutes, questions }),
++      });
++      const data = await response.json().catch(() => null) as { exam?: { id: string }; error?: string } | null;
++      if (!response.ok || !data?.exam?.id) throw new Error(data?.error || 'تعذّر إنشاء الامتحان');
++      setDialog(false); navigate(`/exams/${encodeURIComponent(data.exam.id)}`);
++    } catch (e2) { setError(e2 instanceof Error ? e2.message : 'تعذّر إنشاء الامتحان'); }
++    finally { setSaving(false); }
++  };
++
+   return <div className="space-y-5" dir="rtl">
+-    <header className="flex items-start justify-between gap-3"><div><h1 className="text-xl font-black text-navy-800">الامتحانات</h1><p className="text-xs text-slate-500 mt-1">الامتحانات المخزّنة وأسئلتها، مع تمييز النماذج التدريبية.</p></div><button type="button" onClick={() => void load()} className="inline-flex items-center gap-2 border border-slate-300 bg-white rounded-xl px-3 py-2 text-xs font-bold text-navy-800"><RotateCw className="w-3.5 h-3.5" /> تحديث</button></header>
++    <header className="flex flex-wrap items-start justify-between gap-3"><div><h1 className="text-xl font-black text-navy-800">الامتحانات</h1><p className="text-xs text-slate-500 mt-1">افتح أي امتحان لعرض أسئلته ومفتاح إجابته. النماذج الجديدة تدريبية وغير وزارية.</p></div><div className="flex gap-2"><button type="button" onClick={() => void load()} className="inline-flex items-center gap-2 border border-slate-300 bg-white rounded-xl px-3 py-2 text-xs font-bold text-navy-800"><RotateCw className="w-3.5 h-3.5" /> تحديث</button><Button onClick={openCreate}><Plus className="w-4 h-4" /> إضافة امتحان</Button></div></header>
+     {offline && <NotConnectedNote>تعذّر الوصول إلى الخادم لعرض الامتحانات.</NotConnectedNote>}
+-    <Card>{rows === null && !offline ? <div className="p-4 text-xs text-slate-500">جارٍ تحميل الامتحانات…</div> : rows?.length === 0 ? <EmptyState title="لا توجد امتحانات" description="ستظهر الامتحانات هنا بعد إضافتها إلى قاعدة البيانات." /> : rows && <Table head={['الامتحان', 'المادة', 'الأسئلة', 'المدة', 'التصنيف']}>{rows.map((e) => <tr key={e.id} className="hover:bg-slate-50/70"><td className="py-3 px-3 font-bold text-navy-800">{e.title}</td><td className="py-3 px-3">{e.subjectName}</td><td className="py-3 px-3 nums">{e.questionsCount}</td><td className="py-3 px-3 nums">{e.durationMinutes} دقيقة</td><td className="py-3 px-3"><Badge tone={e.status === 'verified' ? 'green' : 'amber'}>{e.status === 'verified' ? 'مراجَع' : 'تدريبي — غير وزاري'}</Badge></td></tr>)}</Table>}</Card>
++    <Card>{rows === null && !offline ? <div className="p-4 text-xs text-slate-500">جارٍ تحميل الامتحانات…</div> : rows?.length === 0 ? <EmptyState title="لا توجد امتحانات" description="أضف امتحاناً تدريبياً من الزر أعلى الصفحة." /> : rows && <Table head={['الامتحان', 'المادة', 'الأسئلة', 'المدة', 'التصنيف', '']}>
++      {rows.map((e) => <tr key={e.id} className="hover:bg-slate-50/70"><td className="py-3 px-3 font-bold"><Link to={`/exams/${encodeURIComponent(e.id)}`} className="inline-flex items-center gap-1.5 text-navy-800 hover:text-gold-600"><Eye className="w-4 h-4" />{e.title}</Link></td><td className="py-3 px-3">{e.subjectName}</td><td className="py-3 px-3 nums">{e.questionsCount}</td><td className="py-3 px-3 nums">{e.durationMinutes} دقيقة</td><td className="py-3 px-3"><Badge tone={e.status === 'verified' ? 'green' : 'amber'}>{e.status === 'verified' ? 'مراجَع' : 'تدريبي — غير وزاري'}</Badge></td><td className="py-3 px-3"><Link to={`/exams/${encodeURIComponent(e.id)}`} className="text-xs font-bold text-navy-800">فتح <ArrowRight className="inline w-3.5 h-3.5" /></Link></td></tr>)}
++    </Table>}</Card>
+     <Link to="/activities" className="inline-flex items-center gap-1.5 rounded-xl border border-navy-200 px-4 py-2.5 text-xs font-extrabold text-navy-800"><ArrowRight className="w-4 h-4" /> محاولات الامتحانات والتقارير</Link>
++
++    {dialog && <div className="fixed inset-0 z-[100] bg-slate-950/50 p-3 sm:p-5 grid place-items-center" dir="rtl"><form onSubmit={submit} className="w-full max-w-2xl max-h-[94vh] overflow-y-auto rounded-2xl bg-white shadow-2xl border border-slate-200">
++      <div className="sticky top-0 bg-white z-10 p-4 border-b border-slate-100 flex items-center justify-between"><div><h2 className="font-black text-navy-800">إضافة امتحان</h2><p className="text-[10px] text-amber-700 mt-1">سيُسجّل تدريبياً وغير وزاري</p></div><button type="button" onClick={() => setDialog(false)} className="px-3 py-2 text-xs font-bold">إغلاق</button></div>
++      <div className="p-4 space-y-4">
++        <label className="block text-xs font-bold text-slate-600">عنوان الامتحان<input required minLength={3} value={title} onChange={(e) => setTitle(e.target.value)} className="mt-1 w-full rounded-xl border border-slate-300 p-2.5 text-sm" /></label>
++        <div className="grid sm:grid-cols-2 gap-3"><label className="block text-xs font-bold text-slate-600">المادة<select required value={subjectId} onChange={(e) => setSubjectId(e.target.value)} className="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm"><option value="">اختر المادة</option>{subjects?.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</select></label><label className="block text-xs font-bold text-slate-600">المدة (دقيقة)<input required type="number" min={5} max={180} value={durationMinutes} onChange={(e) => setDurationMinutes(Number(e.target.value))} className="mt-1 w-full rounded-xl border border-slate-300 p-2.5 text-sm" /></label></div>
++        <div className="flex items-center justify-between"><h3 className="text-sm font-black text-navy-800">الأسئلة ومفتاح الإجابة</h3><button type="button" onClick={() => setQuestions((q) => [...q, emptyQuestion()])} className="text-xs font-bold text-navy-800 border border-slate-300 rounded-lg px-3 py-2"><Plus className="inline w-3.5 h-3.5" /> سؤال</button></div>
++        {questions.map((q, qi) => <section key={qi} className="rounded-xl border border-slate-200 p-3 space-y-3"><div className="flex justify-between items-center"><strong className="text-xs text-navy-800">السؤال {qi + 1}</strong>{questions.length > 1 && <button type="button" onClick={() => setQuestions((all) => all.filter((_, i) => i !== qi))} aria-label="حذف السؤال" className="text-rose-600"><Trash2 className="w-4 h-4" /></button>}</div><label className="block text-xs font-bold text-slate-600">نص السؤال<textarea required minLength={2} rows={2} value={q.question} onChange={(e) => updateQuestion(qi, { question: e.target.value })} className="mt-1 w-full rounded-lg border border-slate-300 p-2 text-sm" /></label><div className="grid sm:grid-cols-2 gap-2">{q.options.map((option, oi) => <label key={oi} className="text-[11px] font-bold text-slate-600">الخيار {oi + 1}<div className="flex gap-2 mt-1"><input required value={option} onChange={(e) => updateQuestion(qi, { options: q.options.map((x, i) => i === oi ? e.target.value : x) })} className="min-w-0 flex-1 rounded-lg border border-slate-300 p-2 text-sm" /><input type="radio" name={`correct-${qi}`} aria-label={`الخيار الصحيح ${oi + 1}`} checked={q.correctIndex === oi} onChange={() => updateQuestion(qi, { correctIndex: oi })} /></div></label>)}</div><label className="block text-xs font-bold text-slate-600">تفسير الإجابة (اختياري)<textarea rows={2} value={q.explanation} onChange={(e) => updateQuestion(qi, { explanation: e.target.value })} className="mt-1 w-full rounded-lg border border-slate-300 p-2 text-sm" /></label></section>)}
++        {error && <p role="alert" className="rounded-xl bg-rose-50 border border-rose-200 px-3 py-2 text-xs text-rose-700">{error}</p>}
++      </div>
++      <div className="sticky bottom-0 bg-white border-t border-slate-100 p-4 flex justify-end gap-2"><button type="button" onClick={() => setDialog(false)} className="px-4 py-2 rounded-xl border border-slate-300 text-xs font-bold">إلغاء</button><button type="submit" disabled={saving || !subjectId} className="px-4 py-2 rounded-xl bg-navy-800 text-white text-xs font-bold disabled:opacity-50">{saving ? 'جارٍ الحفظ…' : 'حفظ الامتحان وفتحه'}</button></div>
++    </form></div>}
+   </div>;
+ };
+diff --git a/apps/api/src/routes/adminContent.ts b/apps/api/src/routes/adminContent.ts
+index 65e31d2..5c771f8 100644
+--- a/apps/api/src/routes/adminContent.ts
++++ b/apps/api/src/routes/adminContent.ts
+@@ -58,6 +58,57 @@ adminContentRouter.get('/lessons/:id', requireAdmin, async (req, res) => {
+   }
+ });
+ 
++/* ============================ إدارة الامتحانات ============================ */
++adminContentRouter.get('/exams/:id', requireAdmin, async (req, res) => {
++  try {
++    const exam = await prisma.exam.findUnique({
++      where: { id: req.params.id },
++      include: { subject: { select: { id: true, name: true } }, questions: true },
++    });
++    if (!exam) { res.status(404).json({ error: 'الامتحان غير موجود' }); return; }
++    res.json({ exam: {
++      id: exam.id, title: exam.title, subjectId: exam.subjectId, subjectName: exam.subject.name,
++      durationMinutes: exam.durationMinutes, status: exam.status,
++      questions: exam.questions.map((q) => {
++        let options: unknown[] = [];
++        try { const value: unknown = JSON.parse(q.options); if (Array.isArray(value)) options = value; } catch { /* بيانات قديمة غير صالحة */ }
++        return { id: q.id, question: q.question, options, correctIndex: q.correctIndex, explanation: q.explanation ?? '' };
++      }),
++    } });
++  } catch (e) { console.error('admin exam get error:', e); res.status(500).json({ error: 'تعذّر تحميل الامتحان' }); }
++});
++
++adminContentRouter.post('/exams', requireAdmin, async (req, res) => {
++  try {
++    const title = cleanText(req.body?.title, 200);
++    const subjectId = cleanText(req.body?.subjectId, 60);
++    const durationMinutes = Math.max(5, Math.min(180, Number(req.body?.durationMinutes) || 30));
++    const drafts = Array.isArray(req.body?.questions) ? req.body.questions : [];
++    const subject = await prisma.subject.findUnique({ where: { id: subjectId } });
++    if (!subject) { res.status(400).json({ error: 'اختر مادة صحيحة' }); return; }
++    if (title.length < 3) { res.status(400).json({ error: 'عنوان الامتحان يجب أن يكون ٣ أحرف على الأقل' }); return; }
++    if (!drafts.length) { res.status(400).json({ error: 'أضف سؤالاً واحداً على الأقل' }); return; }
++    const questions = drafts.map((raw: unknown) => {
++      const q = (raw ?? {}) as Record<string, unknown>;
++      const options = Array.isArray(q.options) ? q.options.map((x) => cleanText(x, 500)) : [];
++      const correctIndex = Number(q.correctIndex);
++      if (cleanText(q.question, 2000).length < 2 || options.length < 2 || options.some((x) => !x) || !Number.isInteger(correctIndex) || correctIndex < 0 || correctIndex >= options.length) {
++        throw new Error('تحقق من نص السؤال والخيارات والإجابة الصحيحة');
++      }
++      return { question: cleanText(q.question, 2000), options: JSON.stringify(options), correctIndex, explanation: cleanText(q.explanation, 2000) || null };
++    });
++    const exam = await prisma.exam.create({ data: {
++      subjectId, title, durationMinutes, status: 'sample',
++      questions: { create: questions },
++    }, select: { id: true, title: true } });
++    res.status(201).json({ exam });
++  } catch (e) {
++    console.error('admin exam create error:', e);
++    const message = e instanceof Error && e.message.startsWith('تحقق') ? e.message : 'تعذّر إنشاء الامتحان';
++    res.status(400).json({ error: message });
++  }
++});
++
+ /* ============================ إدارة المواد والوحدات وإنشاء الدروس ============================ */
+ adminContentRouter.post('/subjects', requireAdmin, async (req, res) => {
+   try {
