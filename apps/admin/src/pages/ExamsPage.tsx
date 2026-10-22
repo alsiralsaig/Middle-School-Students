@@ -2,6 +2,7 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowRight, Eye, Plus, RotateCw, Trash2 } from 'lucide-react';
 import { Badge, Button, Card, EmptyState, NotConnectedNote, Table } from '../components/ui';
+import { put } from '@vercel/blob/client';
 import { getApiBase } from '../lib/serverUrl';
 import { useSubjects } from '../hooks/useSubjects';
 
@@ -22,6 +23,7 @@ export const ExamsPage: React.FC = () => {
   const [attachmentFile, setAttachmentFile] = React.useState<File | null>(null);
   const [createdExamId, setCreatedExamId] = React.useState('');
   const [saving, setSaving] = React.useState(false);
+  const [uploadProgress, setUploadProgress] = React.useState(0);
   const [error, setError] = React.useState('');
 
   const load = React.useCallback(async () => {
@@ -50,16 +52,49 @@ export const ExamsPage: React.FC = () => {
         setCreatedExamId(targetId);
       }
       if (attachmentFile) {
-        const body = new FormData(); body.append('file', attachmentFile);
-        const fileResponse = await fetch(`${getApiBase()}/api/admin/exams/${encodeURIComponent(targetId)}/attachments`, {
-          method: 'POST', credentials: 'include', headers: { 'X-App': 'admin', Accept: 'application/json' }, body,
-        });
-        const fileData = await fileResponse.json().catch(() => null) as { error?: string } | null;
-        if (!fileResponse.ok) throw new Error(`تم إنشاء الامتحان لكن تعذّر رفع الملف: ${fileData?.error || 'أعد المحاولة'}`);
+        const extension = attachmentFile.name.split('.').pop()?.toLowerCase() || '';
+        const mimeByExtension: Record<string, string> = {
+          pdf: 'application/pdf', doc: 'application/msword',
+          docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          xls: 'application/vnd.ms-excel', xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          ppt: 'application/vnd.ms-powerpoint', pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+          txt: 'text/plain', csv: 'text/csv', jpg: 'image/jpeg', jpeg: 'image/jpeg',
+          png: 'image/png', webp: 'image/webp',
+        };
+        const safeName = attachmentFile.name.normalize('NFKD').replace(/[^\p{L}\p{N}._-]+/gu, '_').slice(-120) || `attachment.${extension}`;
+        const pathname = `exam-attachments/${targetId}/${safeName}`;
+        try {
+          // نطلب الرمز عبر API باستخدام جلسة الإدارة المعتادة، ثم يرسل put() بايتات
+          // الملف مباشرةً إلى Blob؛ لا يمر الملف عبر Vercel Function.
+          const tokenResponse = await fetch(`${getApiBase()}/api/admin/exams/${encodeURIComponent(targetId)}/attachments/client`, {
+            method: 'POST', credentials: 'include',
+            headers: { 'X-App': 'admin', 'Content-Type': 'application/json', Accept: 'application/json' },
+            body: JSON.stringify({
+              type: 'blob.generate-client-token',
+              payload: {
+                pathname,
+                clientPayload: JSON.stringify({ fileName: attachmentFile.name, sizeBytes: attachmentFile.size }),
+                multipart: false,
+              },
+            }),
+          });
+          const tokenData = await tokenResponse.json().catch(() => null) as { clientToken?: string; error?: string } | null;
+          if (!tokenResponse.ok || !tokenData?.clientToken) {
+            throw new Error(tokenData?.error || 'تعذّر إصدار إذن رفع الملف');
+          }
+          await put(pathname, attachmentFile, {
+            access: 'public', token: tokenData.clientToken,
+            contentType: mimeByExtension[extension] || attachmentFile.type,
+            onUploadProgress: ({ percentage }) => setUploadProgress(percentage),
+          });
+        } catch (uploadError) {
+          const reason = uploadError instanceof Error ? uploadError.message : 'أعد المحاولة';
+          throw new Error(`تم إنشاء الامتحان لكن تعذّر رفع الملف: ${reason}`);
+        }
       }
       setDialog(false); navigate(`/exams/${encodeURIComponent(targetId)}`);
     } catch (e2) { setError(e2 instanceof Error ? e2.message : 'تعذّر إنشاء الامتحان'); }
-    finally { setSaving(false); }
+    finally { setSaving(false); setUploadProgress(0); }
   };
 
   return <div className="space-y-5" dir="rtl">
@@ -83,7 +118,7 @@ export const ExamsPage: React.FC = () => {
         </label>
         {error && <p role="alert" className="rounded-xl bg-rose-50 border border-rose-200 px-3 py-2 text-xs text-rose-700">{error}</p>}
       </div>
-      <div className="sticky bottom-0 bg-white border-t border-slate-100 p-4 flex justify-end gap-2"><button type="button" onClick={() => setDialog(false)} className="px-4 py-2 rounded-xl border border-slate-300 text-xs font-bold">إلغاء</button><button type="submit" disabled={saving || !subjectId} className="px-4 py-2 rounded-xl bg-navy-800 text-white text-xs font-bold disabled:opacity-50">{saving ? 'جارٍ الحفظ…' : createdExamId ? 'إعادة رفع الملف وفتح الامتحان' : 'حفظ الامتحان وفتحه'}</button></div>
+      <div className="sticky bottom-0 bg-white border-t border-slate-100 p-4 flex justify-end gap-2"><button type="button" onClick={() => setDialog(false)} className="px-4 py-2 rounded-xl border border-slate-300 text-xs font-bold">إلغاء</button><button type="submit" disabled={saving || !subjectId} className="px-4 py-2 rounded-xl bg-navy-800 text-white text-xs font-bold disabled:opacity-50">{saving ? (attachmentFile ? `جارٍ رفع الملف ${Math.round(uploadProgress)}٪…` : 'جارٍ الحفظ…') : createdExamId ? 'إعادة رفع الملف وفتح الامتحان' : 'حفظ الامتحان وفتحه'}</button></div>
     </form></div>}
   </div>;
 };

@@ -1,7 +1,8 @@
 import path from 'node:path';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import fs from 'node:fs';
 import { put, del } from '@vercel/blob';
+import { handleUpload, type HandleUploadBody } from '@vercel/blob/client';
 import { Router, type Request, type Response } from 'express';
 import multer from 'multer';
 import { prisma } from '../lib/prisma.js';
@@ -139,6 +140,128 @@ uploadsRouter.post('/uploads/resource', requireAuth, async (req, res) => {
   } catch (e) {
     console.error('upload error:', e);
     res.status(400).json({ error: (e as Error).message || 'تعذّر رفع الملف' });
+  }
+});
+
+/* ============================ رفع مباشر لمرفقات الامتحانات ============================ */
+
+const examBlobClientRoute = '/admin/exams/:examId/attachments/client';
+const allowedBlobTypes = [...ALLOWED.keys()];
+
+/** يحفظ بيانات Blob de-duplicated (Vercel قد يعيد callback عند إعادة المحاولة). */
+async function saveExamBlob(
+  blob: { url: string; pathname: string; contentType: string },
+  tokenPayload: string | null | undefined,
+): Promise<void> {
+  if (!tokenPayload) throw new Error('بيانات رفع الملف غير مكتملة');
+  const payload = JSON.parse(tokenPayload) as {
+    examId?: string; fileName?: string; sizeBytes?: number; userName?: string;
+  };
+  const examId = cleanText(payload.examId, 80);
+  const exam = await prisma.exam.findUnique({
+    where: { id: examId }, select: { id: true, title: true, subjectId: true },
+  });
+  if (!exam) throw new Error('الامتحان غير موجود');
+
+  const extension = path.extname(blob.pathname).slice(1).toLowerCase();
+  if (!ALLOWED_EXTENSIONS.has(extension)) throw new Error('نوع الملف غير مدعوم');
+  const fileType = extension.toUpperCase();
+  const safeName = cleanText(payload.fileName, 150) || path.basename(blob.pathname);
+  const bytes = Number(payload.sizeBytes);
+  const fileSize = Number.isFinite(bytes) && bytes >= 0 && bytes <= MAX_SIZE
+    ? humanSize(bytes)
+    : 'غير محدد';
+  const id = `examfile-${exam.id}-${createHash('sha256').update(blob.pathname).digest('hex').slice(0, 24)}`;
+  const data = {
+    subjectId: exam.subjectId,
+    title: safeName,
+    category: 'exam-attachment',
+    fileType,
+    fileSize,
+    pageCount: 0,
+    author: cleanText(payload.userName, 80) || 'الإدارة',
+    publishYear: null,
+    isVerifiedCurriculum: false,
+    downloadCount: 0,
+    description: `مرفق للامتحان ${exam.title}`,
+    previewSummary: '[]',
+    filePath: blob.url,
+    status: 'sample',
+  };
+  await prisma.resource.upsert({ where: { id }, create: { id, ...data }, update: { ...data } });
+}
+
+/**
+ * يمرّر Vercel Blob upload bytes مباشرةً من المتصفح إلى التخزين، لا عبر Function.
+ * حدث الإكمال يأتي من Vercel بلا جلسة مستخدم؛ التفويض مطلوب فقط لطلب إصدار الرمز.
+ */
+uploadsRouter.post(examBlobClientRoute, async (req, res) => {
+  try {
+    const body = req.body as HandleUploadBody;
+    if (body?.type === 'blob.generate-client-token') {
+      // لا نثق بعنوان callback القادم من المتصفح؛ نوجّهه إلى مشروع API الحالي.
+      const vercelHost = process.env.VERCEL_ENV === 'production'
+        ? process.env.VERCEL_PROJECT_PRODUCTION_URL
+        : process.env.VERCEL_URL;
+      const origin = vercelHost ? `https://${vercelHost}` : `${req.protocol}://${req.get('host')}`;
+      body.payload.callbackUrl = `${origin}${req.originalUrl}`;
+    }
+    if (body?.type !== 'blob.upload-completed') {
+      let authorized = false;
+      requireAdmin(req, res, () => { authorized = true; });
+      if (!authorized) return;
+    }
+
+    // Express يزيل بادئة mount من req.url؛ نعيد استخدام originalUrl حتى يكوّن
+    // SDK عنوان callback كاملاً (/api/...) على مشروع Vercel الخاص بالـAPI.
+    const blobRequest = Object.create(req) as Request;
+    blobRequest.url = req.originalUrl;
+    const response = await handleUpload({
+      body,
+      request: blobRequest,
+      onBeforeGenerateToken: async (pathname, clientPayload) => {
+        const actor = currentUser(req);
+        if (!actor || actor.role !== 'admin' || actor.app !== 'admin') {
+          throw new Error('هذه العملية متاحة للإدارة فقط');
+        }
+        const examId = cleanText(req.params.examId, 80);
+        const exam = await prisma.exam.findUnique({
+          where: { id: examId }, select: { id: true },
+        });
+        if (!exam) throw new Error('الامتحان غير موجود');
+
+        let client: { fileName?: unknown; sizeBytes?: unknown } = {};
+        try { client = JSON.parse(clientPayload || '{}') as typeof client; }
+        catch { throw new Error('بيانات الملف غير صالحة'); }
+        const fileName = cleanText(client.fileName, 150);
+        const sizeBytes = Number(client.sizeBytes);
+        const extension = path.extname(fileName).slice(1).toLowerCase();
+        if (!fileName || !ALLOWED_EXTENSIONS.has(extension)) throw new Error('نوع الملف غير مدعوم');
+        if (!Number.isFinite(sizeBytes) || sizeBytes < 1 || sizeBytes > MAX_SIZE) {
+          throw new Error('حجم الملف أكبر من ٢٠ ميغابايت');
+        }
+        const expectedPrefix = `exam-attachments/${exam.id}/`;
+        if (!pathname.startsWith(expectedPrefix) || pathname.slice(expectedPrefix.length).includes('/')) {
+          throw new Error('مسار مرفق الامتحان غير صالح');
+        }
+        return {
+          allowedContentTypes: allowedBlobTypes,
+          maximumSizeInBytes: MAX_SIZE,
+          addRandomSuffix: true,
+          tokenPayload: JSON.stringify({
+            examId: exam.id, fileName, sizeBytes, userName: actor.name,
+          }),
+        };
+      },
+      onUploadCompleted: async ({ blob, tokenPayload }) => {
+        await saveExamBlob(blob, tokenPayload);
+      },
+    });
+    res.status(200).json(response);
+  } catch (e) {
+    console.error('exam client upload error:', e);
+    const message = e instanceof Error ? e.message : 'تعذّر إصدار إذن رفع الملف';
+    res.status(400).json({ error: message });
   }
 });
 
