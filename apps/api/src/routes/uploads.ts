@@ -265,6 +265,203 @@ uploadsRouter.post(examBlobClientRoute, async (req, res) => {
   }
 });
 
+/* ============================ رفع مباشر لمرفقات الدروس ============================ */
+
+const lessonBlobClientRoute = '/admin/lessons/:lessonId/attachments/client';
+
+async function saveLessonBlob(
+  blob: { url: string; pathname: string; contentType: string },
+  tokenPayload: string | null | undefined,
+): Promise<void> {
+  if (!tokenPayload) throw new Error('بيانات رفع الملف غير مكتملة');
+  const payload = JSON.parse(tokenPayload) as {
+    lessonId?: string; fileName?: string; sizeBytes?: number;
+  };
+  const lessonId = cleanText(payload.lessonId, 80);
+  const lesson = await prisma.lesson.findUnique({ where: { id: lessonId }, select: { id: true, attachments: true } });
+  if (!lesson) throw new Error('الدرس غير موجود');
+  const extension = path.extname(blob.pathname).slice(1).toLowerCase();
+  if (!ALLOWED_EXTENSIONS.has(extension)) throw new Error('نوع الملف غير مدعوم');
+  const bytes = Number(payload.sizeBytes);
+  if (!Number.isFinite(bytes) || bytes < 1 || bytes > MAX_SIZE) throw new Error('حجم الملف غير صالح');
+  const id = `lessonfile-${lesson.id}-${createHash('sha256').update(blob.pathname).digest('hex').slice(0, 24)}`;
+  let existing: Array<Record<string, unknown>> = [];
+  try {
+    const parsed: unknown = JSON.parse(lesson.attachments);
+    if (Array.isArray(parsed)) existing = parsed as Array<Record<string, unknown>>;
+  } catch { /* أصلح قيمة مرفقات قديمة غير صالحة */ }
+  if (existing.some((item) => item.id === id)) return;
+  const attachment = {
+    id,
+    title: cleanText(payload.fileName, 150) || path.basename(blob.pathname),
+    filePath: blob.url,
+    fileType: extension.toUpperCase(),
+    fileSize: humanSize(bytes),
+  };
+  await prisma.lesson.update({
+    where: { id: lesson.id },
+    data: { attachments: JSON.stringify([...existing, attachment]) },
+  });
+}
+
+uploadsRouter.post(lessonBlobClientRoute, async (req, res) => {
+  try {
+    const body = req.body as HandleUploadBody;
+    if (body?.type === 'blob.generate-client-token') {
+      const vercelHost = process.env.VERCEL_ENV === 'production'
+        ? process.env.VERCEL_PROJECT_PRODUCTION_URL
+        : process.env.VERCEL_URL;
+      const origin = vercelHost ? `https://${vercelHost}` : `${req.protocol}://${req.get('host')}`;
+      body.payload.callbackUrl = `${origin}${req.originalUrl}`;
+    }
+    if (body?.type !== 'blob.upload-completed') {
+      let authorized = false;
+      requireAdmin(req, res, () => { authorized = true; });
+      if (!authorized) return;
+    }
+    const blobRequest = Object.create(req) as Request;
+    blobRequest.url = req.originalUrl;
+    const response = await handleUpload({
+      body,
+      request: blobRequest,
+      onBeforeGenerateToken: async (pathname, clientPayload) => {
+        const actor = currentUser(req);
+        if (!actor || actor.role !== 'admin' || actor.app !== 'admin') throw new Error('هذه العملية متاحة للإدارة فقط');
+        const lessonId = cleanText(req.params.lessonId, 80);
+        const lesson = await prisma.lesson.findUnique({ where: { id: lessonId }, select: { id: true } });
+        if (!lesson) throw new Error('الدرس غير موجود');
+        let client: { fileName?: unknown; sizeBytes?: unknown } = {};
+        try { client = JSON.parse(clientPayload || '{}') as typeof client; }
+        catch { throw new Error('بيانات الملف غير صالحة'); }
+        const fileName = cleanText(client.fileName, 150);
+        const sizeBytes = Number(client.sizeBytes);
+        const extension = path.extname(fileName).slice(1).toLowerCase();
+        if (!fileName || !ALLOWED_EXTENSIONS.has(extension)) throw new Error('نوع الملف غير مدعوم');
+        if (!Number.isFinite(sizeBytes) || sizeBytes < 1 || sizeBytes > MAX_SIZE) throw new Error('حجم الملف أكبر من ٢٠ ميغابايت');
+        const expectedPrefix = `lesson-attachments/${lesson.id}/`;
+        if (!pathname.startsWith(expectedPrefix) || pathname.slice(expectedPrefix.length).includes('/')) {
+          throw new Error('مسار مرفق الدرس غير صالح');
+        }
+        return {
+          allowedContentTypes: allowedBlobTypes,
+          maximumSizeInBytes: MAX_SIZE,
+          addRandomSuffix: true,
+          tokenPayload: JSON.stringify({ lessonId: lesson.id, fileName, sizeBytes }),
+        };
+      },
+      onUploadCompleted: async ({ blob, tokenPayload }) => { await saveLessonBlob(blob, tokenPayload); },
+    });
+    res.status(200).json(response);
+  } catch (e) {
+    console.error('lesson client upload error:', e);
+    res.status(400).json({ error: e instanceof Error ? e.message : 'تعذّر إصدار إذن رفع الملف' });
+  }
+});
+
+/* ============================ رفع مباشر لعناصر المكتبة والكتب ============================ */
+
+const resourceCategories = new Set(['notes', 'textbook', 'worksheets', 'past_exams']);
+const resourceBlobClientRoute = '/uploads/resource/client';
+
+async function saveResourceBlob(
+  blob: { url: string; pathname: string; contentType: string },
+  tokenPayload: string | null | undefined,
+): Promise<void> {
+  if (!tokenPayload) throw new Error('بيانات رفع الملف غير مكتملة');
+  const payload = JSON.parse(tokenPayload) as {
+    title?: string; category?: string; subjectId?: string; description?: string;
+    author?: string; publishYear?: string; pageCount?: number; fileName?: string; sizeBytes?: number;
+  };
+  const extension = path.extname(blob.pathname).slice(1).toLowerCase();
+  if (!ALLOWED_EXTENSIONS.has(extension)) throw new Error('نوع الملف غير مدعوم');
+  const sizeBytes = Number(payload.sizeBytes);
+  if (!Number.isFinite(sizeBytes) || sizeBytes < 1 || sizeBytes > MAX_SIZE) throw new Error('حجم الملف غير صالح');
+  const category = cleanText(payload.category, 30);
+  if (!resourceCategories.has(category)) throw new Error('تصنيف الملف غير صالح');
+  const subjectId = cleanText(payload.subjectId, 40) || null;
+  if (subjectId && !(await prisma.subject.findUnique({ where: { id: subjectId }, select: { id: true } }))) {
+    throw new Error('المادة المحددة غير موجودة');
+  }
+  const id = `upl-${createHash('sha256').update(blob.pathname).digest('hex').slice(0, 32)}`;
+  const data = {
+    subjectId,
+    title: cleanText(payload.title, 150) || cleanText(payload.fileName, 150) || path.basename(blob.pathname),
+    category,
+    fileType: extension.toUpperCase(),
+    fileSize: humanSize(sizeBytes),
+    pageCount: Math.max(0, Math.min(10000, Math.trunc(Number(payload.pageCount) || 0))),
+    author: cleanText(payload.author, 80) || 'الإدارة',
+    publishYear: cleanText(payload.publishYear, 9) || null,
+    isVerifiedCurriculum: false,
+    downloadCount: 0,
+    description: cleanText(payload.description, 600),
+    previewSummary: '[]',
+    filePath: blob.url,
+    status: 'sample',
+  };
+  await prisma.resource.upsert({ where: { id }, create: { id, ...data }, update: { ...data } });
+}
+
+uploadsRouter.post(resourceBlobClientRoute, async (req, res) => {
+  try {
+    const body = req.body as HandleUploadBody;
+    if (body?.type === 'blob.generate-client-token') {
+      const vercelHost = process.env.VERCEL_ENV === 'production'
+        ? process.env.VERCEL_PROJECT_PRODUCTION_URL
+        : process.env.VERCEL_URL;
+      const origin = vercelHost ? `https://${vercelHost}` : `${req.protocol}://${req.get('host')}`;
+      body.payload.callbackUrl = `${origin}${req.originalUrl}`;
+    }
+    if (body?.type !== 'blob.upload-completed') {
+      let authorized = false;
+      requireAdmin(req, res, () => { authorized = true; });
+      if (!authorized) return;
+    }
+    const blobRequest = Object.create(req) as Request;
+    blobRequest.url = req.originalUrl;
+    const response = await handleUpload({
+      body,
+      request: blobRequest,
+      onBeforeGenerateToken: async (pathname, clientPayload) => {
+        const actor = currentUser(req);
+        if (!actor || actor.role !== 'admin' || actor.app !== 'admin') throw new Error('هذه العملية متاحة للإدارة فقط');
+        let client: Record<string, unknown>;
+        try { client = JSON.parse(clientPayload || '{}') as Record<string, unknown>; }
+        catch { throw new Error('بيانات الملف غير صالحة'); }
+        const fileName = cleanText(client.fileName, 150);
+        const extension = path.extname(fileName).slice(1).toLowerCase();
+        const sizeBytes = Number(client.sizeBytes);
+        const category = cleanText(client.category, 30);
+        const subjectId = cleanText(client.subjectId, 40);
+        if (!fileName || !ALLOWED_EXTENSIONS.has(extension)) throw new Error('نوع الملف غير مدعوم');
+        if (!Number.isFinite(sizeBytes) || sizeBytes < 1 || sizeBytes > MAX_SIZE) throw new Error('حجم الملف أكبر من ٢٠ ميغابايت');
+        if (!resourceCategories.has(category)) throw new Error('تصنيف الملف غير صالح');
+        if (subjectId && !(await prisma.subject.findUnique({ where: { id: subjectId }, select: { id: true } }))) {
+          throw new Error('المادة المحددة غير موجودة');
+        }
+        const prefix = 'library-uploads/';
+        if (!pathname.startsWith(prefix) || pathname.slice(prefix.length).includes('/')) throw new Error('مسار ملف المكتبة غير صالح');
+        return {
+          allowedContentTypes: allowedBlobTypes,
+          maximumSizeInBytes: MAX_SIZE,
+          addRandomSuffix: true,
+          tokenPayload: JSON.stringify({
+            title: cleanText(client.title, 150), category, subjectId,
+            description: cleanText(client.description, 600), author: cleanText(client.author, 80) || actor.name,
+            publishYear: cleanText(client.publishYear, 9), pageCount: Number(client.pageCount) || 0,
+            fileName, sizeBytes,
+          }),
+        };
+      },
+      onUploadCompleted: async ({ blob, tokenPayload }) => { await saveResourceBlob(blob, tokenPayload); },
+    });
+    res.status(200).json(response);
+  } catch (e) {
+    console.error('resource client upload error:', e);
+    res.status(400).json({ error: e instanceof Error ? e.message : 'تعذّر إصدار إذن رفع الملف' });
+  }
+});
+
 /* ============================ مرفقات الامتحانات (الإدارة) ============================ */
 
 uploadsRouter.post('/admin/exams/:examId/attachments', requireAdmin, async (req, res) => {

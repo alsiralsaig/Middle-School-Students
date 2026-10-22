@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ArrowRight, Clock3, FileText, Pencil, Trash2, Upload } from 'lucide-react';
+import { put } from '@vercel/blob/client';
 import { Badge, Card, EmptyState, ErrorState, LoadingState, NotConnectedNote } from '../components/ui';
 import { api, type LessonRecord } from '../lib/contentApi';
 import { getApiBase } from '../lib/serverUrl';
@@ -17,6 +18,7 @@ export const LessonDetailPage: React.FC = () => {
   const [error, setError] = React.useState('');
   const [deleting, setDeleting] = React.useState(false);
   const [uploading, setUploading] = React.useState(false);
+  const [uploadProgress, setUploadProgress] = React.useState(0);
   const [deletingFile, setDeletingFile] = React.useState<string | null>(null);
   const fileInput = React.useRef<HTMLInputElement>(null);
 
@@ -32,20 +34,60 @@ export const LessonDetailPage: React.FC = () => {
   }, [lessonId]);
 
   const uploadAttachment = async (file?: File) => {
+    if (fileInput.current) fileInput.current.value = '';
     if (!file || !lesson || uploading) return;
     if (file.size > 20 * 1024 * 1024) { setError('حجم الملف يتجاوز الحد الأقصى 20 ميغابايت'); return; }
-    setUploading(true); setError('');
+    setUploading(true); setUploadProgress(0); setError('');
     try {
-      const form = new FormData(); form.append('file', file);
-      const response = await fetch(`${getApiBase()}/api/admin/lessons/${encodeURIComponent(lesson.id)}/attachments`, {
-        method: 'POST', credentials: 'include', headers: { 'X-App': 'admin', Accept: 'application/json' }, body: form,
+      const extension = file.name.split('.').pop()?.toLowerCase() || '';
+      const mimeByExtension: Record<string, string> = {
+        pdf: 'application/pdf', doc: 'application/msword',
+        docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        xls: 'application/vnd.ms-excel', xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ppt: 'application/vnd.ms-powerpoint', pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+        txt: 'text/plain', csv: 'text/csv', jpg: 'image/jpeg', jpeg: 'image/jpeg',
+        png: 'image/png', webp: 'image/webp',
+      };
+      const safeName = file.name.normalize('NFKD').replace(/[^\p{L}\p{N}._-]+/gu, '_').slice(-120) || `attachment.${extension}`;
+      const pathname = `lesson-attachments/${lesson.id}/${safeName}`;
+      const tokenResponse = await fetch(`${getApiBase()}/api/admin/lessons/${encodeURIComponent(lesson.id)}/attachments/client`, {
+        method: 'POST', credentials: 'include',
+        headers: { 'X-App': 'admin', 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({
+          type: 'blob.generate-client-token',
+          payload: {
+            pathname,
+            clientPayload: JSON.stringify({ fileName: file.name, sizeBytes: file.size }),
+            multipart: false,
+          },
+        }),
       });
-      const data = await response.json().catch(() => null) as { error?: string; attachment?: LessonFile } | null;
-      if (!response.ok) throw new Error(data?.error || 'تعذّر رفع الملف');
-      if (data?.attachment) setLesson((current) => current ? { ...current, attachments: [...current.attachments, data.attachment!] } : current);
-      if (fileInput.current) fileInput.current.value = '';
+      const tokenData = await tokenResponse.json().catch(() => null) as { clientToken?: string; error?: string } | null;
+      if (!tokenResponse.ok || !tokenData?.clientToken) throw new Error(tokenData?.error || 'تعذّر إصدار إذن رفع الملف');
+
+      const blob = await put(pathname, file, {
+        access: 'public', token: tokenData.clientToken,
+        contentType: mimeByExtension[extension] || file.type,
+        onUploadProgress: ({ percentage }) => setUploadProgress(percentage),
+      });
+
+      // سجل المرفق يكتبه callback الخادمي بعد إتمام الرفع؛ ننتظره قبل تأكيد النجاح.
+      let saved = false;
+      for (let attempt = 0; attempt < 10; attempt++) {
+        try {
+          const fresh = await api.getLesson(lesson.id) as FullLesson;
+          const attachments = Array.isArray(fresh.attachments) ? fresh.attachments : [];
+          setLesson({ ...fresh, attachments });
+          if (attachments.some((attachment) => attachment.filePath === blob.url || attachment.url === blob.url)) {
+            saved = true;
+            break;
+          }
+        } catch { /* أعد المحاولة؛ الملف وصل إلى Blob بالفعل */ }
+        await new Promise((resolve) => window.setTimeout(resolve, 500));
+      }
+      if (!saved) setError('تم رفع الملف إلى التخزين، لكن لم يصل تأكيد حفظه بعد. حدّث الصفحة بعد قليل قبل إعادة رفعه.');
     } catch (e) { setError(e instanceof Error ? e.message : 'تعذّر رفع الملف'); }
-    finally { setUploading(false); }
+    finally { setUploading(false); setUploadProgress(0); }
   };
 
   const removeAttachment = async (file: LessonFile) => {
@@ -94,7 +136,7 @@ export const LessonDetailPage: React.FC = () => {
           <p className="text-xs text-slate-500">PDF وWord وExcel وPowerPoint وTXT وCSV والصور، حتى 20 ميغابايت للملف.</p>
           <input ref={fileInput} type="file" className="hidden" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.jpg,.jpeg,.png,.webp" onChange={(event) => void uploadAttachment(event.currentTarget.files?.[0])} />
           <button type="button" onClick={() => fileInput.current?.click()} disabled={uploading} className="inline-flex items-center gap-2 rounded-xl bg-navy-800 px-3 py-2 text-xs font-bold text-white disabled:opacity-60">
-            <Upload className="w-3.5 h-3.5" />{uploading ? 'جارٍ الرفع…' : 'رفع ملف'}
+            <Upload className="w-3.5 h-3.5" />{uploading ? `جارٍ الرفع ${Math.round(uploadProgress)}٪…` : 'رفع ملف'}
           </button>
         </div>
         {lesson.attachments.length === 0 ? <p className="rounded-xl border border-dashed border-slate-200 p-4 text-center text-xs text-slate-400">لا توجد مرفقات لهذا الدرس بعد.</p> :
