@@ -1,0 +1,24 @@
+diff --git a/apps/api/vercel.json b/apps/api/vercel.json
+index f03dd08..eb77cbb 100644
+--- a/apps/api/vercel.json
++++ b/apps/api/vercel.json
+@@ -1,17 +1,5 @@
+ {
+   "$schema": "https://openapi.vercel.sh/vercel.json",
+-  "version": 2,
+-  "buildCommand": "npm run build",
+-  "builds": [
+-    {
+-      "src": "dist/index.js",
+-      "use": "@vercel/node"
+-    }
+-  ],
+-  "rewrites": [
+-    {
+-      "source": "/(.*)",
+-      "destination": "dist/index.js"
+-    }
+-  ]
++  "framework": "express",
++  "buildCommand": "npm run build"
+ }
