@@ -8,6 +8,7 @@ import { SubjectDetailPage, SubjectsPage } from './pages/SubjectsPage';
 import { ActivitiesPage, SettingsPage, StudentsPage } from './pages/MiscPages';
 import CodesPage from './pages/CodesPage';
 import LessonEditorPage from './pages/LessonEditorPage';
+import { LessonDetailPage } from './pages/LessonDetailPage';
 import { ExamsPage } from './pages/ExamsPage';
 import { ExamDetailPage } from './pages/ExamDetailPage';
 import { UnitsPage } from './pages/UnitsPage';
@@ -23,7 +24,8 @@ export default function App() {
           <Route path="/units" element={<UnitsPage />} />
           <Route path="/subjects/:subjectId" element={<SubjectDetailPage />} />
           <Route path="/content" element={<ContentPage />} />
-          <Route path="/content/:lessonId" element={<LessonEditorPage />} />
+          <Route path="/content/:lessonId" element={<LessonDetailPage />} />
+          <Route path="/content/:lessonId/edit" element={<LessonEditorPage />} />
           <Route path="/library" element={<LibraryPage />} />
           <Route path="/ratings" element={<RatingsPage />} />
           <Route path="/codes" element={<CodesPage />} />

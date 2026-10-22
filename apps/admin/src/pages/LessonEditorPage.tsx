@@ -93,13 +93,13 @@ const LessonEditorPage: React.FC = () => {
     }
   };
 
-  if (loading) return <div className="space-y-3" dir="rtl"><button onClick={() => navigate('/content')} className="inline-flex items-center gap-1 rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-bold text-navy-800"><ArrowRight className="w-3.5 h-3.5" /> رجوع إلى إدارة المحتوى</button><LoadingState label="جارٍ تحميل الدرس…" /></div>;
+  if (loading) return <div className="space-y-3" dir="rtl"><button onClick={() => navigate(`/content/${encodeURIComponent(lessonId)}`)} className="inline-flex items-center gap-1 rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-bold text-navy-800"><ArrowRight className="w-3.5 h-3.5" /> رجوع إلى عرض الدرس</button><LoadingState label="جارٍ تحميل الدرس…" /></div>;
   if (!lesson) {
     return (
       <div className="p-4">
         <ErrorState title="تعذّر تحميل الدرس" description={error || 'الدرس غير موجود'} />
         <button
-          onClick={() => navigate('/content')}
+          onClick={() => navigate(`/content/${encodeURIComponent(lessonId)}`)}
           className="mt-3 text-xs font-bold text-navy-800 border border-slate-300 rounded-xl px-3 py-2"
         >
           رجوع
@@ -119,11 +119,11 @@ const LessonEditorPage: React.FC = () => {
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
           <button
-            onClick={() => navigate('/content')}
+            onClick={() => navigate(`/content/${encodeURIComponent(lessonId)}`)}
             className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-500 hover:text-navy-800 mb-1"
           >
             <ArrowRight className="w-3.5 h-3.5" />
-            رجوع إلى إدارة المحتوى
+            رجوع إلى عرض الدرس
           </button>
           <h1 className="text-lg font-black text-navy-800">تحرير الدرس</h1>
           <p className="text-[11px] text-slate-500 mt-0.5 nums">

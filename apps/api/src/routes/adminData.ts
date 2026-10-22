@@ -19,6 +19,7 @@ export const adminDataRouter = Router();
 adminDataRouter.get('/library', requireAdmin, async (_req, res) => {
   try {
     const resources = await prisma.resource.findMany({
+      where: { category: { not: 'exam-attachment' } },
       orderBy: [{ category: 'asc' }, { title: 'asc' }],
       include: { subject: { select: { id: true, name: true } } },
     });

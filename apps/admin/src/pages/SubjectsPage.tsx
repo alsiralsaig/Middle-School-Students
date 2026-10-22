@@ -222,7 +222,7 @@ export const SubjectDetailPage: React.FC = () => {
                     <tr key={l.id} className="hover:bg-slate-50/70">
                       <td className="py-2.5 px-3 nums text-slate-500">{l.lessonNumber}</td>
                       <td className="py-2.5 px-3">
-                        <p className="font-bold text-navy-800">{l.title}</p>
+                        <Link to={`/content/${encodeURIComponent(l.id)}`} className="font-bold text-navy-800 hover:text-gold-600 hover:underline">{l.title}</Link>
                         <p className="text-[10px] text-slate-500 line-clamp-1">{l.summary}</p>
                       </td>
                       <td className="py-2.5 px-3 nums">{l.durationMinutes} د</td>

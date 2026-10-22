@@ -252,7 +252,7 @@ learnRouter.delete('/planner/group/:groupId', requireAuth, async (req, res) => {
 /* ============================ المكتبة ============================ */
 
 learnRouter.get('/resources', async (_req, res) => {
-  const resources = await prisma.resource.findMany({ orderBy: { id: 'asc' } });
+  const resources = await prisma.resource.findMany({ where: { category: { not: 'exam-attachment' } }, orderBy: { id: 'asc' } });
   res.json({
     resources: resources.map((r) => ({
       ...r,

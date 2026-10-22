@@ -66,9 +66,15 @@ adminContentRouter.get('/exams/:id', requireAdmin, async (req, res) => {
       include: { subject: { select: { id: true, name: true } }, questions: true },
     });
     if (!exam) { res.status(404).json({ error: 'الامتحان غير موجود' }); return; }
+    const attachments = await prisma.resource.findMany({
+      where: { id: { startsWith: `examfile-${exam.id}-` } },
+      orderBy: { id: 'asc' },
+      select: { id: true, title: true, fileType: true, fileSize: true, filePath: true },
+    });
     res.json({ exam: {
       id: exam.id, title: exam.title, subjectId: exam.subjectId, subjectName: exam.subject.name,
       durationMinutes: exam.durationMinutes, status: exam.status,
+      attachments,
       questions: exam.questions.map((q) => {
         let options: unknown[] = [];
         try { const value: unknown = JSON.parse(q.options); if (Array.isArray(value)) options = value; } catch { /* بيانات قديمة غير صالحة */ }
@@ -238,6 +244,24 @@ adminContentRouter.put('/lessons/:id', requireAdmin, async (req, res) => {
     console.error('admin lesson update error:', e);
     res.status(500).json({ error: 'تعذّر حفظ الدرس' });
   }
+});
+
+/** DELETE /api/admin/lessons/:id — حذف الدرس مع حماية تقدّم وتقييمات الطلاب */
+adminContentRouter.delete('/lessons/:id', requireAdmin, async (req, res) => {
+  try {
+    const lesson = await prisma.lesson.findUnique({ where: { id: req.params.id } });
+    if (!lesson) { res.status(404).json({ error: 'الدرس غير موجود' }); return; }
+    const [progressCount, ratingCount] = await Promise.all([
+      prisma.lessonProgress.count({ where: { lessonId: lesson.id } }),
+      prisma.lessonRating.count({ where: { lessonId: lesson.id } }),
+    ]);
+    if (progressCount || ratingCount) {
+      res.status(409).json({ error: 'لا يمكن حذف الدرس لأنه مرتبط بتقدّم أو تقييمات طلاب. حُفظت سجلات الطلاب كما هي.' });
+      return;
+    }
+    await prisma.lesson.delete({ where: { id: lesson.id } });
+    res.json({ ok: true });
+  } catch (e) { console.error('admin lesson delete error:', e); res.status(500).json({ error: 'تعذّر حذف الدرس' }); }
 });
 
 /* ============================ مساعدات ============================ */

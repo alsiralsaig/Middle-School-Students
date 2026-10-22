@@ -157,7 +157,7 @@ export const ContentPage: React.FC = () => {
               {filtered.map((l) => (
                 <tr key={`${l.subjectId}-${l.id}`} className="hover:bg-slate-50/70">
                   <td className="py-2.5 px-3">
-                    <p className="font-bold text-navy-800">{l.title}</p>
+                    <Link to={`/content/${encodeURIComponent(l.id)}`} className="font-bold text-navy-800 hover:text-gold-600 hover:underline">{l.title}</Link>
                     <p className="text-[10px] text-slate-500 line-clamp-1">{l.summary}</p>
                   </td>
                   <td className="py-2.5 px-3 text-slate-600">{l.subjectName}</td>
@@ -175,7 +175,7 @@ export const ContentPage: React.FC = () => {
                   </td>
                   <td className="py-2.5 px-3 text-left">
                     <Link
-                      to={`/content/${l.id}`}
+                      to={`/content/${encodeURIComponent(l.id)}/edit`}
                       className="inline-flex items-center gap-1 text-[11px] font-bold text-navy-800 hover:text-gold-600"
                     >
                       <SquarePen className="w-3.5 h-3.5" />

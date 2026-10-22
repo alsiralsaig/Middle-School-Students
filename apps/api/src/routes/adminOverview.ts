@@ -34,7 +34,7 @@ adminOverviewRouter.get('/overview', requireAdmin, async (_req, res) => {
       prisma.unit.count(),
       prisma.lesson.count(),
       prisma.lesson.count({ where: { status: 'verified' } }),
-      prisma.resource.count(),
+      prisma.resource.count({ where: { category: { not: 'exam-attachment' } } }),
       prisma.user.count({ where: { role: 'student' } }),
       prisma.accessCode.count({ where: { status: 'active' } }),
       prisma.exam.count(),
