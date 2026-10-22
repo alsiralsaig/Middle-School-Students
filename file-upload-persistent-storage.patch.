@@ -1,0 +1,477 @@
+diff --git a/DEPLOY_STEPS.md b/DEPLOY_STEPS.md
+index 67e94f4..dc82d7d 100644
+--- a/DEPLOY_STEPS.md
++++ b/DEPLOY_STEPS.md
+@@ -101,13 +101,21 @@ DATABASE_URL="الرابط_المنسوخ" npx tsx prisma/seed.ts
+ DATABASE_URL = الرابط Pooled من Neon
+ JWT_SECRET   = ولّده: node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"
+ NODE_ENV     = production
++BLOB_READ_WRITE_TOKEN = رمز Blob من Vercel Storage (لرفع الملفات الدائم)
+ ```
+ 
+-اختبار:
++قبل النشر، أنشئ Blob Store من Vercel Storage وانسخ رمز القراءة والكتابة إلى
++`BLOB_READ_WRITE_TOKEN`. الرفع في الإنتاج يستخدم التخزين الدائم؛ إن غاب الرمز
++سيرفض الرفع بدلاً من حفظ ملفات مؤقتة قد تختفي عند إعادة تشغيل Vercel.
++
++اختبارات بعد النشر:
+ ```bash
+ curl https://your-api.vercel.app/api/subjects
++curl -i https://your-api.vercel.app/api/admin/exams/test
+ ```
+-يجب أن يردّ JSON فيه ٨ مواد.
++يجب أن يردّ الأول JSON فيه المواد، والثاني `401` بلا تسجيل دخول (أي أن مسار
++تفاصيل الامتحان موجود ومحمي). إذا أعاد الثاني `404` فأعد نشر **مشروع API**
++ذو Root Directory=`apps/api`؛ نشر لوحة الإدارة وحدها لا يحدّث الخادم.
+ 
+ ---
+ 
+diff --git a/apps/admin/src/pages/ExamDetailPage.tsx b/apps/admin/src/pages/ExamDetailPage.tsx
+index 323ca8e..6afe14b 100644
+--- a/apps/admin/src/pages/ExamDetailPage.tsx
++++ b/apps/admin/src/pages/ExamDetailPage.tsx
+@@ -76,7 +76,7 @@ export const ExamDetailPage: React.FC = () => {
+           <input type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.jpg,.jpeg,.png,.webp,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,text/plain,text/csv,image/jpeg,image/png,image/webp" onChange={upload} disabled={uploading} className="sr-only" />
+         </label>
+         {fileError && <p role="alert" className="text-xs text-rose-700 bg-rose-50 border border-rose-200 rounded-xl px-3 py-2">{fileError}</p>}
+-        {exam.attachments.length === 0 ? <p className="text-xs text-slate-400">لا توجد ملفات مرفقة.</p> : <ul className="divide-y divide-slate-100">{exam.attachments.map((a) => <li key={a.id} className="flex items-center justify-between gap-3 py-2"><div className="min-w-0"><a href={a.filePath ? `${getApiBase()}${a.filePath}` : '#'} target="_blank" rel="noreferrer" className="font-bold text-xs text-navy-800 hover:underline break-all">{a.title}</a><p className="text-[10px] text-slate-500">{a.fileType} · {a.fileSize}</p></div><button type="button" onClick={() => void removeAttachment(a)} aria-label="حذف المرفق" className="shrink-0 p-2 text-rose-600 hover:bg-rose-50 rounded-lg"><Trash2 className="w-4 h-4" /></button></li>)}</ul>}
++        {exam.attachments.length === 0 ? <p className="text-xs text-slate-400">لا توجد ملفات مرفقة.</p> : <ul className="divide-y divide-slate-100">{exam.attachments.map((a) => <li key={a.id} className="flex items-center justify-between gap-3 py-2"><div className="min-w-0"><a href={a.filePath ? (a.filePath.startsWith('/') ? `${getApiBase()}${a.filePath}` : a.filePath) : '#'} target="_blank" rel="noreferrer" className="font-bold text-xs text-navy-800 hover:underline break-all">{a.title}</a><p className="text-[10px] text-slate-500">{a.fileType} · {a.fileSize}</p></div><button type="button" onClick={() => void removeAttachment(a)} aria-label="حذف المرفق" className="shrink-0 p-2 text-rose-600 hover:bg-rose-50 rounded-lg"><Trash2 className="w-4 h-4" /></button></li>)}</ul>}
+       </div>
+     </Card>
+ 
+diff --git a/apps/admin/src/pages/LessonDetailPage.tsx b/apps/admin/src/pages/LessonDetailPage.tsx
+index 0842791..ceb4669 100644
+--- a/apps/admin/src/pages/LessonDetailPage.tsx
++++ b/apps/admin/src/pages/LessonDetailPage.tsx
+@@ -1,11 +1,11 @@
+ import React from 'react';
+ import { Link, useNavigate, useParams } from 'react-router-dom';
+-import { ArrowRight, Clock3, Pencil, Trash2 } from 'lucide-react';
++import { ArrowRight, Clock3, FileText, Pencil, Trash2, Upload } from 'lucide-react';
+ import { Badge, Card, EmptyState, ErrorState, LoadingState, NotConnectedNote } from '../components/ui';
+ import { api, type LessonRecord } from '../lib/contentApi';
+ import { getApiBase } from '../lib/serverUrl';
+ 
+-interface LessonFile { title?: string; name?: string; url?: string; path?: string; filePath?: string; type?: string }
++interface LessonFile { id?: string; title?: string; name?: string; url?: string; path?: string; filePath?: string; type?: string; fileType?: string; fileSize?: string }
+ type FullLesson = LessonRecord & { attachments: LessonFile[] };
+ 
+ export const LessonDetailPage: React.FC = () => {
+@@ -16,6 +16,9 @@ export const LessonDetailPage: React.FC = () => {
+   const [offline, setOffline] = React.useState(false);
+   const [error, setError] = React.useState('');
+   const [deleting, setDeleting] = React.useState(false);
++  const [uploading, setUploading] = React.useState(false);
++  const [deletingFile, setDeletingFile] = React.useState<string | null>(null);
++  const fileInput = React.useRef<HTMLInputElement>(null);
+ 
+   React.useEffect(() => {
+     let alive = true;
+@@ -28,6 +31,38 @@ export const LessonDetailPage: React.FC = () => {
+     return () => { alive = false; };
+   }, [lessonId]);
+ 
++  const uploadAttachment = async (file?: File) => {
++    if (!file || !lesson || uploading) return;
++    if (file.size > 20 * 1024 * 1024) { setError('حجم الملف يتجاوز الحد الأقصى 20 ميغابايت'); return; }
++    setUploading(true); setError('');
++    try {
++      const form = new FormData(); form.append('file', file);
++      const response = await fetch(`${getApiBase()}/api/admin/lessons/${encodeURIComponent(lesson.id)}/attachments`, {
++        method: 'POST', credentials: 'include', headers: { 'X-App': 'admin', Accept: 'application/json' }, body: form,
++      });
++      const data = await response.json().catch(() => null) as { error?: string; attachment?: LessonFile } | null;
++      if (!response.ok) throw new Error(data?.error || 'تعذّر رفع الملف');
++      if (data?.attachment) setLesson((current) => current ? { ...current, attachments: [...current.attachments, data.attachment!] } : current);
++      if (fileInput.current) fileInput.current.value = '';
++    } catch (e) { setError(e instanceof Error ? e.message : 'تعذّر رفع الملف'); }
++    finally { setUploading(false); }
++  };
++
++  const removeAttachment = async (file: LessonFile) => {
++    if (!lesson || !file.id || deletingFile) return;
++    if (!window.confirm(`حذف المرفق «${file.title ?? file.name ?? 'ملف'}»؟`)) return;
++    setDeletingFile(file.id); setError('');
++    try {
++      const response = await fetch(`${getApiBase()}/api/admin/lessons/${encodeURIComponent(lesson.id)}/attachments/${encodeURIComponent(file.id)}`, {
++        method: 'DELETE', credentials: 'include', headers: { 'X-App': 'admin', Accept: 'application/json' },
++      });
++      const data = await response.json().catch(() => null) as { error?: string } | null;
++      if (!response.ok) throw new Error(data?.error || 'تعذّر حذف المرفق');
++      setLesson((current) => current ? { ...current, attachments: current.attachments.filter((x) => x.id !== file.id) } : current);
++    } catch (e) { setError(e instanceof Error ? e.message : 'تعذّر حذف المرفق'); }
++    finally { setDeletingFile(null); }
++  };
++
+   const removeLesson = async () => {
+     if (!lesson || deleting) return;
+     if (!window.confirm(`حذف «${lesson.title}»؟ لن تُحذف تقدّمات الطلاب أو تقييماتهم؛ إذا كان للدرس سجلات طلابية سيمنع الخادم حذفه.`)) return;
+@@ -53,6 +88,27 @@ export const LessonDetailPage: React.FC = () => {
+     <Card title="الشرح الكامل">{lesson.sections.length ? <div className="p-4 space-y-4">{lesson.sections.map((s, i) => <section key={i} className="border-b border-slate-100 pb-4 last:border-0"><h3 className="font-black text-navy-800 mb-2">{s.heading}</h3><p className="text-sm leading-8 text-slate-700 whitespace-pre-wrap">{s.body}</p></section>)}</div> : <EmptyState title="لا توجد أقسام شرح بعد" description="لا يحتوي الدرس على أقسام شرح حتى الآن." />}</Card>
+     <div className="grid md:grid-cols-2 gap-4"><Card title="القواعد الأساسية">{lesson.keyRules.length ? <ul className="p-4 list-disc list-inside space-y-2 text-sm leading-7">{lesson.keyRules.map((x,i)=><li key={i}>{x}</li>)}</ul> : <div className="p-4 text-xs text-slate-400">لا توجد قواعد مسجلة.</div>}</Card><Card title="نصائح الامتحان">{lesson.examTips.length ? <ul className="p-4 list-disc list-inside space-y-2 text-sm leading-7">{lesson.examTips.map((x,i)=><li key={i}>{x}</li>)}</ul> : <div className="p-4 text-xs text-slate-400">لا توجد نصائح مسجلة.</div>}</Card></div>
+     <Card title="أسئلة شائعة">{lesson.faq.length ? <div className="p-4 space-y-3">{lesson.faq.map((f,i)=><div key={i}><h3 className="font-bold text-navy-800">{f.q}</h3><p className="text-sm text-slate-600 mt-1">{f.a}</p></div>)}</div> : <div className="p-4 text-xs text-slate-400">لا توجد أسئلة شائعة.</div>}</Card>
+-    {lesson.attachments.length > 0 && <Card title="مرفقات الدرس"><ul className="p-4 space-y-2">{lesson.attachments.map((f,i)=>{const url=f.url ?? f.filePath ?? f.path; return <li key={i}>{url ? <a href={url.startsWith('/') ? `${getApiBase()}${url}` : url} target="_blank" rel="noreferrer" className="text-sm text-navy-800 underline">{f.title ?? f.name ?? url}</a> : <span className="text-sm">{f.title ?? f.name ?? 'مرفق'}</span>}</li>;})}</ul></Card>}
++    <Card title="مرفقات الدرس">
++      <div className="p-4 space-y-3">
++        <div className="flex flex-wrap items-center justify-between gap-2">
++          <p className="text-xs text-slate-500">PDF وWord وExcel وPowerPoint وTXT وCSV والصور، حتى 20 ميغابايت للملف.</p>
++          <input ref={fileInput} type="file" className="hidden" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.jpg,.jpeg,.png,.webp" onChange={(event) => void uploadAttachment(event.currentTarget.files?.[0])} />
++          <button type="button" onClick={() => fileInput.current?.click()} disabled={uploading} className="inline-flex items-center gap-2 rounded-xl bg-navy-800 px-3 py-2 text-xs font-bold text-white disabled:opacity-60">
++            <Upload className="w-3.5 h-3.5" />{uploading ? 'جارٍ الرفع…' : 'رفع ملف'}
++          </button>
++        </div>
++        {lesson.attachments.length === 0 ? <p className="rounded-xl border border-dashed border-slate-200 p-4 text-center text-xs text-slate-400">لا توجد مرفقات لهذا الدرس بعد.</p> :
++          <ul className="space-y-2">{lesson.attachments.map((f, i) => {
++            const url = f.url ?? f.filePath ?? f.path;
++            return <li key={f.id ?? i} className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 p-3">
++              <div className="flex min-w-0 items-center gap-2"><FileText className="h-4 w-4 shrink-0 text-navy-700" /><div className="min-w-0">
++                {url ? <a href={url.startsWith('/') ? `${getApiBase()}${url}` : url} target="_blank" rel="noreferrer" className="block truncate text-sm font-bold text-navy-800 underline">{f.title ?? f.name ?? 'مرفق'}</a> : <span className="text-sm">{f.title ?? f.name ?? 'مرفق'}</span>}
++                <span className="text-[11px] text-slate-400">{[f.fileType ?? f.type, f.fileSize].filter(Boolean).join(' · ')}</span>
++              </div></div>
++              {f.id && <button type="button" aria-label="حذف المرفق" onClick={() => void removeAttachment(f)} disabled={deletingFile === f.id} className="rounded-lg p-2 text-rose-600 hover:bg-rose-50 disabled:opacity-50"><Trash2 className="h-4 w-4" /></button>}
++            </li>;
++          })}</ul>}
++      </div>
++    </Card>
+   </div>;
+ };
+diff --git a/apps/api/package.json b/apps/api/package.json
+index b92a96a..8ceeca4 100644
+--- a/apps/api/package.json
++++ b/apps/api/package.json
+@@ -22,6 +22,7 @@
+   },
+   "dependencies": {
+     "@google/genai": "^2.4.0",
++    "@vercel/blob": "^1.1.1",
+     "@prisma/client": "^6.1.0",
+     "bcryptjs": "^2.4.3",
+     "cookie-parser": "^1.4.7",
+diff --git a/apps/api/src/routes/uploads.ts b/apps/api/src/routes/uploads.ts
+index b0be75e..6a03e32 100644
+--- a/apps/api/src/routes/uploads.ts
++++ b/apps/api/src/routes/uploads.ts
+@@ -1,6 +1,7 @@
+ import path from 'node:path';
+ import { randomUUID } from 'node:crypto';
+ import fs from 'node:fs';
++import { put, del } from '@vercel/blob';
+ import { Router, type Request, type Response } from 'express';
+ import multer from 'multer';
+ import { prisma } from '../lib/prisma.js';
+@@ -9,7 +10,7 @@ import { UPLOAD_DIR, ensureUploadDir } from '../lib/paths.js';
+ 
+ export const uploadsRouter = Router();
+ 
+-ensureUploadDir();
++if (!process.env.VERCEL) ensureUploadDir();
+ 
+ const MAX_SIZE = 20 * 1024 * 1024; // 20 ميغابايت
+ const ALLOWED = new Map([
+@@ -27,23 +28,20 @@ const ALLOWED = new Map([
+   ['image/webp', 'webp'],
+ ]);
+ 
+-const storage = multer.diskStorage({
+-  destination: (_req, _file, cb) => cb(null, UPLOAD_DIR),
+-  filename: (_req, file, cb) => {
+-    const safe = path
+-      .basename(file.originalname)
+-      .replace(/[^\p{L}\p{N}._-]/gu, '_')
+-      .slice(0, 80);
+-    cb(null, `${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${safe}`);
+-  },
+-});
++const ALLOWED_EXTENSIONS = new Set(ALLOWED.values());
++const fileExtension = (file: Express.Multer.File): string | undefined => {
++  const byMime = ALLOWED.get(file.mimetype);
++  if (byMime) return byMime;
++  const byName = path.extname(file.originalname).slice(1).toLowerCase();
++  return file.mimetype === 'application/octet-stream' && ALLOWED_EXTENSIONS.has(byName) ? byName : undefined;
++};
+ 
+ const upload = multer({
+-  storage,
++  storage: multer.memoryStorage(),
+   limits: { fileSize: MAX_SIZE, files: 1 },
+   fileFilter: (_req, file, cb) => {
+-    if (ALLOWED.has(file.mimetype)) cb(null, true);
+-    else cb(new Error('نوع الملف غير مدعوم — PDF أو Word أو صورة فقط'));
++    if (fileExtension(file)) cb(null, true);
++    else cb(new Error('نوع الملف غير مدعوم — PDF أو Office أو TXT/CSV أو صورة'));
+   },
+ });
+ 
+@@ -65,6 +63,32 @@ const humanSize = (bytes: number) => {
+   return `${(bytes / (1024 * 1024)).toFixed(1)} ميغابايت`;
+ };
+ 
++/** تخزين دائم على Vercel Blob في الإنتاج؛ ملفات محلية للتطوير فقط. */
++async function storeUploadedFile(file: Express.Multer.File): Promise<string> {
++  const safe = path.basename(file.originalname).replace(/[^\p{L}\p{N}._-]/gu, '_').slice(0, 80) || 'file';
++  const token = process.env.BLOB_READ_WRITE_TOKEN;
++  if (token) {
++    const result = await put(`uploads/${Date.now()}-${randomUUID()}-${safe}`, file.buffer, { access: 'public', token });
++    return result.url;
++  }
++  if (process.env.VERCEL) throw new Error('تخزين الملفات الدائم غير مُعدّ: أضف BLOB_READ_WRITE_TOKEN في إعدادات API على Vercel.');
++  ensureUploadDir();
++  const filename = `${Date.now()}-${randomUUID()}-${safe}`;
++  fs.writeFileSync(path.join(UPLOAD_DIR, filename), file.buffer);
++  return `/uploads/${filename}`;
++}
++
++async function deleteStoredFile(fileUrl: string): Promise<void> {
++  if (fileUrl.startsWith('/uploads/')) {
++    const full = path.join(UPLOAD_DIR, path.basename(fileUrl));
++    if (fs.existsSync(full)) fs.unlinkSync(full);
++    return;
++  }
++  if (fileUrl.startsWith('https://') && process.env.BLOB_READ_WRITE_TOKEN) {
++    await del(fileUrl, { token: process.env.BLOB_READ_WRITE_TOKEN });
++  }
++}
++
+ /* ============================ رفع ملف للمكتبة ============================ */
+ 
+ uploadsRouter.post('/uploads/resource', requireAuth, async (req, res) => {
+@@ -82,8 +106,11 @@ uploadsRouter.post('/uploads/resource', requireAuth, async (req, res) => {
+     const author = cleanText(req.body?.author, 80) || null;
+     const user = currentUser(req);
+ 
+-    const ext = ALLOWED.get(req.file.mimetype) ?? 'bin';
+-    const resource = await prisma.resource.create({
++    const ext = fileExtension(req.file) ?? 'bin';
++    const filePath = await storeUploadedFile(req.file);
++    let resource;
++    try {
++      resource = await prisma.resource.create({
+       data: {
+         id: `upl-${Date.now().toString(36)}`,
+         subjectId,
+@@ -98,10 +125,14 @@ uploadsRouter.post('/uploads/resource', requireAuth, async (req, res) => {
+         downloadCount: 0,
+         description,
+         previewSummary: '[]',
+-        filePath: `/uploads/${req.file.filename}`,
++        filePath,
+         status: 'sample',
+       },
+-    });
++      });
++    } catch (e) {
++      await deleteStoredFile(filePath).catch(() => undefined);
++      throw e;
++    }
+ 
+     console.log(`📤 ${user.name} رفع ملفاً: ${title}`);
+     res.status(201).json({ resource: { ...resource, previewSummary: [] } });
+@@ -119,22 +150,23 @@ uploadsRouter.post('/admin/exams/:examId/attachments', requireAdmin, async (req,
+   await runUpload(req, res);
+   if (res.headersSent) return;
+   if (!req.file) { res.status(400).json({ error: 'اختر ملفاً أولاً' }); return; }
++  let filePath = '';
+   try {
+-    const ext = ALLOWED.get(req.file.mimetype) ?? 'bin';
++    const ext = fileExtension(req.file) ?? 'bin';
++    filePath = await storeUploadedFile(req.file);
+     const attachment = await prisma.resource.create({ data: {
+       id: `examfile-${exam.id}-${randomUUID()}`, subjectId: exam.subjectId,
+       title: cleanText(req.file.originalname, 150) || 'ملف الامتحان', category: 'exam-attachment',
+       fileType: ext.toUpperCase(), fileSize: humanSize(req.file.size), pageCount: 0,
+       author: currentUser(req).name, publishYear: null, isVerifiedCurriculum: false,
+       downloadCount: 0, description: `مرفق للامتحان ${exam.title}`, previewSummary: '[]',
+-      filePath: `/uploads/${req.file.filename}`, status: 'sample',
++      filePath, status: 'sample',
+     }, select: { id: true, title: true, fileType: true, fileSize: true, filePath: true } });
+     res.status(201).json({ attachment });
+   } catch (e) {
+-    const full = path.join(UPLOAD_DIR, path.basename(req.file.path));
+-    if (fs.existsSync(full)) fs.unlinkSync(full);
++    if (filePath) await deleteStoredFile(filePath).catch(() => undefined);
+     console.error('exam attachment create error:', e);
+-    res.status(500).json({ error: 'تعذّر حفظ مرفق الامتحان' });
++    res.status(500).json({ error: e instanceof Error ? e.message : 'تعذّر حفظ مرفق الامتحان' });
+   }
+ });
+ 
+@@ -143,14 +175,55 @@ uploadsRouter.delete('/admin/exams/:examId/attachments/:attachmentId', requireAd
+   if (!req.params.attachmentId.startsWith(prefix)) { res.status(400).json({ error: 'المرفق لا يتبع هذا الامتحان' }); return; }
+   const attachment = await prisma.resource.findUnique({ where: { id: req.params.attachmentId } });
+   if (!attachment || attachment.category !== 'exam-attachment') { res.status(404).json({ error: 'الملف غير موجود' }); return; }
+-  if (attachment.filePath) {
+-    const full = path.join(UPLOAD_DIR, path.basename(attachment.filePath));
+-    if (fs.existsSync(full)) fs.unlinkSync(full);
+-  }
+   await prisma.resource.delete({ where: { id: attachment.id } });
++  if (attachment.filePath) await deleteStoredFile(attachment.filePath).catch((e) => console.error('exam attachment storage delete error:', e));
+   res.json({ ok: true });
+ });
+ 
++/* ============================ مرفقات الدروس (الإدارة) ============================ */
++
++uploadsRouter.post('/admin/lessons/:lessonId/attachments', requireAdmin, async (req, res) => {
++  const lesson = await prisma.lesson.findUnique({ where: { id: req.params.lessonId }, select: { id: true, attachments: true } });
++  if (!lesson) { res.status(404).json({ error: 'الدرس غير موجود' }); return; }
++  await runUpload(req, res);
++  if (res.headersSent) return;
++  if (!req.file) { res.status(400).json({ error: 'اختر ملفاً أولاً' }); return; }
++  let filePath = '';
++  try {
++    filePath = await storeUploadedFile(req.file);
++    let existing: Array<Record<string, unknown>> = [];
++    try { const parsed: unknown = JSON.parse(lesson.attachments); if (Array.isArray(parsed)) existing = parsed as Array<Record<string, unknown>>; } catch { /* إصلاح قيمة قديمة غير صالحة */ }
++    const attachment = {
++      id: `lessonfile-${lesson.id}-${randomUUID()}`,
++      title: cleanText(req.file.originalname, 150) || 'مرفق الدرس',
++      filePath,
++      fileType: (fileExtension(req.file) ?? 'file').toUpperCase(),
++      fileSize: humanSize(req.file.size),
++    };
++    await prisma.lesson.update({ where: { id: lesson.id }, data: { attachments: JSON.stringify([...existing, attachment]) } });
++    res.status(201).json({ attachment });
++  } catch (e) {
++    if (filePath) await deleteStoredFile(filePath).catch(() => undefined);
++    console.error('lesson attachment create error:', e);
++    res.status(500).json({ error: e instanceof Error ? e.message : 'تعذّر حفظ مرفق الدرس' });
++  }
++});
++
++uploadsRouter.delete('/admin/lessons/:lessonId/attachments/:attachmentId', requireAdmin, async (req, res) => {
++  try {
++    const lesson = await prisma.lesson.findUnique({ where: { id: req.params.lessonId }, select: { id: true, attachments: true } });
++    if (!lesson) { res.status(404).json({ error: 'الدرس غير موجود' }); return; }
++    let existing: Array<Record<string, unknown>> = [];
++    try { const parsed: unknown = JSON.parse(lesson.attachments); if (Array.isArray(parsed)) existing = parsed as Array<Record<string, unknown>>; } catch { /* قيمة قديمة غير صالحة */ }
++    const target = existing.find((item) => item.id === req.params.attachmentId);
++    if (!target) { res.status(404).json({ error: 'المرفق غير موجود' }); return; }
++    const remaining = existing.filter((item) => item.id !== req.params.attachmentId);
++    await prisma.lesson.update({ where: { id: lesson.id }, data: { attachments: JSON.stringify(remaining) } });
++    if (typeof target.filePath === 'string') await deleteStoredFile(target.filePath).catch((e) => console.error('lesson attachment storage delete error:', e));
++    res.json({ ok: true });
++  } catch (e) { console.error('lesson attachment delete error:', e); res.status(500).json({ error: 'تعذّر حذف المرفق' }); }
++});
++
+ /* ============================ حذف ملف (الإدارة) ============================ */
+ 
+ uploadsRouter.delete('/uploads/resource/:id', requireAdmin, async (req, res) => {
+@@ -159,10 +232,7 @@ uploadsRouter.delete('/uploads/resource/:id', requireAdmin, async (req, res) =>
+     res.status(404).json({ error: 'الملف غير موجود' });
+     return;
+   }
+-  if (resource.filePath) {
+-    const full = path.join(UPLOAD_DIR, path.basename(resource.filePath));
+-    if (fs.existsSync(full)) fs.unlinkSync(full);
+-  }
+   await prisma.resource.delete({ where: { id: req.params.id } });
++  if (resource.filePath) await deleteStoredFile(resource.filePath).catch((e) => console.error('resource storage delete error:', e));
+   res.json({ ok: true });
+ });
+diff --git a/package-lock.json b/package-lock.json
+index 1ded764..d98b9c0 100644
+--- a/package-lock.json
++++ b/package-lock.json
+@@ -45,7 +45,8 @@
+         "dotenv": "^16.4.7",
+         "express": "^4.21.2",
+         "jsonwebtoken": "^9.0.2",
+-        "multer": "^1.4.5-lts.1"
++        "multer": "^1.4.5-lts.1",
++        "@vercel/blob": "^1.1.1"
+       },
+       "devDependencies": {
+         "@types/bcryptjs": "^2.4.6",
+@@ -6823,6 +6824,93 @@
+     "shared": {
+       "name": "@ssp/shared",
+       "version": "1.0.0"
++    },
++    "node_modules/@fastify/busboy": {
++      "version": "2.1.1",
++      "resolved": "https://registry.npmjs.org/@fastify/busboy/-/busboy-2.1.1.tgz",
++      "integrity": "sha512-vBZP4NlzfOlerQTnba4aqZoMhE/a9HY7HRqoOPaETQcSQuWEIyZMHGfVu6w9wGtGK5fED5qRs2DteVCjOH60sA==",
++      "license": "MIT",
++      "engines": {
++        "node": ">=14"
++      }
++    },
++    "node_modules/@vercel/blob": {
++      "version": "1.1.1",
++      "resolved": "https://registry.npmjs.org/@vercel/blob/-/blob-1.1.1.tgz",
++      "integrity": "sha512-heiJGj2qt5qTv6yiShH9f6KRAoZGj+lz61GQ+lBRL4lhvUmKI9A51KYlQTnsUd9ymdFlKHBlvmPeG+yGz2Qsbg==",
++      "license": "Apache-2.0",
++      "dependencies": {
++        "async-retry": "^1.3.3",
++        "is-buffer": "^2.0.5",
++        "is-node-process": "^1.2.0",
++        "throttleit": "^2.1.0",
++        "undici": "^5.28.4"
++      },
++      "engines": {
++        "node": ">=16.14"
++      }
++    },
++    "node_modules/async-retry": {
++      "version": "1.3.3",
++      "resolved": "https://registry.npmjs.org/async-retry/-/async-retry-1.3.3.tgz",
++      "integrity": "sha512-wfr/jstw9xNi/0teMHrRW7dsz3Lt5ARhYNZ2ewpadnhaIp5mbALhOAP+EAdsC7t4Z6wqsDVv9+W6gm1Dk9mEyw==",
++      "license": "MIT",
++      "dependencies": {
++        "retry": "0.13.1"
++      }
++    },
++    "node_modules/is-buffer": {
++      "version": "2.0.5",
++      "resolved": "https://registry.npmjs.org/is-buffer/-/is-buffer-2.0.5.tgz",
++      "integrity": "sha512-i2R6zNFDwgEHJyQUtJEk0XFi1i0dPFn/oqjK3/vPCcDeJvW5NQ83V8QbicfF1SupOaB0h8ntgBC2YiE7dfyctQ==",
++      "funding": [
++        {
++          "type": "github",
++          "url": "https://github.com/sponsors/feross"
++        },
++        {
++          "type": "patreon",
++          "url": "https://www.patreon.com/feross"
++        },
++        {
++          "type": "consulting",
++          "url": "https://feross.org/support"
++        }
++      ],
++      "license": "MIT",
++      "engines": {
++        "node": ">=4"
++      }
++    },
++    "node_modules/is-node-process": {
++      "version": "1.2.0",
++      "resolved": "https://registry.npmjs.org/is-node-process/-/is-node-process-1.2.0.tgz",
++      "integrity": "sha512-Vg4o6/fqPxIjtxgUH5QLJhwZ7gW5diGCVlXpuUfELC62CuxM1iHcRe51f2W1FDy04Ai4KJkagKjx3XaqyfRKXw==",
++      "license": "MIT"
++    },
++    "node_modules/throttleit": {
++      "version": "2.1.0",
++      "resolved": "https://registry.npmjs.org/throttleit/-/throttleit-2.1.0.tgz",
++      "integrity": "sha512-nt6AMGKW1p/70DF/hGBdJB57B8Tspmbp5gfJ8ilhLnt7kkr2ye7hzD6NVG8GGErk2HWF34igrL2CXmNIkzKqKw==",
++      "license": "MIT",
++      "engines": {
++        "node": ">=18"
++      },
++      "funding": {
++        "url": "https://github.com/sponsors/sindresorhus"
++      }
++    },
++    "node_modules/undici": {
++      "version": "5.29.0",
++      "resolved": "https://registry.npmjs.org/undici/-/undici-5.29.0.tgz",
++      "integrity": "sha512-raqeBD6NQK4SkWhQzeYKd1KmIG6dllBOTt55Rmkt4HtI9mwdWtJljnrXjAFUBLTSN67HWrOIZ3EPF4kjUw80Bg==",
++      "license": "MIT",
++      "dependencies": {
++        "@fastify/busboy": "^2.0.0"
++      },
++      "engines": {
++        "node": ">=14.0"
++      }
+     }
+   }
+ }
