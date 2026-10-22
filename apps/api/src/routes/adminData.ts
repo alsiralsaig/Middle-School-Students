@@ -15,6 +15,20 @@ export const adminDataRouter = Router();
 
 /* ============================ المكتبة ============================ */
 
+/** GET /api/admin/library/subjects — خيارات المادة لرفع عناصر المكتبة */
+adminDataRouter.get('/library/subjects', requireAdmin, async (_req, res) => {
+  try {
+    const subjects = await prisma.subject.findMany({
+      orderBy: { code: 'asc' },
+      select: { id: true, name: true },
+    });
+    res.json({ subjects });
+  } catch (e) {
+    console.error('admin library subjects error:', e);
+    res.status(500).json({ error: 'تعذّر تحميل المواد' });
+  }
+});
+
 /** GET /api/admin/library — عناصر المكتبة من جدول Resource */
 adminDataRouter.get('/library', requireAdmin, async (_req, res) => {
   try {
@@ -40,6 +54,7 @@ adminDataRouter.get('/library', requireAdmin, async (_req, res) => {
         isVerifiedCurriculum: r.isVerifiedCurriculum,
         subjectId: r.subjectId,
         subjectName: r.subject?.name ?? '—',
+        filePath: r.filePath,
       })),
       summary: {
         total: resources.length,
