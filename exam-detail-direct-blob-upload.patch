@@ -1,0 +1,101 @@
+diff --git a/apps/admin/src/pages/ExamDetailPage.tsx b/apps/admin/src/pages/ExamDetailPage.tsx
+index 6afe14b..95b27fe 100644
+--- a/apps/admin/src/pages/ExamDetailPage.tsx
++++ b/apps/admin/src/pages/ExamDetailPage.tsx
+@@ -1,6 +1,7 @@
+ import React from 'react';
+ import { Link, useParams } from 'react-router-dom';
+ import { ArrowRight, CheckCircle2, FilePlus2, Loader2, Trash2 } from 'lucide-react';
++import { put } from '@vercel/blob/client';
+ import { Badge, Card, EmptyState, ErrorState, LoadingState, NotConnectedNote } from '../components/ui';
+ import { getApiBase } from '../lib/serverUrl';
+ 
+@@ -15,6 +16,7 @@ export const ExamDetailPage: React.FC = () => {
+   const [offline, setOffline] = React.useState(false);
+   const [error, setError] = React.useState('');
+   const [uploading, setUploading] = React.useState(false);
++  const [uploadProgress, setUploadProgress] = React.useState(0);
+   const [fileError, setFileError] = React.useState('');
+ 
+   const load = React.useCallback(async () => {
+@@ -37,15 +39,64 @@ export const ExamDetailPage: React.FC = () => {
+     if (file.size > 20 * 1024 * 1024) { setFileError('حجم الملف أكبر من ٢٠ ميغابايت'); return; }
+     setUploading(true); setFileError('');
+     try {
+-      const body = new FormData(); body.append('file', file);
+-      const response = await fetch(`${getApiBase()}/api/admin/exams/${encodeURIComponent(examId)}/attachments`, {
+-        method: 'POST', credentials: 'include', headers: { 'X-App': 'admin', Accept: 'application/json' }, body,
++      const extension = file.name.split('.').pop()?.toLowerCase() || '';
++      const mimeByExtension: Record<string, string> = {
++        pdf: 'application/pdf', doc: 'application/msword',
++        docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
++        xls: 'application/vnd.ms-excel', xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
++        ppt: 'application/vnd.ms-powerpoint', pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
++        txt: 'text/plain', csv: 'text/csv', jpg: 'image/jpeg', jpeg: 'image/jpeg',
++        png: 'image/png', webp: 'image/webp',
++      };
++      const safeName = file.name.normalize('NFKD').replace(/[^\p{L}\p{N}._-]+/gu, '_').slice(-120) || `attachment.${extension}`;
++      const pathname = `exam-attachments/${examId}/${safeName}`;
++      const tokenResponse = await fetch(`${getApiBase()}/api/admin/exams/${encodeURIComponent(examId)}/attachments/client`, {
++        method: 'POST', credentials: 'include',
++        headers: { 'X-App': 'admin', 'Content-Type': 'application/json', Accept: 'application/json' },
++        body: JSON.stringify({
++          type: 'blob.generate-client-token',
++          payload: {
++            pathname,
++            clientPayload: JSON.stringify({ fileName: file.name, sizeBytes: file.size }),
++            multipart: false,
++          },
++        }),
+       });
+-      const data = await response.json().catch(() => null) as { error?: string } | null;
+-      if (!response.ok) throw new Error(data?.error || 'تعذّر رفع الملف');
+-      await load();
++      const tokenData = await tokenResponse.json().catch(() => null) as { clientToken?: string; error?: string } | null;
++      if (!tokenResponse.ok || !tokenData?.clientToken) {
++        throw new Error(tokenData?.error || 'تعذّر إصدار إذن رفع الملف');
++      }
++
++      // التوكن مقيّد بالامتحان والحجم والنوع؛ البايتات تذهب من المتصفح إلى Blob مباشرة.
++      const blob = await put(pathname, file, {
++        access: 'public', token: tokenData.clientToken,
++        contentType: mimeByExtension[extension] || file.type,
++        onUploadProgress: ({ percentage }) => setUploadProgress(percentage),
++      });
++
++      // ينتظر ظهور سجل الإكمال الذي يحفظه callback الخادمي، لتجنب رفع الملف مرتين.
++      let saved = false;
++      for (let attempt = 0; attempt < 10; attempt++) {
++        try {
++          const check = await fetch(`${getApiBase()}/api/admin/exams/${encodeURIComponent(examId)}`, {
++            headers: { Accept: 'application/json', 'X-App': 'admin' }, credentials: 'include',
++          });
++          const data = await check.json().catch(() => null) as { exam?: ExamDetail } | null;
++          if (check.ok && data?.exam) {
++            setExam(data.exam);
++            if (data.exam.attachments.some((attachment) => attachment.filePath === blob.url)) {
++              saved = true;
++              break;
++            }
++          }
++        } catch { /* نعيد المحاولة؛ الملف وصل إلى التخزين بالفعل */ }
++        await new Promise((resolve) => window.setTimeout(resolve, 500));
++      }
++      if (!saved) {
++        setFileError('تم رفع الملف إلى التخزين، لكن لم يصل تأكيد حفظه بعد. حدّث الصفحة بعد قليل قبل إعادة رفعه.');
++      }
+     } catch (e2) { setFileError(e2 instanceof Error ? e2.message : 'تعذّر رفع الملف'); }
+-    finally { setUploading(false); }
++    finally { setUploading(false); setUploadProgress(0); }
+   };
+ 
+   const removeAttachment = async (attachment: Attachment) => {
+@@ -72,7 +123,7 @@ export const ExamDetailPage: React.FC = () => {
+       <div className="p-4 space-y-3">
+         <label className="inline-flex items-center gap-2 cursor-pointer rounded-xl bg-navy-800 text-white px-4 py-2.5 text-xs font-bold hover:bg-navy-700">
+           {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <FilePlus2 className="w-4 h-4" />}
+-          {uploading ? 'جارٍ رفع الملف…' : 'إضافة ملف'}
++          {uploading ? `جارٍ رفع الملف ${Math.round(uploadProgress)}٪…` : 'إضافة ملف'}
+           <input type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.jpg,.jpeg,.png,.webp,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,text/plain,text/csv,image/jpeg,image/png,image/webp" onChange={upload} disabled={uploading} className="sr-only" />
+         </label>
+         {fileError && <p role="alert" className="text-xs text-rose-700 bg-rose-50 border border-rose-200 rounded-xl px-3 py-2">{fileError}</p>}
