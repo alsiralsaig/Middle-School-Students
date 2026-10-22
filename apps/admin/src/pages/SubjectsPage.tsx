@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ArrowRight, BookOpen, Layers, Pencil } from 'lucide-react';
 import {
@@ -15,11 +15,30 @@ import {
 import { useSubjects } from '../hooks/useSubjects';
 import { subjectEmoji, CONTENT_STATUS } from '@shared/curriculum';
 import OfficialStructureCard from '../components/OfficialStructureCard';
+import { EditDialog } from '../components/EditDialog';
+import { api } from '../lib/contentApi';
 
 /* ============================ قائمة المواد ============================ */
 
 export const SubjectsPage: React.FC = () => {
-  const { subjects, loading, offline } = useSubjects();
+  const { subjects, loading, offline, reload } = useSubjects();
+  const [dialog, setDialog] = useState<null | { id?: string; values: Record<string, string> }>(null);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const fields = [{ name: 'id', label: 'معرّف بالإنجليزية', required: true }, { name: 'name', label: 'اسم المادة', required: true }, { name: 'nameEn', label: 'الاسم بالإنجليزية' }, { name: 'code', label: 'الرمز', required: true }, { name: 'category', label: 'التصنيف (core / optional)' }, { name: 'description', label: 'الوصف', multiline: true }];
+  const openSubject = (s?: import('../hooks/useSubjects').Subject) => {
+    setError('');
+    setDialog(s ? { id: s.id, values: { id: s.id, name: s.name, nameEn: s.nameEn, code: s.code, category: s.category, description: s.description } } : { values: { id: '', name: '', nameEn: '', code: '', category: 'core', description: '' } });
+  };
+  const saveSubject = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault(); if (!dialog || saving) return; setSaving(true); setError('');
+    try { const { id, ...data } = dialog.values;
+      if (dialog.id) await api.updateSubject(dialog.id, data as Parameters<typeof api.updateSubject>[1]);
+      else await api.createSubject({ id: id.trim().toLowerCase().replace(/\s+/g, '-'), ...data } as Parameters<typeof api.createSubject>[0]);
+      setDialog(null); reload();
+    } catch (e2) { setError(e2 instanceof Error ? e2.message : 'تعذّر الحفظ'); }
+    finally { setSaving(false); }
+  };
 
   return (
     <div className="space-y-5">
@@ -34,12 +53,10 @@ export const SubjectsPage: React.FC = () => {
         <div>
           <h1 className="text-xl font-black text-navy-800">المواد والدروس</h1>
           <p className="text-xs text-slate-500 mt-1">
-            هيكل المنهج كما سيُدار من لوحة التحكم — البيانات الحالية تجريبية.
+            هيكل المنهج من قاعدة البيانات — أضف المواد والوحدات، ثم أنشئ الدروس من إدارة المحتوى.
           </p>
         </div>
-        <Button disabled title="الحفظ يتطلب قاعدة بيانات (المرحلة القادمة)">
-          إضافة مادة
-        </Button>
+        <Button onClick={() => openSubject()}>إضافة مادة</Button>
       </header>
 
       <Card>
@@ -78,13 +95,10 @@ export const SubjectsPage: React.FC = () => {
                     <StatusBadge status={CONTENT_STATUS} />
                   </td>
                   <td className="py-3 px-3">
-                    <Link
-                      to={`/subjects/${s.id}`}
-                      className="inline-flex items-center gap-1 text-xs font-bold text-navy-800 hover:text-gold-600 py-2.5 px-1 min-h-[36px]"
-                    >
-                      تفاصيل
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </Link>
+                    <div className="flex items-center gap-2">
+                      <button type="button" onClick={() => openSubject(s)} className="inline-flex items-center gap-1 text-xs font-bold text-navy-800 py-2 px-1"><Pencil className="w-3.5 h-3.5" /> تعديل</button>
+                      <Link to={`/subjects/${s.id}`} className="inline-flex items-center gap-1 text-xs font-bold text-navy-800 py-2 px-1">تفاصيل <ArrowRight className="w-3.5 h-3.5" /></Link>
+                    </div>
                   </td>
                 </tr>
               );
@@ -92,6 +106,7 @@ export const SubjectsPage: React.FC = () => {
           </Table>
         )}
       </Card>
+      {dialog && <EditDialog title={dialog.id ? 'تعديل بيانات المادة' : 'إضافة مادة'} fields={fields.filter((f) => !dialog.id || f.name !== 'id')} values={dialog.values} onChange={(name, value) => setDialog((d) => d ? { ...d, values: { ...d.values, [name]: value } } : d)} onClose={() => setDialog(null)} onSubmit={saveSubject} saving={saving} error={error} />}
     </div>
   );
 };
@@ -100,8 +115,34 @@ export const SubjectsPage: React.FC = () => {
 
 export const SubjectDetailPage: React.FC = () => {
   const { subjectId } = useParams<{ subjectId: string }>();
-  const { subjects, loading, offline } = useSubjects();
+  const { subjects, loading, offline, reload } = useSubjects();
   const subject = (subjects ?? []).find((s) => s.id === subjectId);
+  const [unitDialog, setUnitDialog] = useState<null | { id?: string; values: Record<string, string> }>(null);
+  const [unitSaving, setUnitSaving] = useState(false);
+  const [unitError, setUnitError] = useState('');
+  const [editSubject, setEditSubject] = useState(false);
+  const [editSubjectValues, setEditSubjectValues] = useState<Record<string, string>>({});
+  const [subjectSaving, setSubjectSaving] = useState(false);
+  const [subjectError, setSubjectError] = useState('');
+  const openUnit = (u?: { id: string; title: string; description: string; unitNumber: number }) => {
+    setUnitError(''); setUnitDialog(u ? { id: u.id, values: { title: u.title, description: u.description, unitNumber: String(u.unitNumber) } } : { values: { title: '', description: '', unitNumber: String((subject?.units.length ?? 0) + 1) } });
+  };
+  const saveUnit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault(); if (!unitDialog || !subjectId || unitSaving) return; setUnitSaving(true); setUnitError('');
+    try { const d = { title: unitDialog.values.title, description: unitDialog.values.description, unitNumber: Number(unitDialog.values.unitNumber) }; if (unitDialog.id) await api.updateUnit(unitDialog.id, d); else await api.createUnit(subjectId, d); setUnitDialog(null); reload(); }
+    catch (e2) { setUnitError(e2 instanceof Error ? e2.message : 'تعذّر الحفظ'); } finally { setUnitSaving(false); }
+  };
+  const openSubjectEdit = () => {
+    if (!subject) return;
+    setSubjectError('');
+    setEditSubjectValues({ name: subject.name, nameEn: subject.nameEn, code: subject.code, category: subject.category, description: subject.description });
+    setEditSubject(true);
+  };
+  const saveSubjectEdit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault(); if (!subject || subjectSaving) return; setSubjectSaving(true); setSubjectError('');
+    try { await api.updateSubject(subject.id, editSubjectValues as Parameters<typeof api.updateSubject>[1]); setEditSubject(false); reload(); }
+    catch (e2) { setSubjectError(e2 instanceof Error ? e2.message : 'تعذّر الحفظ'); } finally { setSubjectSaving(false); }
+  };
 
   if (loading) return <LoadingState label="جارٍ تحميل تفاصيل المادة…" />;
   if (offline) {
@@ -151,21 +192,15 @@ export const SubjectDetailPage: React.FC = () => {
             )}
           </div>
         </div>
-        <Button disabled title="التعديل يتطلب قاعدة بيانات (المرحلة القادمة)">
-          <Pencil className="w-3.5 h-3.5" />
-          تعديل المادة
-        </Button>
+        <div className="flex gap-2"><Button onClick={() => openUnit()}><Layers className="w-3.5 h-3.5" /> إضافة وحدة</Button><Button variant="outline" onClick={openSubjectEdit}><Pencil className="w-3.5 h-3.5" /> تعديل المادة</Button></div>
       </header>
 
       <OfficialStructureCard subject={subject} />
 
       {subject.units.length === 0 ? (
         <Card>
-          <EmptyState
-            title="لا توجد وحدات بعد"
-            description="لم تُضف أي وحدة لهذه المادة. عند ربط قاعدة البيانات ستتمكن من إضافة الوحدات والدروس من هنا."
-            hint="المرحلة القادمة: إضافة وحدة"
-          />
+          <EmptyState title="لا توجد وحدات بعد" description="أضف أول وحدة لهذه المادة." />
+          <div className="px-4 pb-4"><Button onClick={() => openUnit()}><Layers className="w-4 h-4" /> إضافة وحدة</Button></div>
         </Card>
       ) : (
         <div className="space-y-4">
@@ -174,17 +209,12 @@ export const SubjectDetailPage: React.FC = () => {
               key={unit.id}
               title={unit.title}
               subtitle={unit.description}
-              action={
-                <Badge tone="navy">
-                  <Layers className="w-3 h-3" />
-                  {unit.lessons.length} دروس
-                </Badge>
-              }
+              action={<div className="flex items-center gap-2"><Badge tone="navy"><Layers className="w-3 h-3" /> {unit.lessons.length} دروس</Badge><button type="button" onClick={() => openUnit(unit)} className="text-[11px] font-bold text-navy-800 border border-slate-200 rounded-lg px-2 py-1"><Pencil className="w-3 h-3 inline" /> تعديل الوحدة</button></div>}
             >
               {unit.lessons.length === 0 ? (
                 <EmptyState
                   title="لا توجد دروس في هذه الوحدة"
-                  description="أضف الدروس بعد ربط قاعدة البيانات."
+                  description="يمكنك إنشاء درس من صفحة إدارة المحتوى بعد إضافة الوحدة."
                 />
               ) : (
                 <Table head={['#', 'الدرس', 'المدة', 'الأهداف', 'المرفقات', 'الحالة']}>
@@ -210,15 +240,9 @@ export const SubjectDetailPage: React.FC = () => {
         </div>
       )}
 
-      <NotConnectedNote>
-        أزرار الإضافة والتعديل <strong>معطّلة عمداً</strong>: لا توجد قاعدة بيانات في هذه المرحلة،
-        ولن نعرض أزراراً توحي بوجود حفظ وهو غير مُفعّل.
-      </NotConnectedNote>
-
-      <div className="flex items-center gap-2 text-[11px] text-slate-500">
-        <BookOpen className="w-4 h-4 text-navy-800" />
-        <span>نفس البيانات معروضة في تطبيق الطالب عبر الحزمة المشتركة.</span>
-      </div>
+      <div className="flex items-center gap-2 text-[11px] text-slate-500"><BookOpen className="w-4 h-4 text-navy-800" /><span>نفس البيانات معروضة في تطبيق الطالب عبر الحزمة المشتركة.</span></div>
+      {unitDialog && <EditDialog title={unitDialog.id ? 'تعديل الوحدة' : 'إضافة وحدة'} fields={[{ name: 'title', label: 'عنوان الوحدة', required: true }, { name: 'unitNumber', label: 'رقم الوحدة', type: 'number', required: true }, { name: 'description', label: 'الوصف', multiline: true }]} values={unitDialog.values} onChange={(name, value) => setUnitDialog((d) => d ? { ...d, values: { ...d.values, [name]: value } } : d)} onClose={() => setUnitDialog(null)} onSubmit={saveUnit} saving={unitSaving} error={unitError} />}
+      {editSubject && subject && <EditDialog title="تعديل بيانات المادة" fields={[{ name: 'name', label: 'اسم المادة', required: true }, { name: 'nameEn', label: 'الاسم بالإنجليزية' }, { name: 'code', label: 'الرمز', required: true }, { name: 'category', label: 'التصنيف' }, { name: 'description', label: 'الوصف', multiline: true }]} values={editSubjectValues} onChange={(name, value) => setEditSubjectValues((v) => ({ ...v, [name]: value }))} onClose={() => setEditSubject(false)} onSubmit={saveSubjectEdit} saving={subjectSaving} error={subjectError} />}
     </div>
   );
 };

@@ -10,6 +10,7 @@ import {
   FileText,
   GraduationCap,
   LayoutDashboard,
+  Layers,
   Library,
   KeyRound,
   Menu,
@@ -22,11 +23,13 @@ import {
 const NAV = [
   { to: '/', label: 'نظرة عامة', icon: LayoutDashboard, end: true },
   { to: '/subjects', label: 'المواد والدروس', icon: BookOpen },
+  { to: '/units', label: 'الوحدات', icon: Layers },
   { to: '/content', label: 'إدارة المحتوى', icon: GraduationCap },
   { to: '/library', label: 'المكتبة', icon: Library },
   { to: '/ratings', label: 'تقييمات المحتوى', icon: Star },
   { to: '/codes', label: 'رموز الدخول', icon: KeyRound },
   { to: '/students', label: 'الطلاب', icon: Users },
+  { to: '/exams', label: 'الامتحانات', icon: GraduationCap },
   { to: '/activities', label: 'الأنشطة والتقارير', icon: FileText },
   { to: '/settings', label: 'الإعدادات', icon: Settings },
 ];
@@ -41,6 +44,7 @@ export const AdminLayout: React.FC = () => {
     error: sessionError,
     login,
     logout,
+    enterPreview,
   } = useAdminSession();
 
   /* بوابة الدخول: مسارات الإدارة على الخادم لا تُفتح إلا بجلسة إدارة */
@@ -57,6 +61,7 @@ export const AdminLayout: React.FC = () => {
         onLogin={login}
         error={sessionError}
         offline={offline}
+        onPreview={enterPreview}
       />
     );
   }
@@ -139,9 +144,9 @@ export const AdminLayout: React.FC = () => {
       {/* تنويه المرحلة */}
       <div className="p-3 border-t border-white/10">
         <div className="bg-white/10 rounded-xl p-3">
-          <p className="text-white text-[10px] font-bold mb-1">المرحلة الأولى</p>
+          <p className="text-white text-[10px] font-bold mb-1">حالة الإدارة</p>
           <p className="text-white/60 text-[10px] leading-relaxed">
-            واجهة تحضيرية للإدارة — الحفظ والرفع يتطلبان ربط قاعدة بيانات في المرحلة القادمة.
+            إدارة المحتوى تحفظ في قاعدة البيانات عند الاتصال بالخادم. رفع الملفات يعتمد على إعداد التخزين.
           </p>
         </div>
       </div>

@@ -47,6 +47,7 @@ const LessonEditorPage: React.FC = () => {
 
   const load = useCallback(async () => {
     setLoading(true);
+    setLesson(null);
     try {
       setLesson(await api.getLesson(lessonId));
       setOffline(false);
@@ -92,7 +93,7 @@ const LessonEditorPage: React.FC = () => {
     }
   };
 
-  if (loading) return <LoadingState label="جارٍ تحميل الدرس…" />;
+  if (loading) return <div className="space-y-3" dir="rtl"><button onClick={() => navigate('/content')} className="inline-flex items-center gap-1 rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-bold text-navy-800"><ArrowRight className="w-3.5 h-3.5" /> رجوع إلى إدارة المحتوى</button><LoadingState label="جارٍ تحميل الدرس…" /></div>;
   if (!lesson) {
     return (
       <div className="p-4">

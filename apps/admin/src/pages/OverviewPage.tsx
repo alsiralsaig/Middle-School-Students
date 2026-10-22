@@ -22,8 +22,9 @@ const StatCard: React.FC<{
   value: number | string;
   hint?: string;
   tone?: string;
-}> = ({ icon: Icon, label, value, hint, tone = 'text-navy-800' }) => (
-  <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
+  to: string;
+}> = ({ icon: Icon, label, value, hint, tone = 'text-navy-800', to }) => (
+  <Link to={to} aria-label={`${label}: ${value} — فتح الصفحة`} className="block text-right bg-white border border-slate-200 rounded-2xl p-4 shadow-sm hover:shadow-md hover:border-navy-300 focus:outline-none focus:ring-2 focus:ring-navy-400 transition-all">
     <div className="flex items-start justify-between">
       <div>
         <p className="text-[11px] text-slate-500 font-bold">{label}</p>
@@ -34,7 +35,7 @@ const StatCard: React.FC<{
         <Icon className="w-5 h-5 text-navy-800" />
       </div>
     </div>
-  </div>
+  </Link>
 );
 
 interface OverviewStats {
@@ -129,31 +130,34 @@ export const OverviewPage: React.FC = () => {
 
       {/* إحصاءات */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <StatCard icon={BookOpen} label="المواد" value={stats?.subjects ?? '—'} />
+        <StatCard icon={BookOpen} label="المواد" value={stats?.subjects ?? '—'} to="/subjects" />
         <StatCard
           icon={Layers}
           label="الوحدات"
           value={stats?.units ?? '—'}
           hint={stats ? `من ${stats.plannedUnits} في الخطة` : undefined}
+          to="/units"
         />
         <StatCard
           icon={FlaskConical}
           label="الدروس"
           value={stats?.lessons ?? '—'}
           hint={stats ? `من ${stats.plannedLessons} · ${stats.coverage}%` : undefined}
+          to="/content"
         />
-        <StatCard icon={FileText} label="عناصر المكتبة" value={stats?.resources ?? '—'} />
+        <StatCard icon={FileText} label="عناصر المكتبة" value={stats?.resources ?? '—'} to="/library" />
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <StatCard icon={Users} label="الطلاب المسجّلون" value={stats?.students ?? '—'} />
-        <StatCard icon={KeyRound} label="رموز نشطة" value={stats?.activeCodes ?? '—'} />
-        <StatCard icon={GraduationCap} label="الامتحانات" value={stats?.exams ?? '—'} />
+        <StatCard icon={Users} label="الطلاب المسجّلون" value={stats?.students ?? '—'} to="/students" />
+        <StatCard icon={KeyRound} label="رموز نشطة" value={stats?.activeCodes ?? '—'} to="/codes" />
+        <StatCard icon={GraduationCap} label="الامتحانات" value={stats?.exams ?? '—'} to="/exams" />
         <StatCard
           icon={CheckCircle2}
           label="دروس مُراجَعة"
           value={stats ? `${stats.verifiedLessons}/${stats.lessons}` : '—'}
           hint={stats ? `${stats.sampleLessons} بوسم «تجريبي»` : undefined}
+          to="/content"
         />
       </div>
 

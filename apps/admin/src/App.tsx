@@ -8,6 +8,8 @@ import { SubjectDetailPage, SubjectsPage } from './pages/SubjectsPage';
 import { ActivitiesPage, SettingsPage, StudentsPage } from './pages/MiscPages';
 import CodesPage from './pages/CodesPage';
 import LessonEditorPage from './pages/LessonEditorPage';
+import { ExamsPage } from './pages/ExamsPage';
+import { UnitsPage } from './pages/UnitsPage';
 import { EmptyState } from './components/ui';
 
 export default function App() {
@@ -17,6 +19,7 @@ export default function App() {
         <Route element={<AdminLayout />}>
           <Route path="/" element={<OverviewPage />} />
           <Route path="/subjects" element={<SubjectsPage />} />
+          <Route path="/units" element={<UnitsPage />} />
           <Route path="/subjects/:subjectId" element={<SubjectDetailPage />} />
           <Route path="/content" element={<ContentPage />} />
           <Route path="/content/:lessonId" element={<LessonEditorPage />} />
@@ -24,6 +27,7 @@ export default function App() {
           <Route path="/ratings" element={<RatingsPage />} />
           <Route path="/codes" element={<CodesPage />} />
           <Route path="/students" element={<StudentsPage />} />
+          <Route path="/exams" element={<ExamsPage />} />
           <Route path="/activities" element={<ActivitiesPage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route

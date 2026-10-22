@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { randomUUID } from 'node:crypto';
 import { prisma } from '../lib/prisma.js';
 import { cleanText, requireAdmin } from '../lib/auth.js';
 
@@ -55,6 +56,96 @@ adminContentRouter.get('/lessons/:id', requireAdmin, async (req, res) => {
     console.error('admin lesson get error:', e);
     res.status(500).json({ error: 'تعذّر تحميل الدرس' });
   }
+});
+
+/* ============================ إدارة المواد والوحدات وإنشاء الدروس ============================ */
+adminContentRouter.post('/subjects', requireAdmin, async (req, res) => {
+  try {
+    const id = cleanText(req.body?.id, 60).toLowerCase();
+    const name = cleanText(req.body?.name, 160);
+    const code = cleanText(req.body?.code, 30).toUpperCase();
+    if (!/^[a-z0-9_-]{2,60}$/.test(id) || name.length < 2 || code.length < 2) {
+      res.status(400).json({ error: 'المعرّف والاسم والرمز مطلوبة؛ استخدم معرّفاً إنجليزياً قصيراً' }); return;
+    }
+    const subject = await prisma.subject.create({ data: {
+      id, name, nameEn: cleanText(req.body?.nameEn, 160), code,
+      category: cleanText(req.body?.category, 40) || 'core',
+      description: cleanText(req.body?.description, 1000),
+      unitsCount: 0, lessonsCount: 0, status: 'sample',
+    } });
+    res.status(201).json({ subject });
+  } catch (e) {
+    res.status(400).json({ error: (e as { code?: string }).code === 'P2002' ? 'معرّف المادة أو رمزها مستخدم مسبقاً' : 'تعذّر إضافة المادة' });
+  }
+});
+
+adminContentRouter.put('/subjects/:id', requireAdmin, async (req, res) => {
+  try {
+    const current = await prisma.subject.findUnique({ where: { id: req.params.id } });
+    if (!current) { res.status(404).json({ error: 'المادة غير موجودة' }); return; }
+    const name = cleanText(req.body?.name, 160);
+    const code = cleanText(req.body?.code, 30).toUpperCase();
+    if (name.length < 2 || code.length < 2) { res.status(400).json({ error: 'الاسم والرمز مطلوبان' }); return; }
+    const subject = await prisma.subject.update({ where: { id: current.id }, data: {
+      name, nameEn: cleanText(req.body?.nameEn, 160), code,
+      category: cleanText(req.body?.category, 40) || current.category,
+      description: cleanText(req.body?.description, 1000),
+    } });
+    res.json({ subject });
+  } catch (e) {
+    const duplicate = (e as { code?: string }).code === 'P2002';
+    res.status(duplicate ? 400 : 500).json({ error: duplicate ? 'رمز المادة مستخدم مسبقاً' : 'تعذّر تعديل المادة' });
+  }
+});
+
+adminContentRouter.post('/subjects/:subjectId/units', requireAdmin, async (req, res) => {
+  try {
+    const subject = await prisma.subject.findUnique({ where: { id: req.params.subjectId } });
+    if (!subject) { res.status(404).json({ error: 'المادة غير موجودة' }); return; }
+    const title = cleanText(req.body?.title, 200);
+    if (title.length < 2) { res.status(400).json({ error: 'عنوان الوحدة مطلوب' }); return; }
+    const last = await prisma.unit.findFirst({ where: { subjectId: subject.id }, orderBy: { unitNumber: 'desc' } });
+    const unit = await prisma.unit.create({ data: {
+      id: `unit-${randomUUID()}`, subjectId: subject.id,
+      unitNumber: Math.max(1, Number(req.body?.unitNumber) || (last?.unitNumber ?? 0) + 1),
+      title, description: cleanText(req.body?.description, 1000),
+    } });
+    res.status(201).json({ unit });
+  } catch (e) { console.error('admin unit create error:', e); res.status(500).json({ error: 'تعذّر إضافة الوحدة' }); }
+});
+
+adminContentRouter.put('/units/:id', requireAdmin, async (req, res) => {
+  try {
+    const current = await prisma.unit.findUnique({ where: { id: req.params.id } });
+    if (!current) { res.status(404).json({ error: 'الوحدة غير موجودة' }); return; }
+    const title = cleanText(req.body?.title, 200);
+    if (title.length < 2) { res.status(400).json({ error: 'عنوان الوحدة مطلوب' }); return; }
+    const unit = await prisma.unit.update({ where: { id: current.id }, data: {
+      title, description: cleanText(req.body?.description, 1000),
+      unitNumber: Math.max(1, Number(req.body?.unitNumber) || current.unitNumber),
+    } });
+    res.json({ unit });
+  } catch (e) { console.error('admin unit update error:', e); res.status(500).json({ error: 'تعذّر تعديل الوحدة' }); }
+});
+
+adminContentRouter.post('/lessons', requireAdmin, async (req, res) => {
+  try {
+    const subjectId = cleanText(req.body?.subjectId, 60);
+    const unitId = cleanText(req.body?.unitId, 100);
+    const title = cleanText(req.body?.title, 200);
+    const unit = await prisma.unit.findFirst({ where: { id: unitId, subjectId } });
+    if (!unit) { res.status(400).json({ error: 'اختر وحدة صحيحة تابعة للمادة' }); return; }
+    if (title.length < 2) { res.status(400).json({ error: 'عنوان الدرس مطلوب' }); return; }
+    const last = await prisma.lesson.findFirst({ where: { unitId }, orderBy: { lessonNumber: 'desc' } });
+    const lesson = await prisma.lesson.create({ data: {
+      id: `lesson-${randomUUID()}`, subjectId, unitId,
+      lessonNumber: Math.max(1, Number(req.body?.lessonNumber) || (last?.lessonNumber ?? 0) + 1),
+      title, summary: cleanText(req.body?.summary, 4000),
+      durationMinutes: Math.min(180, Math.max(5, Number(req.body?.durationMinutes) || 30)),
+      learningObjectives: '[]', sections: '[]', keyRules: '[]', attachments: '[]', faq: '[]', examTips: '[]', status: 'sample',
+    } });
+    res.status(201).json({ lesson: expand(lesson) });
+  } catch (e) { console.error('admin lesson create error:', e); res.status(500).json({ error: 'تعذّر إنشاء الدرس' }); }
 });
 
 /* ============================ كتابة ============================ */
@@ -162,10 +253,16 @@ const expand = (l: {
     subjectId: l.subjectId,
     unitId: l.unitId,
     learningObjectives: parse(l.learningObjectives),
-    sections: parse(l.sections),
+    sections: parse(l.sections).map((x) => {
+      const o = (x ?? {}) as Record<string, unknown>;
+      return { heading: String(o.heading ?? o.title ?? ''), body: String(o.body ?? o.content ?? '') };
+    }),
     keyRules: parse(l.keyRules),
     attachments: parse(l.attachments),
-    faq: parse(l.faq),
+    faq: parse(l.faq).map((x) => {
+      const o = (x ?? {}) as Record<string, unknown>;
+      return { q: String(o.q ?? o.question ?? ''), a: String(o.a ?? o.answer ?? '') };
+    }),
     examTips: parse(l.examTips),
   };
 };

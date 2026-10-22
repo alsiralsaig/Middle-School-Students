@@ -1,8 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { BookOpen, Paperclip, Plus, Search, SquarePen } from 'lucide-react';
 import {
-  Badge,
   Button,
   Card,
   EmptyState,
@@ -12,6 +11,7 @@ import {
   Table,
 } from '../components/ui';
 import { api } from '../lib/contentApi';
+import { useSubjects } from '../hooks/useSubjects';
 import { allLessons, CONTENT_STATUS } from '@shared/curriculum';
 
 interface LessonRow {
@@ -39,6 +39,23 @@ const SUBJECT_NAMES: Record<string, string> = {
 };
 
 export const ContentPage: React.FC = () => {
+  const navigate = useNavigate();
+  const { subjects } = useSubjects();
+  const [newLesson, setNewLesson] = useState(false);
+  const [subjectId, setSubjectId] = useState('');
+  const [unitId, setUnitId] = useState('');
+  const [newTitle, setNewTitle] = useState('');
+  const [newSummary, setNewSummary] = useState('');
+  const [creating, setCreating] = useState(false);
+  const [createError, setCreateError] = useState('');
+  const availableUnits = subjects?.find((s) => s.id === subjectId)?.units ?? [];
+  const openNewLesson = () => { const first = subjects?.[0]; setSubjectId(first?.id ?? ''); setUnitId(first?.units[0]?.id ?? ''); setNewTitle(''); setNewSummary(''); setCreateError(''); setNewLesson(true); };
+  const submitNewLesson = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault(); if (creating) return; setCreating(true); setCreateError('');
+    try { const lesson = await api.createLesson({ subjectId, unitId, title: newTitle.trim(), summary: newSummary.trim() }); navigate(`/content/${encodeURIComponent(lesson.id)}`); }
+    catch (e2) { setCreateError(e2 instanceof Error ? e2.message : 'تعذّر إنشاء الدرس'); }
+    finally { setCreating(false); }
+  };
   /* الدروس من **قاعدة البيانات** — والملفات المضمّنة ملاذ أخير إن غاب الخادم */
   const [rows, setRows] = useState<LessonRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -104,10 +121,7 @@ export const ContentPage: React.FC = () => {
             كل الدروس في مكان واحد — للمراجعة والتحضير قبل اعتماد المحتوى الرسمي.
           </p>
         </div>
-        <Button disabled title="الحفظ يتطلب قاعدة بيانات (المرحلة القادمة)">
-          <Plus className="w-4 h-4" />
-          درس جديد
-        </Button>
+        <Button onClick={openNewLesson}><Plus className="w-4 h-4" /> درس جديد</Button>
       </header>
 
       <Card>
@@ -186,8 +200,7 @@ export const ContentPage: React.FC = () => {
         </NotConnectedNote>
       ) : (
         <p className="text-[10px] text-slate-400 leading-relaxed px-1">
-          هذه الدروس مقروءة من <strong>قاعدة البيانات</strong> — أي تعديل تحفظه here يراه
-          الطلاب فور تحميلهم المنهج.
+          هذه الدروس مقروءة من <strong>قاعدة البيانات</strong> — أي تعديل تحفظه يراه الطلاب فور تحميلهم المنهج.
         </p>
       )}
 
@@ -199,8 +212,16 @@ export const ContentPage: React.FC = () => {
           <BookOpen className="w-4 h-4" />
           عرض حسب المادة
         </Link>
-        <Badge tone="gold">المرحلة الأولى — واجهة فقط</Badge>
       </div>
+      {newLesson && <div className="fixed inset-0 z-[100] bg-slate-950/50 p-4 grid place-items-center" dir="rtl"><form onSubmit={submitNewLesson} className="w-full max-w-lg rounded-2xl bg-white shadow-2xl border border-slate-200 p-5 space-y-4">
+        <div className="flex items-center justify-between"><h2 className="font-black text-navy-800">إنشاء درس جديد</h2><button type="button" onClick={() => setNewLesson(false)} className="text-slate-500 px-2 py-1">إغلاق</button></div>
+        <label className="block text-xs font-bold text-slate-600">المادة<select required value={subjectId} onChange={(e) => { setSubjectId(e.target.value); setUnitId(subjects?.find((s) => s.id === e.target.value)?.units[0]?.id ?? ''); }} className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm bg-white"><option value="">اختر المادة</option>{subjects?.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</select></label>
+        <label className="block text-xs font-bold text-slate-600">الوحدة<select required value={unitId} onChange={(e) => setUnitId(e.target.value)} className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm bg-white"><option value="">اختر الوحدة</option>{availableUnits.map((u) => <option key={u.id} value={u.id}>{u.title}</option>)}</select></label>
+        <label className="block text-xs font-bold text-slate-600">عنوان الدرس<input required minLength={2} value={newTitle} onChange={(e) => setNewTitle(e.target.value)} className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm" /></label>
+        <label className="block text-xs font-bold text-slate-600">ملخص اختياري<textarea rows={3} value={newSummary} onChange={(e) => setNewSummary(e.target.value)} className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm" /></label>
+        {createError && <p role="alert" className="rounded-xl bg-rose-50 border border-rose-200 px-3 py-2 text-xs text-rose-700">{createError}</p>}
+        <div className="flex justify-end gap-2"><button type="button" onClick={() => setNewLesson(false)} className="px-4 py-2 rounded-xl border border-slate-300 text-xs font-bold">إلغاء</button><button type="submit" disabled={creating || !subjectId || !unitId} className="px-4 py-2 rounded-xl bg-navy-800 text-white text-xs font-bold disabled:opacity-50">{creating ? 'جارٍ الإنشاء…' : 'إنشاء وفتح المحرر'}</button></div>
+      </form></div>}
     </div>
   );
 };

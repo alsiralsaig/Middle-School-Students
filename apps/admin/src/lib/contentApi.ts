@@ -83,6 +83,23 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return data as T;
 }
 
+function normalizeLesson(input: LessonRecord): LessonRecord {
+  const value = input as LessonRecord & Record<string, unknown>;
+  const strings = (x: unknown): string[] => Array.isArray(x) ? x.map(String) : [];
+  const sections = Array.isArray(value.sections) ? value.sections.map((x) => {
+    const o = (x ?? {}) as Record<string, unknown>;
+    return { heading: String(o.heading ?? o.title ?? ''), body: String(o.body ?? o.content ?? '') };
+  }) : [];
+  const faq = Array.isArray(value.faq) ? value.faq.map((x) => {
+    const o = (x ?? {}) as Record<string, unknown>;
+    return { q: String(o.q ?? o.question ?? ''), a: String(o.a ?? o.answer ?? '') };
+  }) : [];
+  return { ...value, title: String(value.title ?? ''), summary: String(value.summary ?? ''), status: String(value.status ?? 'sample'),
+    lessonNumber: Number(value.lessonNumber) || 1, durationMinutes: Number(value.durationMinutes) || 30,
+    subjectId: String(value.subjectId ?? ''), unitId: String(value.unitId ?? ''),
+    learningObjectives: strings(value.learningObjectives), sections, keyRules: strings(value.keyRules), examTips: strings(value.examTips), faq };
+}
+
 export const api = {
   isOffline,
 
@@ -91,7 +108,12 @@ export const api = {
       `/api/admin/lessons${subjectId ? `?subjectId=${encodeURIComponent(subjectId)}` : ''}`
     ),
 
-  getLesson: (id: string) => request<LessonRecord>(`/api/admin/lessons/${id}`),
+  async getLesson(id: string): Promise<LessonRecord> {
+    const result = await request<{ lesson?: LessonRecord } | LessonRecord>(`/api/admin/lessons/${encodeURIComponent(id)}`);
+    const lesson = (result as { lesson?: LessonRecord }).lesson ?? (result as LessonRecord);
+    if (!lesson || typeof lesson !== 'object') throw new Error('استجابة الدرس غير صالحة');
+    return normalizeLesson(lesson);
+  },
 
   saveLesson: (
     id: string,
@@ -107,8 +129,17 @@ export const api = {
       status: string;
     }
   ) =>
-    request<LessonRecord>(`/api/admin/lessons/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(data),
-    }),
+    request<{ lesson: LessonRecord }>(`/api/admin/lessons/${encodeURIComponent(id)}`, {
+      method: 'PUT', body: JSON.stringify(data),
+    }).then((r) => normalizeLesson(r.lesson)),
+  createLesson: (data: { subjectId: string; unitId: string; title: string; summary?: string; durationMinutes?: number }) =>
+    request<{ lesson: LessonRecord }>('/api/admin/lessons', { method: 'POST', body: JSON.stringify(data) }).then((r) => normalizeLesson(r.lesson)),
+  createSubject: (data: { id: string; name: string; nameEn: string; code: string; category: string; description: string }) =>
+    request<{ subject: unknown }>('/api/admin/subjects', { method: 'POST', body: JSON.stringify(data) }),
+  updateSubject: (id: string, data: { name: string; nameEn: string; code: string; category: string; description: string }) =>
+    request<{ subject: unknown }>(`/api/admin/subjects/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(data) }),
+  createUnit: (subjectId: string, data: { title: string; description: string; unitNumber?: number }) =>
+    request<{ unit: unknown }>(`/api/admin/subjects/${encodeURIComponent(subjectId)}/units`, { method: 'POST', body: JSON.stringify(data) }),
+  updateUnit: (id: string, data: { title: string; description: string; unitNumber?: number }) =>
+    request<{ unit: unknown }>(`/api/admin/units/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(data) }),
 };
