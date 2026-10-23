@@ -38,14 +38,41 @@ const host = (() => {
 })();
 console.log(`[migrate] تطبيق الترحيلات على ${host} ...`);
 
-const result = spawnSync(command, args, {
-  stdio: 'inherit',
-  env: process.env,
-});
+/**
+ * إعادة المحاولة عند تعارض قفل Prisma.
+ *
+ * Prisma يستخدم advisory lock في Postgres حتى لا يتزاحم ترحيلان. عند نشرين
+ * متتاليين (أو نشر Vercel مع تشغيل يدوي) ينتظر الثاني ١٠ ثوانٍ ثم يفشل بـP1002
+ * — وهو **ليس خطأ ترحيل**، بل انتظار قفل. لذلك نعيد المحاولة بدل إسقاط البناء.
+ */
+const MAX_ATTEMPTS = 4;
 
-if (result.status !== 0) {
-  console.error('[migrate] فشل الترحيل — تم إيقاف البناء حتى لا يُنشر كود لا يطابق قاعدة البيانات.');
-  process.exit(result.status ?? 1);
+function runOnce() {
+  const out = spawnSync(command, args, { encoding: 'utf8', env: process.env });
+  const text = `${out.stdout || ''}${out.stderr || ''}`;
+  process.stdout.write(text);
+  return { status: out.status ?? 1, text };
 }
 
-console.log('[migrate] الترحيلات مطبّقة وناجحة.');
+let attempt = 0;
+let last = { status: 1, text: '' };
+
+while (attempt < MAX_ATTEMPTS) {
+  attempt += 1;
+  last = runOnce();
+  if (last.status === 0) break;
+
+  const lockBusy = last.text.includes('P1002') || last.text.includes('advisory lock');
+  if (!lockBusy || attempt === MAX_ATTEMPTS) break;
+
+  const waitMs = 5000 * attempt; // ٥ ثم ١٠ ثم ١٥ ثانية
+  console.warn(`[migrate] القاعدة مشغولة بترحيل آخر (قفل) — إعادة المحاولة بعد ${waitMs / 1000} ثانية…`);
+  spawnSync('sleep', [String(waitMs / 1000)]);
+}
+
+if (last.status !== 0) {
+  console.error('[migrate] فشل الترحيل — تم إيقاف البناء حتى لا يُنشر كود لا يطابق قاعدة البيانات.');
+  process.exit(last.status);
+}
+
+console.log(`[migrate] الترحيلات مطبّقة وناجحة.${attempt > 1 ? ` (بعد ${attempt} محاولات)` : ''}`);
