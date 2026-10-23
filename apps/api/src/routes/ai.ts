@@ -18,7 +18,7 @@ export const aiRouter = Router();
  * تحديد: 20 طلب / 10 دقائق لكل مستخدم، وسقف يومي عام.
  */
 const AI_RATE_WINDOW_MS = 10 * 60_000;
-const AI_RATE_MAX = Number(process.env.AI_RATE_MAX || 20);
+const AI_RATE_MAX = Number(process.env.AI_RATE_MAX || 40);
 const AI_DAILY_CAP = Number(process.env.AI_DAILY_CAP || 2000);
 
 const hits = new Map<string, { count: number; resetAt: number }>();

@@ -257,6 +257,22 @@ export const AIAssistantView: React.FC = () => {
         body: JSON.stringify({ prompt: query, history, stream: true }),
       });
 
+      if (!res.ok) {
+        // حد الاستخدام أو الضغط — نعرض رسالة الخادم كما هي
+        const data = (await res.json().catch(() => ({}))) as { reply?: string; error?: string };
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: botId,
+            sender: 'assistant',
+            text: data.reply || data.error || 'المساعد مشغول حالياً، جرّب تاني بعد شوية 🙏',
+            timestamp: 'الآن',
+          },
+        ]);
+        setIsTyping(false);
+        return;
+      }
+
       if (res.ok && res.body) {
         const reader = res.body.getReader();
         const decoder = new TextDecoder();
