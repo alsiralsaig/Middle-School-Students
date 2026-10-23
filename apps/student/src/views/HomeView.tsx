@@ -14,6 +14,7 @@ import {
   Flame,
   Download
 } from 'lucide-react';
+import heroImage from '../assets/images/hero_sudanese_education_1792071283906.jpg';
 
 interface HomeViewProps {
   subjects: Subject[];
@@ -117,7 +118,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
           <div className="lg:col-span-5 relative">
             <div className="rounded-2xl overflow-hidden border-2 border-amber-400/30 shadow-2xl bg-[#0D213B]">
               <img
-                src="/src/assets/images/hero_sudanese_education_1792071283906.jpg"
+                src={heroImage}
                 alt="طلاب سودانيون يدرسون المنهج القومي للصف الثالث المتوسط"
                 referrerPolicy="no-referrer"
                 className="w-full h-auto object-cover max-h-[380px]"

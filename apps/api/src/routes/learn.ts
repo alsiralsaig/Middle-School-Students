@@ -6,6 +6,13 @@ export const learnRouter = Router();
 
 /* ============================ المنهج (للجميع) ============================ */
 
+/**
+ * المنهج يتغيّر فقط عندما تحفظ الإدارة درساً، ومع ذلك كان كل فتح للتطبيق
+ * يعيد تنزيل ١٠٨٠ كيلوبايت (١٦٠ مضغوطة) وينتظر ~١.٢ ثانية.
+ * الآن يُخزَّن على حافة Vercel ويُقدَّم من الذاكرة، مع إعادة تحقق في الخلفية.
+ */
+const CURRICULUM_CACHE = 'public, max-age=60, s-maxage=600, stale-while-revalidate=86400';
+
 learnRouter.get('/subjects', async (_req, res) => {
   try {
     const subjects = await prisma.subject.findMany({
@@ -17,6 +24,8 @@ learnRouter.get('/subjects', async (_req, res) => {
         },
       },
     });
+    res.setHeader('Cache-Control', CURRICULUM_CACHE);
+    res.setHeader('Vary', 'Accept-Encoding');
     res.json({
       subjects: subjects.map((s) => ({
         ...s,
