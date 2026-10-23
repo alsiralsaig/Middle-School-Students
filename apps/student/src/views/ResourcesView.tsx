@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ResourceItem, ResourceCategory, Subject } from '../types';
 import { 
   FileText, 
@@ -14,6 +14,8 @@ import {
 } from 'lucide-react';
 import { PDFViewerModal } from '../components/PDFViewerModal';
 import { downloadResourcePDF } from '../utils/pdfDownloader';
+import { api } from '../utils/apiClient';
+import { getApiBase } from '../utils/serverUrl';
 
 interface ResourcesViewProps {
   resources: ResourceItem[];
@@ -36,6 +38,8 @@ export const ResourcesView: React.FC<ResourcesViewProps> = ({
     return null;
   });
   const [downloadToast, setDownloadToast] = useState<string | null>(null);
+  const [serverResources,setServerResources]=useState<ResourceItem[]>([]);
+  useEffect(()=>{let alive=true;api.resources().then(({resources:rows})=>{if(!alive)return;const mapped:ResourceItem[]=rows.map(r=>{let previewSummary:string[]=[];try{const parsed=typeof r.previewSummary==='string'?JSON.parse(r.previewSummary):r.previewSummary;if(Array.isArray(parsed))previewSummary=parsed.map(String);}catch{/* skip malformed summary */}const subjectId=String(r.subjectId||'');return{id:String(r.id),title:String(r.title||''),subjectId,subjectName:subjects.find(s=>s.id===subjectId)?.name||'عام',category:String(r.category||'notes') as ResourceCategory,fileType:String(r.fileType||'FILE'),filePath:typeof r.filePath==='string'?r.filePath:null,fileSize:String(r.fileSize||''),pageCount:Number(r.pageCount)||0,author:String(r.author||''),publishYear:String(r.publishYear||''),isVerifiedCurriculum:r.isVerifiedCurriculum===true,downloadCount:Number(r.downloadCount)||0,description:String(r.description||''),previewSummary};});setServerResources(mapped);}).catch(()=>undefined);return()=>{alive=false;};},[subjects]);
 
   const categoryTabs: { key: ResourceCategory; label: string }[] = [
     { key: 'all', label: 'جميع الموارد' },
@@ -44,7 +48,8 @@ export const ResourcesView: React.FC<ResourcesViewProps> = ({
     { key: 'worksheets', label: 'أوراق عمل وتدريبات' },
   ];
 
-  const filteredResources = resources.filter((item) => {
+  const allResources=[...resources,...serverResources.filter(item=>!resources.some(existing=>existing.id===item.id))];
+  const filteredResources = allResources.filter((item) => {
     const matchesCategory =
       selectedCategory === 'all' || item.category === selectedCategory;
     const matchesSubject =
@@ -59,8 +64,9 @@ export const ResourcesView: React.FC<ResourcesViewProps> = ({
   });
 
   const triggerDownload = (item: ResourceItem) => {
-    downloadResourcePDF(item);
-    setDownloadToast(`تم بدء تنزيل ملف "${item.title}" بصيغة PDF بنجاح!`);
+    if(item.filePath&&(item.filePath.startsWith('https://')||item.filePath.startsWith('http://')||item.filePath.startsWith('/api/media/'))){const url=/^https?:\/\//i.test(item.filePath)?item.filePath:`${getApiBase()}${item.filePath}`;window.open(url,'_blank','noopener,noreferrer');}
+    else downloadResourcePDF(item);
+    setDownloadToast(`تم فتح المورد «${item.title}» للمعاينة أو التنزيل.`);
     setTimeout(() => {
       setDownloadToast(null);
     }, 4000);

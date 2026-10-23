@@ -18,12 +18,12 @@
     "db:backup": "node prisma/db-tool.mjs backup",
     "db:restore": "node prisma/db-tool.mjs restore",
     "db:backups": "node prisma/db-tool.mjs list",
-    "build": "prisma generate && tsc -p tsconfig.build.json"
+    "build": "prisma generate && node scripts/migrate-if-db.mjs && tsc -p tsconfig.build.json"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
-    "@vercel/blob": "^1.1.1",
     "@prisma/client": "^6.1.0",
+    "@vercel/blob": "^2.8.2",
     "bcryptjs": "^2.4.3",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",

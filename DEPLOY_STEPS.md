@@ -101,12 +101,15 @@ DATABASE_URL="الرابط_المنسوخ" npx tsx prisma/seed.ts
 DATABASE_URL = الرابط Pooled من Neon
 JWT_SECRET   = ولّده: node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"
 NODE_ENV     = production
-BLOB_READ_WRITE_TOKEN = رمز Blob من Vercel Storage (لرفع الملفات الدائم)
+BLOB_READ_WRITE_TOKEN = رمز مخزن Blob عام (مواد الدروس والامتحانات والمكتبة)
+PRIVATE_BLOB_READ_WRITE_TOKEN = رمز مخزن Blob خاص مستقل (مرفقات تقويم الطالب)
 ```
 
-قبل النشر، أنشئ Blob Store من Vercel Storage وانسخ رمز القراءة والكتابة إلى
-`BLOB_READ_WRITE_TOKEN`. الرفع في الإنتاج يستخدم التخزين الدائم؛ إن غاب الرمز
-سيرفض الرفع بدلاً من حفظ ملفات مؤقتة قد تختفي عند إعادة تشغيل Vercel.
+أنشئ مخزناً عاماً وآخر خاصاً في Vercel Storage، واربط الرمزين بمشروع API فقط.
+لا تضع الأسرار في تطبيق الطالب أو لوحة الإدارة ولا ترسلها في المحادثة. الملفات
+الشخصية تُقرأ عبر API بعد التحقق من مالك حدث المراجعة؛ لا يُعرض رابط Blob الخاص
+للمتصفح. يجب تطبيق migration `20261023000000_unified_media_assets` عبر
+`prisma migrate deploy` قبل تفعيل النظام، ومن دون تشغيل seed.
 
 اختبارات بعد النشر:
 ```bash

@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { prisma } from '../lib/prisma.js';
 import { currentUser, requireAuth } from '../lib/auth.js';
+import { mediaAssetDto } from './media.js';
 
 export const examsRouter = Router();
 
@@ -11,8 +12,11 @@ examsRouter.get('/exams', async (_req, res) => {
     include: { subject: true, _count: { select: { questions: true } } },
     orderBy: { createdAt: 'desc' },
   });
+  const files=exams.length?await prisma.mediaAsset.findMany({where:{ownerType:'exam',ownerId:{in:exams.map(e=>e.id)},access:'public'},orderBy:{createdAt:'asc'}}):[];
+  const byExam=new Map<string,unknown[]>();files.forEach(a=>byExam.set(a.ownerId,[...(byExam.get(a.ownerId)||[]),mediaAssetDto(a)]));
   res.json({
     exams: exams.map((e) => ({
+      attachments:byExam.get(e.id)||[],
       id: e.id,
       title: e.title,
       subjectId: e.subjectId,
@@ -35,10 +39,12 @@ examsRouter.get('/exams/:id/questions', async (req, res) => {
     res.status(404).json({ error: 'الاختبار غير موجود' });
     return;
   }
+  const attachments=await prisma.mediaAsset.findMany({where:{ownerType:'exam',ownerId:exam.id,access:'public'},orderBy:{createdAt:'asc'}});
   res.json({
     exam: {
       id: exam.id,
       title: exam.title,
+      attachments:attachments.map(mediaAssetDto),
       durationMinutes: exam.durationMinutes,
       status: exam.status,
       questions: exam.questions.map((q) => ({

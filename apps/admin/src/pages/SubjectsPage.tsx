@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { MediaManager } from '../components/MediaManager';
 import { Link, useParams } from 'react-router-dom';
 import { ArrowRight, BookOpen, Layers, Pencil } from 'lucide-react';
 import {
@@ -196,6 +197,7 @@ export const SubjectDetailPage: React.FC = () => {
       </header>
 
       <OfficialStructureCard subject={subject} />
+      <MediaManager ownerType="subject" ownerId={subject.id} title="وسائط المادة والروابط الخارجية" />
 
       {subject.units.length === 0 ? (
         <Card>
@@ -211,6 +213,7 @@ export const SubjectDetailPage: React.FC = () => {
               subtitle={unit.description}
               action={<div className="flex items-center gap-2"><Badge tone="navy"><Layers className="w-3 h-3" /> {unit.lessons.length} دروس</Badge><button type="button" onClick={() => openUnit(unit)} className="text-[11px] font-bold text-navy-800 border border-slate-200 rounded-lg px-2 py-1"><Pencil className="w-3 h-3 inline" /> تعديل الوحدة</button></div>}
             >
+              <div className="p-4 pb-0"><MediaManager ownerType="unit" ownerId={unit.id} title="وسائط الوحدة" /></div>
               {unit.lessons.length === 0 ? (
                 <EmptyState
                   title="لا توجد دروس في هذه الوحدة"

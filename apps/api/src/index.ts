@@ -10,6 +10,7 @@ import { learnRouter } from './routes/learn.js';
 import { examsRouter } from './routes/exams.js';
 import { aiRouter } from './routes/ai.js';
 import { uploadsRouter } from './routes/uploads.js';
+import { mediaRouter } from './routes/media.js';
 import { syncRouter } from './routes/sync.js';
 import { adminCodesRouter } from './routes/adminCodes.js';
 import { adminContentRouter } from './routes/adminContent.js';
@@ -85,6 +86,7 @@ app.use('/api', learnRouter);
 app.use('/api', examsRouter);
 app.use('/api', aiRouter);
 app.use('/api', uploadsRouter);
+app.use('/api', mediaRouter);
 app.use('/api', syncRouter);
 // مسارات الإدارة — وراء requireAdmin (دور مدير + رمز صادر عن لوحة الإدارة)
 app.use('/api/admin', adminCodesRouter);

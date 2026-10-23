@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Subject, Lesson } from '../types';
+import { MediaAssetViewer } from '../components/MediaAssetViewer';
 import { 
   ArrowRight, 
   BookOpen, 
@@ -95,6 +96,7 @@ export const SubjectDetailView: React.FC<SubjectDetailViewProps> = ({
         </div>
       </div>
 
+      {!!subject.mediaAssets?.length&&<section className="rounded-2xl border border-slate-200 dark:border-[#1C3A62] bg-white dark:bg-[#0D1F35] p-5"><h2 className="text-sm font-bold mb-3">وسائط المادة</h2><MediaAssetViewer assets={subject.mediaAssets}/></section>}
       {/* Units & Lessons Accordion List */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
@@ -157,6 +159,7 @@ export const SubjectDetailView: React.FC<SubjectDetailViewProps> = ({
               {/* Lessons List in Unit */}
               {isExpanded && (
                 <div className="border-t border-slate-100 dark:border-slate-800 divide-y divide-slate-100 dark:divide-slate-800 bg-slate-50/30 dark:bg-[#091524]">
+                  {!!unit.mediaAssets?.length&&<div className="p-4 border-b border-slate-100 dark:border-slate-800"><h4 className="text-xs font-bold mb-2">وسائط الوحدة</h4><MediaAssetViewer assets={unit.mediaAssets}/></div>}
                   {unit.lessons.map((lesson) => {
                     const completed = isLessonCompleted(lesson.id);
                     return (

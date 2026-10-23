@@ -113,6 +113,8 @@ export const api = {
    * هذا هو المصدر الموثوق: ما تعدّله الإدارة يظهر هنا مباشرة.
    */
   subjects: () => request<{ subjects: Subject[] }>('/api/subjects'),
+  resources: () => request<{ resources: Array<Record<string, unknown>> }>('/api/resources'),
+  exams: () => request<{ exams: Array<{id:string;title:string;subjectName:string;attachments:Array<{id:string;title:string;url:string;kind?:string;mimeType?:string|null;originalName?:string|null;description?:string|null;sizeBytes?:number|null}>}> }>('/api/exams'),
   /** الفهرس فقط (بلا شرح) — خفيف وسريع، والدرس يُطلب عند فتحه. */
   subjectsIndex: () => request<{ subjects: Subject[] }>('/api/subjects?view=index'),
   /** درس كامل واحد — يُدمج في المخزن عند فتحه. */

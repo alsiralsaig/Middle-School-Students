@@ -10,7 +10,8 @@ import {
 } from '../components/ui';
 import type { ResourceCategory } from '@shared/curriculumTypes';
 import { getApiBase } from '../lib/serverUrl';
-import { put } from '@vercel/blob/client';
+import { MediaManager } from '../components/MediaManager';
+import { uploadMediaAsset } from '../lib/mediaUpload';
 
 interface LibraryRow {
   id: string;
@@ -125,40 +126,18 @@ export const LibraryPage: React.FC = () => {
     if (!MIME_BY_EXTENSION[extension]) { setUploadError('نوع الملف غير مدعوم'); return; }
     setUploading(true); setUploadProgress(0); setUploadError('');
     try {
-      const safeName = file.name.normalize('NFKD').replace(/[^\p{L}\p{N}._-]+/gu, '_').slice(-120) || `resource.${extension}`;
-      const pathname = `library-uploads/${Date.now()}-${safeName}`;
-      const payload = {
-        title: title.trim() || file.name,
-        category: uploadCategory,
-        subjectId,
-        description: description.trim(),
-        author: author.trim(),
-        publishYear: publishYear.trim(),
-        pageCount: Number(pageCount) || 0,
-        fileName: file.name,
-        sizeBytes: file.size,
-      };
-      const tokenResponse = await fetch(`${getApiBase()}/api/uploads/resource/client`, {
-        method: 'POST', credentials: 'include',
-        headers: { 'X-App': 'admin', 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify({
-          type: 'blob.generate-client-token',
-          payload: { pathname, clientPayload: JSON.stringify(payload), multipart: false },
-        }),
-      });
-      const tokenData = await tokenResponse.json().catch(() => null) as { clientToken?: string; error?: string } | null;
-      if (!tokenResponse.ok || !tokenData?.clientToken) throw new Error(tokenData?.error || 'تعذّر إصدار إذن رفع الملف');
-      const blob = await put(pathname, file, {
-        access: 'public', token: tokenData.clientToken,
-        contentType: MIME_BY_EXTENSION[extension] || file.type,
-        onUploadProgress: ({ percentage }) => setUploadProgress(percentage),
+      const uploaded = await uploadMediaAsset({
+        ownerType: 'library', ownerId: 'shared-library', file,
+        title: title.trim() || file.name, description: description.trim(),
+        metadata: { category: uploadCategory, subjectId, author: author.trim(), publishYear: publishYear.trim(), pageCount: Number(pageCount) || 0 },
+        onProgress: setUploadProgress,
       });
 
       // لا نضيف سجلاً من المتصفح؛ callback الخادم ينشئه بعد تحقق Blob من الرفع.
       let saved = false;
       for (let attempt = 0; attempt < 10; attempt++) {
         const rows = await refreshLibrary();
-        if (rows?.some((row) => row.filePath === blob.url)) { saved = true; break; }
+        if (rows?.some((row) => row.filePath === uploaded.url)) { saved = true; break; }
         await new Promise((resolve) => window.setTimeout(resolve, 500));
       }
       if (!saved) {
@@ -188,6 +167,7 @@ export const LibraryPage: React.FC = () => {
           <Upload className="w-4 h-4" /> رفع كتاب أو ملف
         </button>
       </header>
+      <MediaManager ownerType="library" ownerId="shared-library" title="ملفات وروابط المكتبة عبر النظام المشترك" />
 
       {summary && (
         <div className="grid grid-cols-3 gap-3">
