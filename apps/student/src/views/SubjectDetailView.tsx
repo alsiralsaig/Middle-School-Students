@@ -15,6 +15,8 @@ import {
 } from 'lucide-react';
 import { InAppFileViewer, ViewerFile, resolveFileUrl } from '../components/InAppFileViewer';
 import { SubjectFileRow } from '../components/SubjectFileRow';
+import { InteractiveQuiz } from '../components/InteractiveQuiz';
+import { api } from '../utils/apiClient';
 import { subjectVisual } from '../utils/subjectVisuals';
 import { warmPdfEngine } from '../utils/pdfEngine';
 import {
@@ -40,12 +42,17 @@ interface SubjectDetailViewProps {
   onOpenExams?: () => void;
 }
 
-type TabKey = 'books' | 'exams' | 'lessons' | 'offline' | 'chat';
+type TabKey = 'books' | 'exams' | 'lessons' | 'interactive' | 'offline' | 'chat';
 
+/**
+ * نفس ترتيب تطبيق الثانوي: الكتب ← الامتحانات ← الدروس ← التفاعلية ←
+ * بدون نت ← الدردشة. الستة كلها ظاهرة في شريط واحد بلا تمرير.
+ */
 const TABS: Array<{ key: TabKey; label: string; emoji: string }> = [
   { key: 'books', label: 'الكتب', emoji: '📖' },
   { key: 'exams', label: 'الامتحانات', emoji: '📝' },
   { key: 'lessons', label: 'الدروس', emoji: '⚡' },
+  { key: 'interactive', label: 'التفاعلية', emoji: '🧩' },
   { key: 'offline', label: 'بدون نت', emoji: '📶' },
   { key: 'chat', label: 'الدردشة', emoji: '💬' },
 ];
@@ -83,6 +90,9 @@ export const SubjectDetailView: React.FC<SubjectDetailViewProps> = ({
   const [offline, setOffline] = useState<OfflineFileMeta[]>([]);
   const [progress, setProgress] = useState<Record<string, number>>({});
   const [notice, setNotice] = useState('');
+  /** الدرس المفتوح للأسئلة التفاعلية (يُطلب كاملاً عند الحاجة) */
+  const [quizLesson, setQuizLesson] = useState<Lesson | null>(null);
+  const [quizLoadingId, setQuizLoadingId] = useState('');
 
   const refreshOffline = useCallback(async () => {
     const rows = await listOfflineFiles();
@@ -171,6 +181,24 @@ export const SubjectDetailView: React.FC<SubjectDetailViewProps> = ({
     }
   };
 
+  /** يفتح الأسئلة التفاعلية لدرس معيّن — يجلب محتواه الكامل أولاً */
+  const openInteractive = async (lessonId: string) => {
+    setQuizLoadingId(lessonId);
+    setNotice('');
+    try {
+      const { lesson } = await api.lesson(lessonId);
+      // الدرس الكامل من الخادم هو المصدر (فيه الشرح والقواعد والأسئلة)
+      const known = subject.units.flatMap((u) => u.lessons).find((l) => l.id === lessonId);
+      setQuizLesson((lesson || known) as Lesson);
+    } catch {
+      setNotice('تعذّر فتح الدرس التفاعلي — تأكد من الاتصال بالإنترنت وحاول مرة أخرى.');
+    } finally {
+      setQuizLoadingId('');
+    }
+  };
+
+  const allLessons = useMemo(() => subject.units.flatMap((u) => u.lessons), [subject.units]);
+
   const handleRemove = async (url: string) => {
     await removeOfflineFile(url);
     await refreshOffline();
@@ -241,18 +269,22 @@ export const SubjectDetailView: React.FC<SubjectDetailViewProps> = ({
       <div className="flex gap-1.5 rounded-2xl bg-slate-100 p-1 dark:bg-[#0B1E36]">
         {TABS.map((t) => {
           const active = tab === t.key;
-          const activeBg = t.key === 'offline' ? '#16a34a' : t.key === 'chat' ? '#7c3aed' : visual.accent;
+          const activeBg =
+            t.key === 'offline' ? '#16a34a'
+              : t.key === 'chat' ? '#7c3aed'
+                : t.key === 'interactive' ? '#0891b2'
+                  : visual.accent;
           return (
             <button
               key={t.key}
               type="button"
               onClick={() => setTab(t.key)}
-              className={`flex-1 rounded-xl px-1 py-2.5 text-[11px] font-black transition-colors active:scale-95 ${
+              className={`flex-1 rounded-xl px-0.5 py-2 text-[10px] font-black transition-colors active:scale-95 ${
                 active ? 'text-white shadow' : 'text-slate-600 dark:text-slate-300'
               }`}
               style={active ? { backgroundColor: activeBg } : undefined}
             >
-              <span className="block text-[13px] leading-none">{t.emoji}</span>
+              <span className="block text-[12px] leading-none">{t.emoji}</span>
               <span className="mt-1 block">{t.label}</span>
             </button>
           );
@@ -399,6 +431,52 @@ export const SubjectDetailView: React.FC<SubjectDetailViewProps> = ({
         </section>
       )}
 
+      {/* ============ التفاعلية ============ */}
+      {tab === 'interactive' && (
+        <section className="space-y-2.5">
+          <div className="rounded-2xl border border-cyan-300 bg-cyan-50 p-3.5 dark:border-cyan-800/70 dark:bg-cyan-950/30">
+            <p className="text-[13px] font-black text-cyan-900 dark:text-cyan-100">حصص تفاعلية — اختبر نفسك</p>
+            <p className="mt-1 text-[11px] font-semibold leading-relaxed text-cyan-800/80 dark:text-cyan-200/80">
+              أسئلة فورية مع تصحيح وشرح لكل درس في {subject.name}. اختر الدرس وابدأ.
+            </p>
+          </div>
+
+          {allLessons.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-slate-300 p-7 text-center text-[12px] font-semibold text-slate-500 dark:border-[#25476F] dark:text-slate-400">
+              ما في دروس متاحة للمادة دي حالياً.
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {allLessons.map((lesson) => {
+                const loading = quizLoadingId === lesson.id;
+                return (
+                  <div
+                    key={lesson.id}
+                    className="flex items-center justify-between gap-2.5 rounded-2xl border border-slate-200 bg-white p-3 dark:border-[#1C3A62] dark:bg-[#0D1F35]"
+                  >
+                    <div className="min-w-0 flex-1 text-right">
+                      <p className="text-[10px] font-bold text-slate-400">درس {lesson.lessonNumber}</p>
+                      <p className="mt-0.5 text-[12.5px] font-extrabold leading-snug text-slate-900 dark:text-white">
+                        {lesson.title}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => void openInteractive(lesson.id)}
+                      disabled={!!quizLoadingId}
+                      className="shrink-0 rounded-xl px-3 py-2 text-[11.5px] font-black text-white active:scale-95 disabled:opacity-60"
+                      style={{ backgroundColor: '#0891b2' }}
+                    >
+                      {loading ? '...' : 'ابدأ 🧩'}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </section>
+      )}
+
       {/* ============ بدون نت ============ */}
       {tab === 'offline' && (
         <section className="space-y-2.5">
@@ -470,6 +548,28 @@ export const SubjectDetailView: React.FC<SubjectDetailViewProps> = ({
 
       {/* عارض الملفات داخل التطبيق */}
       {viewing && <InAppFileViewer file={viewing} onClose={() => setViewing(null)} />}
+
+      {/* الأسئلة التفاعلية — داخل التطبيق مع زر رجوع واضح */}
+      {quizLesson && (
+        <div dir="rtl" className="fixed inset-0 z-[110] overflow-y-auto bg-[#061220]/95 p-3 backdrop-blur-sm">
+          <div className="mx-auto max-w-2xl space-y-3 pb-8">
+            <div className="sticky top-0 z-10 flex items-center gap-2 rounded-2xl bg-[#0B1E36] p-2.5 shadow-lg">
+              <button
+                type="button"
+                onClick={() => setQuizLesson(null)}
+                className="inline-flex min-h-[44px] items-center gap-1.5 rounded-xl bg-amber-400 px-3 text-[13px] font-black text-slate-950 active:scale-95"
+              >
+                <ArrowRight className="h-4 w-4" />
+                رجوع
+              </button>
+              <p className="min-w-0 flex-1 truncate text-[12.5px] font-bold text-white">{quizLesson.title}</p>
+            </div>
+            <div className="rounded-2xl bg-white p-3 dark:bg-[#0D1F35]">
+              <InteractiveQuiz lesson={quizLesson} subjectName={subject.name} />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

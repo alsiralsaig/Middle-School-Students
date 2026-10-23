@@ -36,117 +36,124 @@ export const InteractiveQuiz: React.FC<InteractiveQuizProps> = ({
 }) => {
   // Dynamically generate instant multiple-choice questions from the lesson data
   const questions: GeneratedQuizQuestion[] = useMemo(() => {
+    /**
+     * ⚠️ إصلاح مهم: كان مولّد الأسئلة يضع خيارات **رياضية جاهزة**
+     * («س + ص = ج²» …) في كل درس، فتظهر مسألة تاريخ أو لغة عربية بخيارات
+     * رياضية لا معنى لها. الآن الخيارات الخاطئة تُؤخذ من محتوى الدرس نفسه
+     * (قواعد أخرى، حلول أخرى، أهداف أخرى)، وإن لم يتوفر محتوى كافٍ
+     * يُعرض السؤال بخيارات أقل بدل تلفيق خيارات غريبة.
+     */
     const list: GeneratedQuizQuestion[] = [];
     let qId = 1;
 
-    // 1. Generate from FAQ if available
-    if (lesson.faq && lesson.faq.length > 0) {
-      lesson.faq.forEach((faqItem) => {
-        list.push({
-          id: qId++,
-          question: faqItem.question,
-          options: [
-            faqItem.answer,
-            'عكس هذا المفهوم تماماً وفق شروط المسألة',
-            'قاعدة خاصة بصف دراسي آخر لا تنطبق هنا',
-            'إجابة غير دقيقة تتعارض مع وثيقة المنهج',
-          ],
-          correctIndex: 0,
-          explanation: `وفق إرشادات الدرس: ${faqItem.answer}`,
-          conceptTag: 'مفاهيم أساسية',
-        });
-      });
-    }
+    const uniq = (arr: (string | null | undefined)[]) => {
+      const seen = new Set<string>();
+      const out: string[] = [];
+      for (const raw of arr) {
+        const v = (raw || '').trim();
+        if (!v || seen.has(v)) continue;
+        seen.add(v);
+        out.push(v);
+      }
+      return out;
+    };
 
-    // 2. Generate from keyRules
-    if (lesson.keyRules && lesson.keyRules.length > 0) {
-      lesson.keyRules.forEach((rule, rIdx) => {
-        list.push({
-          id: qId++,
-          question: `ما هي القاعدة الصحيحة المقررة في درس «${lesson.title}»؟`,
-          options: [
-            rule,
-            'يمكن تجاهل شروط القاعدة في المسائل المعقدة',
-            'تطبق القاعدة فقط في الأعداد التخيلية',
-            'قاعدة ملغية في المنهج المطور للشهادة المتوسطة',
-          ],
-          correctIndex: 0,
-          explanation: `القاعدة النموذجية المعتمدة هي: ${rule}`,
-          conceptTag: 'القواعد الذهبية',
-        });
-      });
-    }
+    /** كل محتوى الدرس الصالح لأن يكون خياراً — من نفس المادة والموضوع */
+    const pool = uniq([
+      ...(lesson.keyRules || []),
+      ...(lesson.sections || []).map((s) => s.formulaOrRule),
+      ...(lesson.sections || []).map((s) => s.example?.solution),
+      ...(lesson.learningObjectives || []),
+    ]);
 
-    // 3. Generate from sections with formulaOrRule
-    if (lesson.sections && lesson.sections.length > 0) {
-      lesson.sections.forEach((sec) => {
-        if (sec.formulaOrRule) {
+    const distractors = (correct: string, n = 3) => pool.filter((x) => x !== correct).slice(0, n);
+
+    // 1) أسئلة من الأسئلة الشائعة — الإجابة الصحيحة حقيقية والخيارات من الدرس
+    (lesson.faq || []).forEach((faqItem) => {
+      const correct = (faqItem.answer || '').trim();
+      if (!correct) return;
+      list.push({
+        id: qId++,
+        question: faqItem.question,
+        options: [correct, ...distractors(correct)],
+        correctIndex: 0,
+        explanation: `وفق إرشادات الدرس: ${correct}`,
+        conceptTag: 'مفاهيم أساسية',
+      });
+    });
+
+    // 2) سؤال لكل قاعدة ذهبية — بلا خيارات ملفّقة
+    (lesson.keyRules || []).forEach((rule) => {
+      const correct = (rule || '').trim();
+      if (!correct) return;
+      const others = distractors(correct);
+      if (others.length < 2) return; // لا نلفّق خيارات؛ نتخطى السؤال
+      list.push({
+        id: qId++,
+        question: `أي القواعد التالية هي المقررة في درس «${lesson.title}»؟`,
+        options: [correct, ...others],
+        correctIndex: 0,
+        explanation: `القاعدة المعتمدة هي: ${correct}`,
+        conceptTag: 'القواعد الذهبية',
+      });
+    });
+
+    // 3) أسئلة من الصيغ والأمثلة داخل أقسام الدرس
+    (lesson.sections || []).forEach((sec) => {
+      const formula = (sec.formulaOrRule || '').trim();
+      if (formula) {
+        const others = distractors(formula);
+        if (others.length >= 2) {
           list.push({
             id: qId++,
-            question: `في قسم «${sec.title}»، ما هي الصيغة أو القانون الرياضي المعتمد؟`,
-            options: [
-              sec.formulaOrRule,
-              'س + ص = ج² (صيغة بديلة غير معتمدة)',
-              'ط × نق² ÷ ٢',
-              'لا توجد صيغة رياضية محددة',
-            ],
+            question: `في قسم «${sec.title}»: أي العبارات التالية هي الصيغة أو القاعدة المعتمدة؟`,
+            options: [formula, ...others],
             correctIndex: 0,
-            explanation: `الصيغة الدقيقة المقررة في هذا القسم هي: ${sec.formulaOrRule}`,
+            explanation: `المعتمد في هذا القسم: ${formula}`,
             conceptTag: sec.title,
           });
         }
+      }
 
-        if (sec.example) {
+      const solution = (sec.example?.solution || '').trim();
+      if (solution) {
+        const others = distractors(solution);
+        if (others.length >= 2) {
           list.push({
             id: qId++,
-            question: `المسألة التطبيقية: ${sec.example.question} ، ما هو الحل النموذجي؟`,
-            options: [
-              sec.example.solution,
-              'الحل غير مكتمل لعدم وجود معطيات كافية',
-              'الناتج النهائي يساوي صفراً',
-              'ضعف القيمة المحسوبة',
-            ],
+            question: `المسألة التطبيقية: ${sec.example?.question || ''} — ما الحل النموذجي؟`,
+            options: [solution, ...others],
             correctIndex: 0,
-            explanation: `خطوات الحل المعتمدة: ${sec.example.solution}`,
+            explanation: `خطوات الحل المعتمدة: ${solution}`,
             conceptTag: 'أمثلة محلولة',
           });
         }
-      });
-    }
+      }
+    });
 
-    // 4. Fallback generated questions from summary and objectives if list is short
+    // 4) سؤال احتياطي واحد إن لم يتكوّن أي سؤال من محتوى الدرس
     if (list.length === 0) {
+      const correct = (lesson.summary || '').trim() || `استيعاب محتوى درس «${lesson.title}»`;
+      const others = distractors(correct);
       list.push({
         id: qId++,
         question: `ما هو المحور الأساسي لدرس «${lesson.title}»؟`,
-        options: [
-          lesson.summary || 'استيعاب المفاهيم وتطبيقها في الامتحانات الوزارية',
-          'موضوع إثرائي اختياري غير مقرر في الشهادة',
-          'تطبيقات تاريخية قديمة لا تدخل في الامتحان',
-          'قاعدة عامة لا تحتوي على قوانين',
-        ],
+        options: [correct, ...others],
         correctIndex: 0,
-        explanation: lesson.summary || 'ملخص الدرس يركز على إتقان المفاهيم وحل المسائل.',
+        explanation: correct,
         conceptTag: 'ملخص الدرس',
       });
     }
 
-    // Shuffle options for each question so correctIndex isn't always 0!
+    // خلط الخيارات — يعمل مع أي عدد خيارات (كان يفترض 4 دائماً)
     return list.slice(0, 5).map((q) => {
-      const originalOptions = [...q.options];
-      const correctText = originalOptions[q.correctIndex];
-      // Deterministic pseudo-shuffle based on question id
-      const targetIndex = (q.id * 3) % 4;
-      const newOptions = [...originalOptions];
-      const temp = newOptions[targetIndex];
+      const newOptions = [...q.options];
+      const correctText = newOptions[q.correctIndex];
+      const targetIndex = (q.id * 3) % newOptions.length;
+      const displaced = newOptions[targetIndex];
       newOptions[targetIndex] = correctText;
-      newOptions[q.correctIndex] = temp;
-
-      return {
-        ...q,
-        options: newOptions,
-        correctIndex: targetIndex,
-      };
+      newOptions[q.correctIndex] = displaced;
+      return { ...q, options: newOptions, correctIndex: targetIndex };
     });
   }, [lesson]);
 

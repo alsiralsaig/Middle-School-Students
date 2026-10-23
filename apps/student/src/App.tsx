@@ -247,11 +247,9 @@ function AppContent() {
         {currentView === 'home' && (
           <HomeView
             subjects={SUBJECTS_DATA}
-            resources={RESOURCES_DATA}
             completedLessonIds={completedLessonIds}
             onNavigate={handleNavigate}
             onSelectSubject={handleSelectSubject}
-            onSelectResource={handleSelectResource}
           />
         )}
 
