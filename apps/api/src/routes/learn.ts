@@ -61,6 +61,8 @@ learnRouter.get('/lessons/:id', async (req, res) => {
     res.status(404).json({ error: 'الدرس غير موجود' });
     return;
   }
+  // الدرس نفسه لا يتغيّر إلا بحفظ من الإدارة — يُكاش على الحافة مثل المنهج.
+  res.setHeader('Cache-Control', CURRICULUM_CACHE);
   res.json({
     lesson: {
       ...(lesson as Record<string, unknown>),

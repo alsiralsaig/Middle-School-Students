@@ -13,7 +13,8 @@ import {
 import { api, type LessonRecord } from '../lib/contentApi';
 import { uploadLessonAttachmentBlob } from '../lib/lessonBlobUpload';
 import { useSubjects } from '../hooks/useSubjects';
-import { allLessons, CONTENT_STATUS } from '@shared/curriculum';
+import { CONTENT_STATUS } from '@shared/curriculum';
+import { allLessons } from '@shared/contentData';
 
 interface LessonRow {
   id: string;

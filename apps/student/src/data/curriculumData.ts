@@ -17,7 +17,6 @@ import { api } from '../utils/apiClient';
 
 /* التصديرات الثابتة من الحزمة المشتركة (مصادر، مساعدات…) */
 export * from '@shared/curriculum';
-import * as bundled from '@shared/curriculum';
 
 const CACHE_KEY = 'ssp.curriculum.v1';
 
@@ -40,8 +39,12 @@ function writeCache(subjects: Subject[]): void {
   }
 }
 
-/* الحالة الحالية — تُقرأ من الذاكرة المحفوظة، وإلا من الملفات */
-let current: Subject[] = readCache() ?? (bundled.SUBJECTS_DATA as Subject[]);
+/**
+ * الحالة الحالية. الذاكرة المحفوظة أولاً، وإذا لم توجد (أول زيارة) نبدأ
+ * فارغين ثم نجلب المنهج من الخادم. النسخة المضمَّنة (٥٨٠ كيلوبايت) تُحمَّل
+ * **عند الحاجة فقط** عبر `import()` فتبقى خارج الحزمة الأساسية.
+ */
+let current: Subject[] = readCache() ?? [];
 let lastSync: string | null = null;
 let online = false;
 
@@ -63,7 +66,26 @@ export const getLastSync = (): string | null => lastSync;
  * يجلب المنهج من قاعدة البيانات ويحدّث المخزن.
  * لا يرمي خطأ — الفشل يعني البقاء على النسخة المحفوظة.
  */
+/** النسخة المضمَّنة — حزمة منفصلة تُطلب فقط عند تعذّر الوصول للخادم. */
+let bundledPromise: Promise<Subject[]> | null = null;
+async function loadBundled(): Promise<Subject[]> {
+  if (!bundledPromise) {
+    bundledPromise = import('@shared/contentData')
+      .then((m) => m.SUBJECTS_DATA as Subject[])
+      .catch(() => [] as Subject[]);
+  }
+  return bundledPromise;
+}
+
 export async function refreshCurriculum(): Promise<Subject[]> {
+  // أول زيارة بلا نسخة محفوظة: نكسب الوقت بعرض المضمَّن فوراً إن لزم.
+  if (current.length === 0) {
+    const local = readCache();
+    if (local) {
+      current = local;
+      emit();
+    }
+  }
   try {
     const { subjects } = await api.subjects();
     if (subjects && subjects.length > 0) {
@@ -75,7 +97,14 @@ export async function refreshCurriculum(): Promise<Subject[]> {
     }
   } catch {
     online = false;
-    /* دون اتصال: نبقى على النسخة المحفوظة — هذا مصمَّم، لا خلل */
+    /* دون اتصال: النسخة المحفوظة، وإن لم توجد نحمّل النسخة المضمَّنة */
+    if (current.length === 0) {
+      const fallback = await loadBundled();
+      if (fallback.length > 0) {
+        current = fallback;
+        emit();
+      }
+    }
   }
   return current;
 }
@@ -95,5 +124,5 @@ export async function resetCurriculumCache(): Promise<Subject[]> {
  * `useSyncExternalStore` يضمن الاتساق مع التحديثات المتزامنة.
  */
 export function useSubjects(): Subject[] {
-  return useSyncExternalStore(subscribe, getSubjects, () => bundled.SUBJECTS_DATA as Subject[]);
+  return useSyncExternalStore(subscribe, getSubjects, getSubjects);
 }

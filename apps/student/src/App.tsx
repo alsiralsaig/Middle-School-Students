@@ -20,14 +20,45 @@ import { refreshSession } from './utils/sessionStore';
 import { HomeView } from './views/HomeView';
 import { SubjectsView } from './views/SubjectsView';
 import { SubjectDetailView } from './views/SubjectDetailView';
-import { LessonView } from './views/LessonView';
-import { ResourcesView } from './views/ResourcesView';
-import { ExamsView } from './views/ExamsView';
-import { AIAssistantView } from './views/AIAssistantView';
-import { StudentDashboardView } from './views/StudentDashboardView';
-import { LeaderboardView } from './views/LeaderboardView';
-import { AchievementsView } from './views/AchievementsView';
-import { StudyRoomsView } from './views/StudyRoomsView';
+
+/**
+ * الشاشات الثانوية تُحمَّل عند فتحها فقط (code-splitting).
+ * الشاشات الثلاث الأولى تبقى في الحزمة الأساسية لأنها أول ما يراه الطالب،
+ * والباقي — الدرس، المكتبة، الامتحانات، المساعد، اللوحة، المتصدرين،
+ * الإنجازات، غرف المذاكرة — حزم مستقلة تُطلب عند الحاجة.
+ */
+const LessonView = React.lazy(() =>
+  import('./views/LessonView').then((m) => ({ default: m.LessonView })),
+);
+const ResourcesView = React.lazy(() =>
+  import('./views/ResourcesView').then((m) => ({ default: m.ResourcesView })),
+);
+const ExamsView = React.lazy(() =>
+  import('./views/ExamsView').then((m) => ({ default: m.ExamsView })),
+);
+const AIAssistantView = React.lazy(() =>
+  import('./views/AIAssistantView').then((m) => ({ default: m.AIAssistantView })),
+);
+const StudentDashboardView = React.lazy(() =>
+  import('./views/StudentDashboardView').then((m) => ({ default: m.StudentDashboardView })),
+);
+const LeaderboardView = React.lazy(() =>
+  import('./views/LeaderboardView').then((m) => ({ default: m.LeaderboardView })),
+);
+const AchievementsView = React.lazy(() =>
+  import('./views/AchievementsView').then((m) => ({ default: m.AchievementsView })),
+);
+const StudyRoomsView = React.lazy(() =>
+  import('./views/StudyRoomsView').then((m) => ({ default: m.StudyRoomsView })),
+);
+
+/** بديل خفيف أثناء تحميل حزمة الشاشة. */
+const ViewLoader = () => (
+  <div className="flex items-center justify-center py-16" role="status" aria-live="polite">
+    <span className="h-8 w-8 rounded-full border-[3px] border-amber-400/30 border-t-amber-400 animate-spin" />
+    <span className="sr-only">جارٍ التحميل…</span>
+  </div>
+);
 import { AuthGate } from './components/AuthGate';
 import { AIAssistantFab } from './components/AIAssistantFab';
 import { useSession } from './hooks/useSession';
@@ -143,13 +174,30 @@ function AppContent() {
   // محرّك التنبيهات المحلي (تذكيرات + مواعيد التقويم + الدروس غير المكتملة)
   useReminderEngine({ pendingLessons });
 
-  const allLessonsInCurrentSubject = currentSubject.units.flatMap(
+  const allLessonsInCurrentSubject = (currentSubject?.units || []).flatMap(
     (u) => u.lessons
   );
 
   /* بوابة الدخول: التطبيق لا يُفتح إلا بحساب مُفعَّل برمز من الإدارة */
   const { user: gateUser } = useSession();
   if (!gateUser) return <AuthGate />;
+
+  /**
+   * أول زيارة (لا نسخة محفوظة) — المنهج يصل من الخادم بعد لحظة.
+   * بدل أن تنهار الشاشات على `subjects[0].units` نعرض انتظاراً خفيفاً.
+   */
+  if (SUBJECTS_DATA.length === 0) {
+    return (
+      <div
+        dir={isRtl ? 'rtl' : 'ltr'}
+        className="min-h-screen bg-[#071322] text-white flex flex-col items-center justify-center gap-3 px-6"
+      >
+        <span className="h-9 w-9 rounded-full border-[3px] border-amber-400/30 border-t-amber-400 animate-spin" />
+        <p className="text-sm font-bold text-amber-300">جارٍ تحميل المنهج…</p>
+        <p className="text-[11px] text-slate-400">أول مرة فقط — بعدها يعمل التطبيق دون اتصال</p>
+      </div>
+    );
+  }
 
   return (
     <div 
@@ -172,6 +220,7 @@ function AppContent() {
 
       {/* Main Container */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-8 pb-24 lg:pb-12">
+        <React.Suspense fallback={<ViewLoader />}>
         {currentView === 'home' && (
           <HomeView
             subjects={SUBJECTS_DATA}
@@ -251,7 +300,7 @@ function AppContent() {
         {currentView === 'study-rooms' && (
           <StudyRoomsView onBackToDashboard={() => setCurrentView('student-dashboard')} />
         )}
-
+        </React.Suspense>
       </main>
 
       {/* Footer */}

@@ -1,4 +1,4 @@
-import { Lesson, Subject, ResourceItem, QuizQuestion } from './curriculumTypes';
+import type { ResourceItem, QuizQuestion } from './curriculumTypes';
 
 export const SUDANESE_GRADE_TITLE = 'الصف الثالث المتوسط';
 export const SUDANESE_STAGE = 'مرحلة التعليم المتوسط - جمهورية السودان';
@@ -13,40 +13,6 @@ export const SUDANESE_STAGE = 'مرحلة التعليم المتوسط - جمه
  * لو عدّلت البيانات يدوي من هنا وبدّك ترجّع التصدير:
  *   node scripts/export-content.mjs
  */
-import mathContent from './content/math.json';
-import scienceContent from './content/science.json';
-import arabicContent from './content/arabic.json';
-import islamicContent from './content/islamic.json';
-import socialContent from './content/social.json';
-import englishContent from './content/english.json';
-import ictContent from './content/ict.json';
-import civicsContent from './content/civics.json';
-import technicalContent from './content/technical.json';
-
-const CONTENT_FILES = [
-  mathContent,
-  scienceContent,
-  arabicContent,
-  islamicContent,
-  socialContent,
-  englishContent,
-  ictContent,
-  civicsContent,
-  technicalContent,
-];
-
-export const SUBJECTS_DATA: Subject[] = CONTENT_FILES.map((raw) => {
-  const c = raw as unknown as Subject;
-  return {
-    ...c,
-    units: (c.units || []).map((u) => ({
-      ...u,
-      subjectId: c.id,
-      lessons: (u.lessons || []).map((l) => ({ ...l, subjectId: c.id, unitId: u.id })),
-    })),
-  };
-});
-
 export const RESOURCES_DATA: ResourceItem[] = [
   {
     id: 'res-1',
@@ -342,44 +308,9 @@ const SUBJECT_EMOJI: Record<string, string> = {
   technical: '🛠️',
 };
 
+export type { FlatLesson } from './contentData';
+
 export const subjectEmoji = (id: string) => SUBJECT_EMOJI[id] ?? '📚';
-
-export interface FlatLesson extends Lesson {
-  subjectName: string;
-  subjectCode: string;
-  unitTitle: string;
-  unitNumber: number;
-}
-
-/** كل الدروس مسطّحة مع اسم المادة والوحدة — للبحث وجداول الإدارة */
-export const allLessons = (): FlatLesson[] =>
-  SUBJECTS_DATA.flatMap((s) =>
-    s.units.flatMap((u) =>
-      u.lessons.map((l) => ({
-        ...l,
-        subjectName: s.name,
-        subjectCode: s.code,
-        unitTitle: u.title,
-        unitNumber: u.unitNumber,
-      })),
-    ),
-  );
-
-export const subjectNameById = (id: string) =>
-  SUBJECTS_DATA.find((s) => s.id === id)?.name ?? '—';
-
-export const curriculumStats = () => ({
-  subjects: SUBJECTS_DATA.length,
-  units: SUBJECTS_DATA.reduce((a, s) => a + s.units.length, 0),
-  lessons: SUBJECTS_DATA.reduce(
-    (a, s) => a + s.units.reduce((b, u) => b + u.lessons.length, 0),
-    0,
-  ),
-  resources: RESOURCES_DATA.length,
-  /** الأعداد المعلنة في الخطة (unitsCount / lessonsCount) */
-  plannedUnits: SUBJECTS_DATA.reduce((a, s) => a + s.unitsCount, 0),
-  plannedLessons: SUBJECTS_DATA.reduce((a, s) => a + s.lessonsCount, 0),
-});
 
 /** أرقام تجريبية للعرض (تحاكي تقييمات سابقة) — تُوسم بأنها تجريبية في الواجهة */
 export const SAMPLE_RATING_STATS: Record<string, { average: number; total: number }> = {

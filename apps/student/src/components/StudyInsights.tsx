@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Clock3, Flame, Star, Target, Timer } from 'lucide-react';
 import { SESSION_MINUTES, focusStats, getFocusLog } from '../utils/focusStore';
 import { getAllFeedback, subscribeFeedback } from '../utils/ratingStore';
-import { allLessons } from '@shared/curriculum';
+import { useSubjects } from '../data/curriculumData';
 
 const FOCUS_EVENT = 'ssp:focus-changed';
 
@@ -30,11 +30,18 @@ export const StudyInsights: React.FC = () => {
   }, []);
 
   const stats = useMemo(() => focusStats(log), [log]);
+  // الفهرس من المنهج الحالي (الخادم/الذاكرة) — لا نستورد النسخة المضمَّنة هنا
+  // حتى لا تُسحب ٥٨٠ كيلوبايت إلى الحزمة الأساسية.
+  const subjects = useSubjects();
   const lessonIndex = useMemo(() => {
     const map = new Map<string, { title: string; subjectName: string }>();
-    allLessons().forEach((l) => map.set(l.id, { title: l.title, subjectName: l.subjectName }));
+    subjects.forEach((s) =>
+      s.units.forEach((u) =>
+        u.lessons.forEach((l) => map.set(l.id, { title: l.title, subjectName: s.name })),
+      ),
+    );
     return map;
-  }, []);
+  }, [subjects]);
 
   const ratings = useMemo(
     () =>
