@@ -18,7 +18,7 @@
     "db:backup": "node prisma/db-tool.mjs backup",
     "db:restore": "node prisma/db-tool.mjs restore",
     "db:backups": "node prisma/db-tool.mjs list",
-    "build": "prisma generate && tsc -p tsconfig.build.json"
+    "build": "prisma generate && node scripts/migrate-if-db.mjs && tsc -p tsconfig.build.json"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
