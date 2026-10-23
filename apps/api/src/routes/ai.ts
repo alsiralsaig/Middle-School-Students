@@ -86,7 +86,32 @@ aiRouter.get('/ai/status', async (req, res) => {
   let ok = false;
   let detail = 'لا يوجد مزوّد مفعّل';
   try {
-    if (cfg.gemini.apiKey) {
+    if (cfg.groq.apiKey) {
+      // Groq أولاً لأنه المزوّد المفضّل عند توفّره — نفحصه فعلياً
+      const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${cfg.groq.apiKey}` },
+        body: JSON.stringify({
+          model: cfg.groq.model,
+          messages: [{ role: 'user', content: 'قول: تمام' }],
+          max_tokens: 64,
+          ...(cfg.groq.model.includes('gpt-oss') ? { reasoning_effort: 'low', include_reasoning: false } : {}),
+        }),
+      });
+      if (res.ok) {
+        const data = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
+        ok = !!data.choices?.[0]?.message?.content?.trim();
+        detail = ok ? `groq/${cfg.groq.model} يردّ` : 'groq أعاد رداً فارغاً';
+      } else {
+        detail = res.status === 401
+          ? 'المفتاح مرفوض من Groq (تحقق من GROQ_API_KEY)'
+          : res.status === 404
+            ? `الموديل ${cfg.groq.model} غير متاح لهذا المفتاح`
+            : res.status === 429
+              ? 'حصة Groq مستنفدة مؤقتاً'
+              : `Groq رفض الطلب (${res.status})`;
+      }
+    } else if (cfg.gemini.apiKey) {
       const { GoogleGenAI } = await import('@google/genai');
       const ai = new GoogleGenAI({ apiKey: cfg.gemini.apiKey });
       const out = await ai.models.generateContent({
