@@ -113,6 +113,10 @@ export const api = {
    * هذا هو المصدر الموثوق: ما تعدّله الإدارة يظهر هنا مباشرة.
    */
   subjects: () => request<{ subjects: Subject[] }>('/api/subjects'),
+  /** الفهرس فقط (بلا شرح) — خفيف وسريع، والدرس يُطلب عند فتحه. */
+  subjectsIndex: () => request<{ subjects: Subject[] }>('/api/subjects?view=index'),
+  /** درس كامل واحد — يُدمج في المخزن عند فتحه. */
+  lesson: (id: string) => request<{ lesson: any }>(`/api/lessons/${encodeURIComponent(id)}`),
 
   me: () => request<{ user: SessionUser }>('/api/auth/me'),
 

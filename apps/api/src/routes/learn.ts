@@ -13,7 +13,13 @@ export const learnRouter = Router();
  */
 const CURRICULUM_CACHE = 'public, max-age=60, s-maxage=600, stale-while-revalidate=86400';
 
-learnRouter.get('/subjects', async (_req, res) => {
+/**
+ * `?view=index` يرجّع **الفهرس فقط**: عناوين الدروس وبياناتها القصيرة،
+ * بلا شرح ولا أسئلة ولا نصائح — ١٠٨٠ كيلوبايت تصير ~٢٤٠.
+ * التطبيق يطلب الدرس الكامل من `/api/lessons/:id` عند فتحه.
+ */
+learnRouter.get('/subjects', async (req, res) => {
+  const indexOnly = String(req.query.view || '') === 'index';
   try {
     const subjects = await prisma.subject.findMany({
       orderBy: { code: 'asc' },
@@ -29,20 +35,40 @@ learnRouter.get('/subjects', async (_req, res) => {
     res.json({
       subjects: subjects.map((s) => ({
         ...s,
-        official: s.official ? JSON.parse(s.official) : null,
+        official: indexOnly ? null : s.official ? JSON.parse(s.official) : null,
         // الهيكل الرسمي من الكتاب (ليس بالضرورة مساوياً لـ `units` المؤلَّفة)
-        syllabus: s.syllabus ? JSON.parse(s.syllabus) : null,
+        syllabus: indexOnly ? null : s.syllabus ? JSON.parse(s.syllabus) : null,
         units: s.units.map((u) => ({
           ...u,
-          lessons: u.lessons.map((l) => ({
-            ...l,
-            learningObjectives: JSON.parse(l.learningObjectives),
-            sections: JSON.parse(l.sections),
-            keyRules: JSON.parse(l.keyRules),
-            attachments: JSON.parse(l.attachments),
-            faq: JSON.parse(l.faq),
-            examTips: JSON.parse(l.examTips),
-          })),
+          lessons: u.lessons.map((l) =>
+            indexOnly
+              ? {
+                  // بيانات كافية للعرض والقوائم — بلا الشرح
+                  id: l.id,
+                  subjectId: l.subjectId,
+                  unitId: l.unitId,
+                  lessonNumber: l.lessonNumber,
+                  title: l.title,
+                  durationMinutes: l.durationMinutes,
+                  summary: l.summary,
+                  status: l.status,
+                  learningObjectives: [],
+                  sections: [],
+                  keyRules: [],
+                  attachments: [],
+                  faq: [],
+                  examTips: [],
+                }
+              : {
+                  ...l,
+                  learningObjectives: JSON.parse(l.learningObjectives),
+                  sections: JSON.parse(l.sections),
+                  keyRules: JSON.parse(l.keyRules),
+                  attachments: JSON.parse(l.attachments),
+                  faq: JSON.parse(l.faq),
+                  examTips: JSON.parse(l.examTips),
+                }
+          ),
         })),
       })),
     });

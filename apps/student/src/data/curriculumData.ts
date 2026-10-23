@@ -77,6 +77,35 @@ async function loadBundled(): Promise<Subject[]> {
   return bundledPromise;
 }
 
+/**
+ * يدمج درساً كاملاً في المخزن (يُطلب عند فتح الدرس فقط).
+ * الفهرس يحمل عناوين الدروس بلا شرح؛ هذه الدالة تجلب الشرح وتبدّله في مكانه.
+ */
+export async function hydrateLesson(lessonId: string): Promise<void> {
+  try {
+    const { lesson } = await api.lesson(lessonId);
+    if (!lesson) return;
+    let changed = false;
+    current = current.map((subject) => ({
+      ...subject,
+      units: subject.units.map((unit) => ({
+        ...unit,
+        lessons: unit.lessons.map((l) => {
+          if (l.id !== lessonId) return l;
+          changed = true;
+          return { ...l, ...lesson };
+        }),
+      })),
+    }));
+    if (changed) {
+      // لا نكتب النسخة الكاملة في التخزين: الفهرس هو ما يُحفظ (خفيف)
+      emit();
+    }
+  } catch {
+    /* فشل الشبكة: يبقى الفهرس، والشاشة تعرض ما لديها */
+  }
+}
+
 export async function refreshCurriculum(): Promise<Subject[]> {
   // أول زيارة بلا نسخة محفوظة: نكسب الوقت بعرض المضمَّن فوراً إن لزم.
   if (current.length === 0) {
@@ -87,9 +116,25 @@ export async function refreshCurriculum(): Promise<Subject[]> {
     }
   }
   try {
-    const { subjects } = await api.subjects();
+    // الفهرس أولاً: ٢٤٠ كيلوبايت بدل ١٠٨٠، والشروح تُطلب مع فتح كل درس.
+    const { subjects } = await api.subjectsIndex();
     if (subjects && subjects.length > 0) {
-      current = subjects;
+      // نحافظ على أي شرح سبق تحميله في هذه الجلسة أو في النسخة المحفوظة
+      const hydrated = new Map<string, any>();
+      current.forEach((s) =>
+        s.units.forEach((u) =>
+          u.lessons.forEach((l) => {
+            if (l.sections && l.sections.length > 0) hydrated.set(l.id, l);
+          }),
+        ),
+      );
+      current = subjects.map((s) => ({
+        ...s,
+        units: s.units.map((u) => ({
+          ...u,
+          lessons: u.lessons.map((l) => hydrated.get(l.id) || l),
+        })),
+      }));
       lastSync = new Date().toISOString();
       online = true;
       writeCache(subjects);

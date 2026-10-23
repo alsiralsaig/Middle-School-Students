@@ -5,7 +5,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { ViewMode, Lesson, Subject } from './types';
-import { RESOURCES_DATA, useSubjects, refreshCurriculum } from './data/curriculumData';
+import { RESOURCES_DATA, useSubjects, refreshCurriculum, hydrateLesson } from './data/curriculumData';
 import { Header } from './components/Header';
 import { MobileBottomNav } from './components/MobileBottomNav';
 import { Footer } from './components/Footer';
@@ -142,11 +142,34 @@ function AppContent() {
     setCurrentView('subject-detail');
   };
 
+  /**
+   * الفهرس يحمل عناوين الدروس فقط؛ عند فتح درس نطلب شرحه من الخادم.
+   * إن كان الشرح محمّلاً من قبل (تنقّل داخلي) لا نطلب شيئاً.
+   */
+  const [lessonHydrating, setLessonHydrating] = useState(false);
+
   const handleSelectLesson = (lesson: Lesson) => {
     setSelectedLesson(lesson);
     setSelectedSubjectId(lesson.subjectId);
     setCurrentView('lesson');
+    if (!lesson.sections || lesson.sections.length === 0) {
+      setLessonHydrating(true);
+      hydrateLesson(lesson.id).finally(() => setLessonHydrating(false));
+    } else {
+      setLessonHydrating(false);
+    }
   };
+
+  // وصل الشرح من الخادم: نستبدل الكائن المعروض بنسخته الكاملة
+  useEffect(() => {
+    if (!selectedLesson) return;
+    const fresh = SUBJECTS_DATA.flatMap((s) => s.units.flatMap((u) => u.lessons)).find(
+      (l) => l.id === selectedLesson.id,
+    );
+    if (fresh && (fresh.sections?.length || 0) > (selectedLesson.sections?.length || 0)) {
+      setSelectedLesson(fresh);
+    }
+  }, [SUBJECTS_DATA, selectedLesson]);
 
   const handleSelectResource = (resourceId: string) => {
     setSelectedResourceId(resourceId);
@@ -249,6 +272,13 @@ function AppContent() {
             onBack={() => setCurrentView('subjects')}
             onSelectLesson={handleSelectLesson}
           />
+        )}
+
+        {currentView === 'lesson' && lessonHydrating && (
+          <div className="mb-3 flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-[12px] font-bold text-amber-900">
+            <span className="h-4 w-4 rounded-full border-2 border-amber-400/40 border-t-amber-600 animate-spin" />
+            جارٍ تحميل شرح الدرس…
+          </div>
         )}
 
         {currentView === 'lesson' && selectedLesson && currentSubject && (
