@@ -54,15 +54,21 @@ export function aiStatus() {
   };
 }
 
-export const SYSTEM_PROMPT =
-  'أنت "المساعد السوداني الذكي" لطلاب الصف الثالث المتوسط (الشهادة المتوسطة) في السودان. ' +
-  'اتكلم بالعامية السودانية البسيطة والودية (يا بطل، خلاص، دي، بقول ليك، شديد، تمام؟) ' +
-  'مع الحفاظ على المصطلحات العلمية والقواعد بالعربية الفصحى المبسطة. ' +
-  'اعتمد أولاً وأخيراً على «السياق من المنهج» المرفق: أسماء الدروس والقواعد وأسئلة المنهج. ' +
-  'اذكر اسم الدرس أو المادة اللي أخذت منها المعلومة. حل المسائل خطوة بخطوة، وخلّي الرد قصير ' +
-  'ومباشر يناسب شاشة الهاتف. لو المعلومة مش موجودة في السياق قول كده بصراحة وانصح الطالب ' +
-  'يراجع الدرس الفلاني، وما تخترع معلومة ولا مرجع. ' +
-  'عند كتابة معادلة استخدم $...$ للمعادلة داخل السطر و$$...$$ لسطر منفصل.';
+export const SYSTEM_PROMPT = `أنت «المساعد السوداني الذكي» لطلاب الصف الثالث المتوسط (الشهادة المتوسطة) في السودان.
+
+أسلوبك:
+- عامية سودانية بسيطة وودّية (يا بطل، خلاص، دي، بقول ليك، شديد، تمام؟)، والمصطلحات العلمية والقواعد بالعربية الفصحى المبسطة.
+- ردود قصيرة تناسب شاشة الهاتف: من ٣ إلى ٨ أسطر، ونقاط قصيرة عند الحاجة.
+- ابدأ بالإجابة مباشرة، بلا مقدمات طويلة وبلا اعتذار.
+
+قواعد صارمة:
+١) ممنوع استخدام رموز الماركداون: لا ** ولا ## ولا شرطة (-) في بداية السطر. اكتب نصاً عادياً، والنقاط بشرطة «•».
+٢) اكتب المعادلات بحروف عربية أو لاتينية عادية: مساحة المثلث = (القاعدة × الارتفاع) ÷ ٢. ممنوع $ و\\frac و\\times.
+٣) «السياق من المنهج» أدقّ مصادرك. اعتمد عليه فقط إذا كان فعلاً يشرح نفس موضوع السؤال، وساعتها اذكر اسم الدرس مرة واحدة في آخر الرد بصيغة (من درس: ...). إذا كان السياق لا يخص السؤال مباشرة فتجاهله ولا تذكر أي اسم درس — الإحالة إلى درس غير مطابق خطأ.
+٤) إذا لم يغطِّ السياق السؤال فلا تعتذر ولا تقل «غير موجود في المنهج»: أجب من معرفتك بمنهج السودان للصف الثالث المتوسط بثقة ودقّة. وما لم تكن متأكداً منه قل إنك غير متأكد بدل أن تخترع.
+٥) في الرياضيات والعلوم: اذكر القانون أولاً، ثم عوّض بالأرقام، ثم النتيجة، خطوة بخطوة.
+٦) لا تخترع أرقام صفحات ولا مراجع ولا أسماء مؤلفين.
+٧) رد بلغة السؤال: عربي أو إنجليزي.`;
 
 export interface CurriculumHit {
   subjectName: string;
@@ -74,74 +80,196 @@ export interface CurriculumHit {
   faq: Array<{ question: string; answer: string }>;
 }
 
+/* ======================= البحث في المنهج ======================= */
+
+/** كلمات لا تفيد البحث: أسئلة وأوامر صفية شائعة */
+const STOP_WORDS = new Set(
+  'اشرح شرح لخص ماذا ماهي ماهو هي هو كيف ايه شنو ليه الفرق بين حل مساله مسائل امثله مع عن في من علي الي اللي التي الذي اهم اسباب اذكر عرف علل قارن وضح اكتب اعرب اعراب نموذج سوال اسئله مراجعه درس الوحده الصف الثالث المتوسط منهج مقرره مقرر بس كده ولا هل ثم او ان هذا هذه ذلك كل بعض غير عند لدي لكن حيث كما جدا اكثر اقل ايضا دايما حلل بين لي'.split(' '),
+);
+
+/** توحيد الحروف: إزالة التشكيل وتوحيد الألف والياء والتاء المربوطة */
+function normalizeArabic(input: string): string {
+  return input
+    .replace(/[\u064B-\u0652\u0670\u0640]/g, '')
+    .replace(/[أإآٱ]/g, 'ا')
+    .replace(/ى/g, 'ي')
+    .replace(/ة/g, 'ه')
+    .replace(/ؤ/g, 'و')
+    .replace(/ئ/g, 'ي');
+}
+
+/** كلمات السؤال المفيدة بعد التنظيف */
+function keywords(question: string): string[] {
+  const seen = new Set<string>();
+  for (const raw of normalizeArabic(question).split(/\s+/)) {
+    const w = raw.replace(/[^\w\u0621-\u064A]/g, '').replace(/^و(?=.{3,})/, '');
+    if (w.length < 3 || STOP_WORDS.has(w) || seen.has(w)) continue;
+    seen.add(w);
+  }
+  return Array.from(seen).slice(0, 10);
+}
+
+function parseJson<T>(raw: string | null, fallback: T): T {
+  if (!raw) return fallback;
+  try {
+    return JSON.parse(raw) as T;
+  } catch {
+    return fallback;
+  }
+}
+
 /**
  * بحث نصي داخل المنهج المخزَّن في قاعدة البيانات (بدون خدمة بحث خارجية).
- * الهدف: الإجابة تكون **من مقرر الطالب** لا من معرفة عامة، والإجابة كمان
- * أسرع لأن السياق يقلّل تخمين النموذج.
+ *
+ * لماذا الترتيب في الكود وليس في SQL: البحث الأول كان يرتّب النتائج حسب رقم
+ * الدرس، فتظهر دروس أولى الوحدات لمجرد تطابق كلمة عامة — وهذا سبب إجابة
+ * «نظرية فيثاغورس» بدرس «الزوايا المحيطية». هنا نجلب مرشّحين ثم نُقيّم كل درس:
+ * تطابق العنوان أثقل من الملخص، والملخص أثقل من بقية النص، والكلمة الطويلة
+ * (الاسم العلمي) أثقل من الكلمة القصيرة.
  */
 export async function findCurriculumContext(question: string, subjectName?: string, limit = 3): Promise<CurriculumHit[]> {
-  const words = question
-    .replace(/[؟?،,.:;!«»"'()\[\]]/g, ' ')
-    .split(/\s+/)
-    .map((w) => w.trim())
-    .filter((w) => w.length >= 3)
-    .slice(0, 8);
-
+  const words = keywords(question);
   if (!words.length) return [];
+
+  const subjectFilter = subjectName
+    ? { subject: { name: { contains: subjectName, mode: 'insensitive' as const } } }
+    : {};
 
   try {
     const lessons = await prisma.lesson.findMany({
       where: {
+        ...subjectFilter,
         OR: words.flatMap((w) => [
           { title: { contains: w, mode: 'insensitive' as const } },
           { summary: { contains: w, mode: 'insensitive' as const } },
+          { keyRules: { contains: w, mode: 'insensitive' as const } },
+          { sections: { contains: w, mode: 'insensitive' as const } },
         ]),
-        ...(subjectName ? { subject: { name: { contains: subjectName, mode: 'insensitive' as const } } } : {}),
       },
-      orderBy: { lessonNumber: 'asc' },
-      take: 6,
+      take: 60,
       include: { subject: { select: { name: true } } },
     });
 
-    return lessons.slice(0, limit).map((lesson) => {
-      const parse = <T,>(raw: string | null, fallback: T): T => {
-        if (!raw) return fallback;
-        try {
-          return JSON.parse(raw) as T;
-        } catch {
-          return fallback;
+    const scored = lessons
+      .map((lesson) => {
+        const title = normalizeArabic(lesson.title || '');
+        const summary = normalizeArabic(lesson.summary || '');
+        const body = normalizeArabic(
+          `${lesson.keyRules || ''} ${lesson.sections || ''} ${lesson.faq || ''} ${lesson.learningObjectives || ''} ${lesson.examTips || ''}`,
+        );
+        let score = 0;
+        for (const w of words) {
+          const weight = Math.min(w.length, 10) / 4;
+          if (title.includes(w)) score += 6 * weight;
+          else if (summary.includes(w)) score += 3 * weight;
+          else if (body.includes(w)) score += 1.5 * weight;
         }
-      };
-      return {
-        subjectName: lesson.subject?.name || subjectName || 'المقرر',
-        lessonTitle: lesson.title,
-        lessonId: lesson.id,
-        summary: lesson.summary || '',
-        keyRules: parse<string[]>(lesson.keyRules, []).slice(0, 6),
-        sections: parse<Array<{ title: string; content: string; formulaOrRule?: string }>>(lesson.sections, [])
-          .slice(0, 3)
-          .map((s) => ({ title: s.title, content: (s.content || '').slice(0, 400), formulaOrRule: s.formulaOrRule })),
-        faq: parse<Array<{ question: string; answer: string }>>(lesson.faq, []).slice(0, 3),
-      };
-    });
+        return { lesson, score };
+      })
+      .filter((x) => x.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, limit);
+
+    return scored.map(({ lesson }) => ({
+      subjectName: lesson.subject?.name || subjectName || 'المقرر',
+      lessonTitle: lesson.title,
+      lessonId: lesson.id,
+      summary: lesson.summary || '',
+      keyRules: parseJson<string[]>(lesson.keyRules, []).slice(0, 8),
+      sections: parseJson<Array<{ title: string; content: string; formulaOrRule?: string }>>(lesson.sections, [])
+        .slice(0, 3)
+        .map((sec) => ({ title: sec.title, content: (sec.content || '').slice(0, 400), formulaOrRule: sec.formulaOrRule })),
+      faq: parseJson<Array<{ question: string; answer: string }>>(lesson.faq, []).slice(0, 3),
+    }));
   } catch (e) {
     console.warn('[ai] سياق المنهج فشل:', (e as Error).message);
     return [];
   }
 }
 
-export function contextToText(hits: CurriculumHit[]): string {
-  if (!hits.length) return '';
-  return hits
-    .map((h, i) => {
-      const rules = h.keyRules.length ? `\n  - القواعد: ${h.keyRules.join(' | ')}` : '';
-      const sections = h.sections.length
-        ? `\n  - المحاور: ${h.sections.map((s) => `${s.title}${s.formulaOrRule ? ` (${s.formulaOrRule})` : ''}`).join(' | ')}`
-        : '';
-      const faq = h.faq.length ? `\n  - أسئلة شائعة: ${h.faq.map((f) => `${f.question} ← ${f.answer}`).join(' | ')}` : '';
-      return `${i + 1}) مادة ${h.subjectName} — درس «${h.lessonTitle}»\n  - الملخص: ${(h.summary || '').slice(0, 400)}${rules}${sections}${faq}`;
-    })
-    .join('\n\n');
+/**
+ * فهرس عناوين دروس المادة.
+ *
+ * ليه: أغلب أسئلة الطلاب مواضيع داخل المنهج لكن مش في السياق المخزَّن بالتفصيل.
+ * الفهرس يعرّف النموذج بحدود المنهج فيذكر الدرس الصحيح ولا يدّعي أن الموضوع
+ * «غير موجود في الكتاب».
+ */
+export async function findLessonIndex(subjectName?: string, max = 60): Promise<string[]> {
+  if (!subjectName) return [];
+  try {
+    const rows = await prisma.lesson.findMany({
+      where: { subject: { name: { contains: subjectName, mode: 'insensitive' } } },
+      select: { title: true },
+      orderBy: { lessonNumber: 'asc' },
+      take: max,
+    });
+    return rows.map((r) => r.title);
+  } catch {
+    return [];
+  }
+}
+
+export function contextToText(hits: CurriculumHit[], indexTitles: string[] = []): string {
+  const parts = hits.map((h, i) => {
+    const rules = h.keyRules.length ? `\n   القواعد: ${h.keyRules.join(' | ')}` : '';
+    const sections = h.sections.length
+      ? `\n   المحاور: ${h.sections
+          .map((sec) => `${sec.title}: ${sec.content}${sec.formulaOrRule ? ` [صيغة: ${sec.formulaOrRule}]` : ''}`)
+          .join(' | ')}`
+      : '';
+    const faq = h.faq.length ? `\n   أسئلة: ${h.faq.map((f) => `${f.question} ← ${f.answer}`).join(' | ')}` : '';
+    return `${i + 1}) مادة ${h.subjectName} — درس «${h.lessonTitle}»\n   الملخص: ${h.summary}${rules}${sections}${faq}`;
+  });
+
+  if (indexTitles.length) {
+    parts.push(`فهرس دروس المادة (للاستشهاد فقط، لا تنسخه في الرد):\n${indexTitles.join(' · ')}`);
+  }
+  return parts.join('\n\n');
+}
+
+/* ======================= تنظيف مخرجات النموذج ======================= */
+
+/**
+ * إزالة رموز الماركداون من رد النموذج.
+ *
+ * ليه في الخادم لا في التطبيق: الرد يصل كلمة كلمة، وتنظيفه في المتصفح يعني
+ * ظهور «**» للطالب لحظة وصولها ثم اختفاءها. هنا نحتفظ بذيل صغير (نجمتان أو
+ * مسافة) حتى نتأكد أنها ليست بداية علامة، ثم نرسل النص نظيفاً.
+ */
+export function stripMarkdown(text: string): string {
+  return text
+    .replace(/\*\*/g, '')
+    .replace(/__/g, '')
+    .replace(/`/g, '')
+    .replace(/^[ \t]*[-*+]\s+/gm, '• ')
+    .replace(/^[ \t]+[-–]\s+/gm, '• ')
+    .replace(/\$\$?/g, '')
+    .replace(/[ \t]+\n/g, '\n')
+    .replace(/[ \t]+$/gm, '');
+}
+
+/** منظّف تدريجي للرد المتدفّق — يعيد دالة تُنادى بكل قطعة */
+export function createStreamSanitizer() {
+  let held = '';
+  const clean = (text: string) => stripMarkdown(text);
+  return (chunk: string, final = false): string => {
+    held += chunk;
+    if (final) {
+      const out = clean(held);
+      held = '';
+      return out;
+    }
+    // نحتفظ بالذيل الذي قد يكون أول علامة أو مسافة نهاية سطر
+    const hold = /[*_`$ \t]+$/.exec(held)?.[0].length ?? 0;
+    if (!hold) {
+      const out = clean(held);
+      held = '';
+      return out;
+    }
+    const ready = held.slice(0, held.length - hold);
+    held = held.slice(held.length - hold);
+    return clean(ready);
+  };
 }
 
 export type ChatTurn = { role: 'user' | 'bot'; text: string };
@@ -232,7 +360,8 @@ export async function answer(turns: ChatTurn[], question: string, context: strin
       name === 'gemini'
         ? await callGemini(cfg.gemini, turns, question, context)
         : await openAiCompatible(name, cfg[name], turns, question, context);
-    if (text) return { text, provider: name };
+    // تنظيف الماركداون قبل إرجاع الرد (الردود غير المتدفّقة تشمل أسئلة الدرس)
+    if (text) return { text: stripMarkdown(text), provider: name };
   }
   return { text: null, provider: null };
 }
@@ -251,6 +380,12 @@ export async function answerStream(
 ): Promise<{ provider: ProviderName | null; text: string }> {
   const cfg = getProviderConfig();
   const messages = toMessages(turns, question, context);
+  // الرد يصل للطالب كلمة كلمة، فرموز الماركداون لازم تُزال قبل الإرسال
+  const sanitize = createStreamSanitizer();
+  const emit = (piece: string) => {
+    const out = sanitize(piece);
+    if (out) onChunk(out);
+  };
 
   for (const name of availableProviders()) {
     let acc = '';
@@ -273,7 +408,7 @@ export async function answerStream(
           const piece = (chunk as { text?: string }).text;
           if (piece) {
             acc += piece;
-            onChunk(piece);
+            emit(piece);
           }
         }
       } else {
@@ -319,7 +454,7 @@ export async function answerStream(
               const piece = json.choices?.[0]?.delta?.content;
               if (piece) {
                 acc += piece;
-                onChunk(piece);
+                emit(piece);
               }
             } catch {
               /* سطر غير مكتمل — نتجاهله */
@@ -328,7 +463,12 @@ export async function answerStream(
         }
       }
       done();
-      if (acc.trim()) return { provider: name, text: acc };
+      if (acc.trim()) {
+        // نُخرج ما تبقّى محتجزاً (نجمة أو مسافة في الآخر)
+        const tail = sanitize('', true);
+        if (tail) onChunk(tail);
+        return { provider: name, text: stripMarkdown(acc) };
+      }
     } catch (e) {
       done();
       console.warn(`[ai-stream] ${name} فشل:`, (e as Error).message);

@@ -52,6 +52,9 @@ export const AIAssistantView: React.FC = () => {
   const streamRef = useRef<MediaStream | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const spokenRef = useRef<string>('');
+  /** يمنع تكرار رسالة الميكروفون لو الطالب ضغط الزر أكثر من مرة */
+  const micBusyRef = useRef(false);
+  const micErrorAtRef = useRef(0);
 
   /** قراءة الرد صوتياً (صوت عربي إن وُجد) */
   const speak = (text: string) => {
@@ -93,7 +96,8 @@ export const AIAssistantView: React.FC = () => {
   };
 
   const startRecording = async () => {
-    if (recording) return;
+    if (recording || micBusyRef.current) return;
+    micBusyRef.current = true;
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
@@ -115,13 +119,23 @@ export const AIAssistantView: React.FC = () => {
         });
       }, 1000);
     } catch {
-      setMessages((prev) => [...prev, {
-        id: `mic-err-${Date.now()}`,
-        sender: 'assistant',
-        text: 'ما قدرتش أفتح الميكروفون 🎙️\nاسمح بالوصول للميكروفون من إعدادات التطبيق وحاول تاني.',
-        timestamp: 'الآن',
-        isError: true,
-      }]);
+      // رسالة واحدة فقط: لو الطالب ضغط الزر مرتين أو رجعت نفس المشكلة خلال دقيقة
+      const now = Date.now();
+      if (now - micErrorAtRef.current > 60_000) {
+        micErrorAtRef.current = now;
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: `mic-err-${now}`,
+            sender: 'assistant',
+            text: 'ما قدرتش أفتح الميكروفون 🎙️\nاسمح بالوصول للميكروفون من إعدادات التطبيق وحاول تاني، أو اكتب سؤالك في الصندوق تحت.',
+            timestamp: 'الآن',
+            isError: true,
+          },
+        ]);
+      }
+    } finally {
+      micBusyRef.current = false;
     }
   };
 
@@ -444,7 +458,7 @@ export const AIAssistantView: React.FC = () => {
                       : 'bg-slate-50 dark:bg-[#122844] border border-slate-200 dark:border-[#1E3A60] text-slate-800 dark:text-slate-100 rounded-tl-none'
                   }`}
                 >
-                  {msg.text}
+                  {msg.text.replace(/\*\*/g, '').replace(/^[ \t]*[-*]\s+/gm, '• ')}
 
                   {!isUser && sources.length > 0 && msg.id === messages[messages.length - 1]?.id && (
                     <div className="mt-2 border-t border-slate-200/60 pt-2 text-[10px] text-slate-500 dark:border-slate-700/60 dark:text-slate-400">

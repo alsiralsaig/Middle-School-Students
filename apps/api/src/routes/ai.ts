@@ -8,6 +8,7 @@ import {
   answerStream,
   contextToText,
   findCurriculumContext,
+  findLessonIndex,
   type ChatTurn,
 } from '../lib/aiProviders.js';
 
@@ -69,6 +70,28 @@ let lastProbeResult: { at: string; ok: boolean; detail: string } | null = null;
 aiRouter.get('/ai/status', async (req, res) => {
   res.setHeader('Cache-Control', 'no-store');
   const base = aiStatus();
+
+  // تشخيص جودة البحث في المنهج بلا أي تكلفة ذكاء اصطناعي:
+  // /api/ai/status?q=المفعول به&subject=اللغة العربية
+  const q = cleanText(req.query.q, 200);
+  if (q) {
+    const subject = cleanText(req.query.subject, 80) || undefined;
+    const [matched, index] = await Promise.all([
+      findCurriculumContext(q, subject, 3),
+      findLessonIndex(subject, 200),
+    ]);
+    res.json({
+      ...base,
+      lastProbe: lastProbeResult,
+      curriculum: {
+        query: q,
+        subject: subject || null,
+        lessonsInSubject: index.length,
+        matched: matched.map((h) => ({ subject: h.subjectName, lesson: h.lessonTitle })),
+      },
+    });
+    return;
+  }
 
   if (String(req.query.probe || '') !== '1') {
     res.json({ ...base, lastProbe: lastProbeResult });
@@ -251,8 +274,12 @@ aiRouter.post('/ai/chat', requireAuth, async (req, res) => {
   const question = subject ? `المادة: ${subject}\n\nسؤال الطالب: ${prompt}` : prompt;
 
   // ١) سياق من المنهج — يجعل الإجابة من مقرر الطالب وأسرع
-  const hits = await findCurriculumContext(prompt, subject || undefined);
-  const context = contextToText(hits);
+  const [hits, indexTitles] = await Promise.all([
+    findCurriculumContext(prompt, subject || undefined),
+    // الفهرس يعرّف النموذج بحدود المادة لما ما يكون في سياق مطابق
+    subject ? findLessonIndex(subject, 40) : Promise.resolve<string[]>([]),
+  ]);
+  const context = contextToText(hits, indexTitles);
 
   // ٢) الرد
   if (wantsStream) {
