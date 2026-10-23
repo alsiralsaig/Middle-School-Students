@@ -10,21 +10,30 @@ import {
   ExternalLink, 
   Sparkles,
   MapPin,
-  X
+  X,
+  Upload,
+  Paperclip
 } from 'lucide-react';
 import { CalendarEvent } from '../types';
 import { PlannerEvent, getAllEvents, removeEvent, subscribePlanner, typeLabelAr, typeTone } from '../utils/plannerStore';
 import { useLanguage } from '../context/LanguageContext';
+import { addEvent } from '../utils/plannerStore';
+import { createPlannerEvent, deletePlannerEvent, deletePrivatePlannerMedia, listPrivatePlannerMedia, PrivateMediaAsset, uploadPrivatePlannerMedia } from '../utils/privateMedia';
+import { getApiBase } from '../utils/serverUrl';
+import { MediaAssetViewer } from './MediaAssetViewer';
 
 export const InteractiveCalendar: React.FC = () => {
   const { t, language, isRtl } = useLanguage();
   const [events, setEvents] = useState<PlannerEvent[]>(getAllEvents);
   const [selectedEventType, setSelectedEventType] = useState<'all' | 'live_class' | 'deadline' | 'exam' | 'trial_exam' | 'review'>('all');
   const [selectedEvent, setSelectedEvent] = useState<PlannerEvent | null>(null);
+  const [showReviewForm,setShowReviewForm]=useState(false);
+  const [reviewTitle,setReviewTitle]=useState('');const [reviewDate,setReviewDate]=useState('');const [reviewTime,setReviewTime]=useState('19:00');const [reviewSubject,setReviewSubject]=useState('عام');
+  const [savingReview,setSavingReview]=useState(false);const [media,setMedia]=useState<PrivateMediaAsset[]>([]);const [mediaBusy,setMediaBusy]=useState(false);const [mediaError,setMediaError]=useState('');
 
-  // Month state - October 2026 default based on environment date
-  const [currentDate, setCurrentDate] = useState(new Date(2026, 9, 1)); // October 2026
-  const [selectedDateStr, setSelectedDateStr] = useState<string>('2026-10-18');
+  // افتراضياً نفتح الشهر واليوم المحليين الحاليين.
+  const [currentDate, setCurrentDate] = useState(() => { const d=new Date(); return new Date(d.getFullYear(),d.getMonth(),1); });
+  const [selectedDateStr, setSelectedDateStr] = useState<string>(() => { const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; });
 
   // متابعة أي إضافة أو حذف في مواعيد التقويم (الاختبارات التجريبية…)
   useEffect(() => subscribePlanner(() => setEvents(getAllEvents())), []);
@@ -66,6 +75,9 @@ export const InteractiveCalendar: React.FC = () => {
     if (selectedEventType === 'all') return true;
     return e.type === selectedEventType;
   });
+  const saveReview=async()=>{if(!reviewTitle.trim()||!reviewDate)return;setSavingReview(true);setMediaError('');try{const saved=await createPlannerEvent({title:reviewTitle.trim(),date:reviewDate,time:reviewTime,subjectName:reviewSubject.trim()||'عام',description:''});const event:PlannerEvent={id:saved.id,title:reviewTitle.trim(),titleEn:reviewTitle.trim(),type:'review',date:reviewDate,time:reviewTime,subjectName:reviewSubject.trim()||'عام',description:'',status:'user'};addEvent(event);setShowReviewForm(false);setReviewTitle('');setSelectedEvent(event);}catch(e){setMediaError(e instanceof Error?e.message:'تعذّر حفظ جلسة المراجعة');}finally{setSavingReview(false);}};
+  useEffect(()=>{let alive=true;if(selectedEvent?.status==='user'){listPrivatePlannerMedia(selectedEvent.id).then(rows=>{if(alive)setMedia(rows);}).catch(()=>{if(alive)setMedia([]);});}else setMedia([]);return()=>{alive=false;};},[selectedEvent?.id,selectedEvent?.status]);
+  const uploadAttachment=async(file?:File)=>{if(!file||!selectedEvent||selectedEvent.status!=='user')return;setMediaBusy(true);setMediaError('');try{await uploadPrivatePlannerMedia(selectedEvent.id,file);setMedia(await listPrivatePlannerMedia(selectedEvent.id));}catch(e){setMediaError(e instanceof Error?e.message:'تعذّر رفع المرفق');}finally{setMediaBusy(false);}};
 
   const getEventBadge = (type: CalendarEvent['type']) => {
     switch (type) {
@@ -185,6 +197,7 @@ export const InteractiveCalendar: React.FC = () => {
             <Sparkles className="w-3 h-3" />
             <span>اختباراتي التجريبية</span>
           </button>
+          <button onClick={()=>{setReviewDate(selectedDateStr||new Date().toISOString().slice(0,10));setShowReviewForm(true);}} className="px-3 py-2 min-h-[36px] rounded-lg text-xs font-bold bg-sky-600 hover:bg-sky-500 text-white">+ {language==='en'?'Add review':'إضافة مراجعة'}</button>
         </div>
       </div>
 
@@ -391,6 +404,7 @@ export const InteractiveCalendar: React.FC = () => {
         </div>
       </div>
 
+      {showReviewForm&&<div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70"><form onSubmit={e=>{e.preventDefault();void saveReview();}} className="w-full max-w-md rounded-2xl border border-[#1E3A60] bg-[#0B1E36] p-6 space-y-3" dir={isRtl?'rtl':'ltr'}><h3 className="text-lg font-bold text-white">{language==='en'?'Plan a review':'جدولة جلسة مراجعة'}</h3><input required value={reviewTitle} onChange={e=>setReviewTitle(e.target.value)} placeholder="عنوان المراجعة" className="w-full rounded-lg bg-[#071728] border border-[#1E3A60] p-3 text-white"/><div className="grid grid-cols-2 gap-2"><input required type="date" value={reviewDate} onChange={e=>setReviewDate(e.target.value)} className="rounded-lg bg-[#071728] border border-[#1E3A60] p-3 text-white"/><input type="time" value={reviewTime} onChange={e=>setReviewTime(e.target.value)} className="rounded-lg bg-[#071728] border border-[#1E3A60] p-3 text-white"/></div><input value={reviewSubject} onChange={e=>setReviewSubject(e.target.value)} placeholder="المادة" className="w-full rounded-lg bg-[#071728] border border-[#1E3A60] p-3 text-white"/>{mediaError&&<p className="text-sm text-rose-300">{mediaError}</p>}<div className="flex justify-end gap-2"><button type="button" onClick={()=>setShowReviewForm(false)} className="px-4 py-2 text-slate-300">{t('close')}</button><button disabled={savingReview} className="px-4 py-2 rounded-lg bg-sky-600 text-white">{savingReview?'…':'حفظ'}</button></div></form></div>}
       {/* Selected Event Detail Modal */}
       {selectedEvent && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs animate-in fade-in duration-200">
@@ -447,12 +461,13 @@ export const InteractiveCalendar: React.FC = () => {
               )}
             </div>
 
+            {selectedEvent.status==='user'&&<section className="mb-4 rounded-xl border border-[#163254] bg-[#091C33] p-3"><div className="flex items-center justify-between mb-2"><strong className="text-xs text-white flex gap-1.5 items-center"><Paperclip className="w-3.5 h-3.5"/>مرفقات خاصة</strong><label className="cursor-pointer rounded-lg bg-sky-600 px-3 py-1.5 text-xs font-bold text-white flex items-center gap-1.5"><Upload className="w-3 h-3"/>{mediaBusy?'…':'إرفاق'}<input type="file" className="hidden" disabled={mediaBusy} onChange={e=>{void uploadAttachment(e.target.files?.[0]);e.currentTarget.value='';}}/></label></div><p className="text-[10px] text-slate-400 mb-2">يراها صاحب الحساب فقط. مستندات/صور حتى 20 MB، صوت 50 MB، فيديو 100 MB.</p>{mediaError&&<p className="text-xs text-rose-300 mb-2">{mediaError}</p>}<MediaAssetViewer assets={media}/>{media.map(a=><div key={a.id} className="flex justify-end py-1"><button onClick={async()=>{try{await deletePrivatePlannerMedia(a.id);setMedia(x=>x.filter(y=>y.id!==a.id));}catch(e){setMediaError(e instanceof Error?e.message:'تعذّر حذف المرفق');}}} className="text-xs text-rose-300">حذف {a.title}</button></div>)}</section>}
             <div className="flex items-center justify-end gap-2.5 flex-wrap">
               {selectedEvent.status === 'user' && (
                 <button
-                  onClick={() => {
-                    removeEvent(selectedEvent.id);
-                    setSelectedEvent(null);
+                  onClick={async () => {
+                    try { await deletePlannerEvent(selectedEvent.id); removeEvent(selectedEvent.id); setSelectedEvent(null); }
+                    catch(e) { setMediaError(e instanceof Error?e.message:'تعذّر حذف جلسة المراجعة'); }
                   }}
                   className="px-4 py-2 rounded-xl text-xs font-semibold text-rose-300 hover:bg-rose-500/10 border border-rose-500/30 transition-colors"
                 >

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { QuizQuestion } from '../types';
 import { SAMPLE_QUIZ_QUESTIONS } from '../data/curriculumData';
 import { 
@@ -19,9 +19,13 @@ import {
   Timer
 } from 'lucide-react';
 import { ExamSimulator } from '../components/ExamSimulator';
+import { api } from '../utils/apiClient';
+import { MediaAssetViewer, type MediaAssetView } from '../components/MediaAssetViewer';
 
 export const ExamsView: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'simulator' | 'practice-quiz' | 'past-papers'>('simulator');
+  const [serverExams,setServerExams]=useState<Array<{id:string;title:string;subjectName:string;attachments:MediaAssetView[]}>>([]);
+  useEffect(()=>{let alive=true;api.exams().then(({exams})=>{if(alive)setServerExams(exams.filter(e=>e.attachments?.length));}).catch(()=>undefined);return()=>{alive=false;};},[]);
   
   // Interactive Quiz state
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -383,6 +387,7 @@ export const ExamsView: React.FC = () => {
       {/* Mode 2: Past Papers */}
       {activeTab === 'past-papers' && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {serverExams.map(exam=><article key={exam.id} className="bg-white dark:bg-[#0D1F35] rounded-2xl border border-slate-200 dark:border-[#1C3A62] p-6 shadow-sm text-right"><h3 className="text-base font-bold text-slate-900 dark:text-white">{exam.title}</h3><p className="text-xs text-slate-500 mt-1">{exam.subjectName} · مرفقات تعليمية</p><div className="mt-4"><MediaAssetViewer assets={exam.attachments}/></div></article>)}
           {pastPapersList.map((paper, idx) => (
             <div
               key={idx}

@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { randomUUID } from 'node:crypto';
 import { prisma } from '../lib/prisma.js';
 import { cleanText, requireAdmin } from '../lib/auth.js';
+import { deleteMediaForOwner } from './media.js';
 
 /**
  * تحرير محتوى المنهج — الإدارة فقط.
@@ -259,6 +260,7 @@ adminContentRouter.delete('/lessons/:id', requireAdmin, async (req, res) => {
       res.status(409).json({ error: 'لا يمكن حذف الدرس لأنه مرتبط بتقدّم أو تقييمات طلاب. حُفظت سجلات الطلاب كما هي.' });
       return;
     }
+    await deleteMediaForOwner('lesson',[lesson.id]);
     await prisma.lesson.delete({ where: { id: lesson.id } });
     res.json({ ok: true });
   } catch (e) { console.error('admin lesson delete error:', e); res.status(500).json({ error: 'تعذّر حذف الدرس' }); }

@@ -22,5 +22,8 @@
     "build:admin": "npm run build --workspace apps/admin",
     "lint": "npm run lint --workspace apps/api && npm run lint --workspace apps/student && npm run lint --workspace apps/admin",
     "content:check": "node scripts/validate-content.mjs"
+  },
+  "overrides": {
+    "deepmerge-ts": "8.0.2"
   }
 }

@@ -204,7 +204,7 @@ uploadsRouter.post(examBlobClientRoute, async (req, res) => {
         ? process.env.VERCEL_PROJECT_PRODUCTION_URL
         : process.env.VERCEL_URL;
       const origin = vercelHost ? `https://${vercelHost}` : `${req.protocol}://${req.get('host')}`;
-      body.payload.callbackUrl = `${origin}${req.originalUrl}`;
+      ;(body.payload as typeof body.payload & { callbackUrl?: string }).callbackUrl = `${origin}${req.originalUrl}`;
     }
     if (body?.type !== 'blob.upload-completed') {
       let authorized = false;
@@ -312,7 +312,7 @@ uploadsRouter.post(lessonBlobClientRoute, async (req, res) => {
         ? process.env.VERCEL_PROJECT_PRODUCTION_URL
         : process.env.VERCEL_URL;
       const origin = vercelHost ? `https://${vercelHost}` : `${req.protocol}://${req.get('host')}`;
-      body.payload.callbackUrl = `${origin}${req.originalUrl}`;
+      ;(body.payload as typeof body.payload & { callbackUrl?: string }).callbackUrl = `${origin}${req.originalUrl}`;
     }
     if (body?.type !== 'blob.upload-completed') {
       let authorized = false;
@@ -410,7 +410,7 @@ uploadsRouter.post(resourceBlobClientRoute, async (req, res) => {
         ? process.env.VERCEL_PROJECT_PRODUCTION_URL
         : process.env.VERCEL_URL;
       const origin = vercelHost ? `https://${vercelHost}` : `${req.protocol}://${req.get('host')}`;
-      body.payload.callbackUrl = `${origin}${req.originalUrl}`;
+      ;(body.payload as typeof body.payload & { callbackUrl?: string }).callbackUrl = `${origin}${req.originalUrl}`;
     }
     if (body?.type !== 'blob.upload-completed') {
       let authorized = false;

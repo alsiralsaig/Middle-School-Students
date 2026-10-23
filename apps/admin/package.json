@@ -12,11 +12,11 @@
   },
   "dependencies": {
     "@ssp/shared": "*",
+    "@vercel/blob": "^2.8.2",
     "lucide-react": "^0.468.0",
     "react": "^19.0.1",
     "react-dom": "^19.0.1",
-    "react-router-dom": "^7.1.1",
-    "@vercel/blob": "^1.1.1"
+    "react-router-dom": "^7.1.1"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.0.0",

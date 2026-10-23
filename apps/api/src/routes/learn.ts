@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { prisma } from '../lib/prisma.js';
 import { cleanText, currentUser, requireAuth } from '../lib/auth.js';
+import { deleteMediaForOwner, mediaAssetDto } from './media.js';
 
 export const learnRouter = Router();
 
@@ -30,16 +31,22 @@ learnRouter.get('/subjects', async (req, res) => {
         },
       },
     });
+    const subjectIds=subjects.map(s=>s.id), unitIds=subjects.flatMap(s=>s.units.map(u=>u.id));
+    const media=await prisma.mediaAsset.findMany({where:{access:'public',OR:[{ownerType:'subject',ownerId:{in:subjectIds}},{ownerType:'unit',ownerId:{in:unitIds}}]},orderBy:{createdAt:'asc'}});
+    const bySubject=new Map<string,unknown[]>(),byUnit=new Map<string,unknown[]>();
+    media.forEach(a=>{const target=a.ownerType==='subject'?bySubject:byUnit;target.set(a.ownerId,[...(target.get(a.ownerId)||[]),mediaAssetDto(a)]);});
     res.setHeader('Cache-Control', CURRICULUM_CACHE);
     res.setHeader('Vary', 'Accept-Encoding');
     res.json({
       subjects: subjects.map((s) => ({
+        mediaAssets:bySubject.get(s.id)||[],
         ...s,
         official: indexOnly ? null : s.official ? JSON.parse(s.official) : null,
         // الهيكل الرسمي من الكتاب (ليس بالضرورة مساوياً لـ `units` المؤلَّفة)
         syllabus: indexOnly ? null : s.syllabus ? JSON.parse(s.syllabus) : null,
         units: s.units.map((u) => ({
           ...u,
+          mediaAssets:byUnit.get(u.id)||[],
           lessons: u.lessons.map((l) =>
             indexOnly
               ? {
@@ -87,6 +94,7 @@ learnRouter.get('/lessons/:id', async (req, res) => {
     res.status(404).json({ error: 'الدرس غير موجود' });
     return;
   }
+  const media=await prisma.mediaAsset.findMany({where:{ownerType:'lesson',ownerId:lesson.id,access:'public'},orderBy:{createdAt:'asc'}});
   // الدرس نفسه لا يتغيّر إلا بحفظ من الإدارة — يُكاش على الحافة مثل المنهج.
   res.setHeader('Cache-Control', CURRICULUM_CACHE);
   res.json({
@@ -95,7 +103,7 @@ learnRouter.get('/lessons/:id', async (req, res) => {
       learningObjectives: JSON.parse(lesson.learningObjectives),
       sections: JSON.parse(lesson.sections),
       keyRules: JSON.parse(lesson.keyRules),
-      attachments: JSON.parse(lesson.attachments),
+      attachments: [...JSON.parse(lesson.attachments),...media.map(mediaAssetDto)],
       faq: JSON.parse(lesson.faq),
       examTips: JSON.parse(lesson.examTips),
     },
@@ -243,7 +251,10 @@ learnRouter.get('/planner', requireAuth, async (req, res) => {
     where: { userId: uid },
     orderBy: [{ date: 'asc' }, { time: 'asc' }],
   });
-  res.json({ events });
+  const assets=events.length?await prisma.mediaAsset.findMany({where:{ownerType:'planner-event',ownerId:{in:events.map(e=>e.id)},userId:uid,access:'private'},orderBy:{createdAt:'asc'}}):[];
+  const byEvent=new Map<string,unknown[]>();assets.forEach(a=>byEvent.set(a.ownerId,[...(byEvent.get(a.ownerId)||[]),{id:a.id,title:a.title,kind:a.kind,mimeType:a.mimeType,sizeBytes:a.sizeBytes,url:`/api/media/${a.id}/content`}]));
+  res.setHeader('Cache-Control','private, no-store');
+  res.json({ events:events.map(e=>({...e,attachments:byEvent.get(e.id)||[]})) });
 });
 
 learnRouter.post('/planner', requireAuth, async (req, res) => {
@@ -275,15 +286,17 @@ learnRouter.post('/planner', requireAuth, async (req, res) => {
 });
 
 learnRouter.delete('/planner/:id', requireAuth, async (req, res) => {
-  const uid = currentUser(req).uid;
-  await prisma.plannerEvent.deleteMany({ where: { id: req.params.id, userId: uid } });
-  res.json({ ok: true });
+  const uid=currentUser(req).uid;
+  const event=await prisma.plannerEvent.findFirst({where:{id:req.params.id,userId:uid},select:{id:true}});
+  if(event){await deleteMediaForOwner('planner-event',[event.id],uid);await prisma.plannerEvent.delete({where:{id:event.id}});}
+  res.json({ok:true});
 });
 
 learnRouter.delete('/planner/group/:groupId', requireAuth, async (req, res) => {
-  const uid = currentUser(req).uid;
-  await prisma.plannerEvent.deleteMany({ where: { groupId: req.params.groupId, userId: uid } });
-  res.json({ ok: true });
+  const uid=currentUser(req).uid;
+  const events=await prisma.plannerEvent.findMany({where:{groupId:req.params.groupId,userId:uid},select:{id:true}});
+  if(events.length){const ids=events.map(e=>e.id);await deleteMediaForOwner('planner-event',ids,uid);await prisma.plannerEvent.deleteMany({where:{id:{in:ids},userId:uid}});}
+  res.json({ok:true});
 });
 
 /* ============================ المكتبة ============================ */

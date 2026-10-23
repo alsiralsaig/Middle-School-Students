@@ -1,10 +1,10 @@
 import React from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ArrowRight, Clock3, FileText, Pencil, Trash2, Upload } from 'lucide-react';
+import { ArrowRight, Clock3, FileText, Pencil, Trash2 } from 'lucide-react';
 import { Badge, Card, EmptyState, ErrorState, LoadingState, NotConnectedNote } from '../components/ui';
 import { api, type LessonRecord } from '../lib/contentApi';
 import { getApiBase } from '../lib/serverUrl';
-import { uploadLessonAttachmentBlob } from '../lib/lessonBlobUpload';
+import { MediaManager } from '../components/MediaManager';
 
 interface LessonFile { id?: string; title?: string; name?: string; url?: string; path?: string; filePath?: string; type?: string; fileType?: string; fileSize?: string }
 type FullLesson = LessonRecord & { attachments: LessonFile[] };
@@ -17,10 +17,7 @@ export const LessonDetailPage: React.FC = () => {
   const [offline, setOffline] = React.useState(false);
   const [error, setError] = React.useState('');
   const [deleting, setDeleting] = React.useState(false);
-  const [uploading, setUploading] = React.useState(false);
-  const [uploadProgress, setUploadProgress] = React.useState(0);
   const [deletingFile, setDeletingFile] = React.useState<string | null>(null);
-  const fileInput = React.useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {
     let alive = true;
@@ -32,31 +29,6 @@ export const LessonDetailPage: React.FC = () => {
     })();
     return () => { alive = false; };
   }, [lessonId]);
-
-  const uploadAttachment = async (file?: File) => {
-    if (fileInput.current) fileInput.current.value = '';
-    if (!file || !lesson || uploading) return;
-    setUploading(true); setUploadProgress(0); setError('');
-    try {
-      const blob = await uploadLessonAttachmentBlob(lesson.id, file, setUploadProgress);
-      // سجل المرفق يكتبه callback الخادمي بعد إتمام الرفع؛ ننتظره قبل تأكيد النجاح.
-      let saved = false;
-      for (let attempt = 0; attempt < 10; attempt++) {
-        try {
-          const fresh = await api.getLesson(lesson.id) as FullLesson;
-          const attachments = Array.isArray(fresh.attachments) ? fresh.attachments : [];
-          setLesson({ ...fresh, attachments });
-          if (attachments.some((attachment) => attachment.filePath === blob.url || attachment.url === blob.url)) {
-            saved = true;
-            break;
-          }
-        } catch { /* أعد المحاولة؛ الملف وصل إلى Blob بالفعل */ }
-        await new Promise((resolve) => window.setTimeout(resolve, 500));
-      }
-      if (!saved) setError('تم رفع الملف إلى التخزين، لكن لم يصل تأكيد حفظه بعد. حدّث الصفحة بعد قليل قبل إعادة رفعه.');
-    } catch (e) { setError(e instanceof Error ? e.message : 'تعذّر رفع الملف'); }
-    finally { setUploading(false); setUploadProgress(0); }
-  };
 
   const removeAttachment = async (file: LessonFile) => {
     if (!lesson || !file.id || deletingFile) return;
@@ -100,13 +72,7 @@ export const LessonDetailPage: React.FC = () => {
     <Card title="أسئلة شائعة">{lesson.faq.length ? <div className="p-4 space-y-3">{lesson.faq.map((f,i)=><div key={i}><h3 className="font-bold text-navy-800">{f.q}</h3><p className="text-sm text-slate-600 mt-1">{f.a}</p></div>)}</div> : <div className="p-4 text-xs text-slate-400">لا توجد أسئلة شائعة.</div>}</Card>
     <Card title="مرفقات الدرس">
       <div className="p-4 space-y-3">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <p className="text-xs text-slate-500">PDF وWord وExcel وPowerPoint وTXT وCSV والصور، حتى 20 ميغابايت للملف.</p>
-          <input ref={fileInput} type="file" className="hidden" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.jpg,.jpeg,.png,.webp" onChange={(event) => void uploadAttachment(event.currentTarget.files?.[0])} />
-          <button type="button" onClick={() => fileInput.current?.click()} disabled={uploading} className="inline-flex items-center gap-2 rounded-xl bg-navy-800 px-3 py-2 text-xs font-bold text-white disabled:opacity-60">
-            <Upload className="w-3.5 h-3.5" />{uploading ? `جارٍ الرفع ${Math.round(uploadProgress)}٪…` : 'رفع ملف'}
-          </button>
-        </div>
+        <p className="text-xs text-slate-500">المرفقات القديمة محفوظة أدناه. استخدم مدير الوسائط المشترك لإضافة الملفات والروابط الجديدة.</p>
         {lesson.attachments.length === 0 ? <p className="rounded-xl border border-dashed border-slate-200 p-4 text-center text-xs text-slate-400">لا توجد مرفقات لهذا الدرس بعد.</p> :
           <ul className="space-y-2">{lesson.attachments.map((f, i) => {
             const url = f.url ?? f.filePath ?? f.path;
@@ -120,5 +86,6 @@ export const LessonDetailPage: React.FC = () => {
           })}</ul>}
       </div>
     </Card>
+    <MediaManager ownerType="lesson" ownerId={lesson.id} title="الوسائط المشتركة للدرس" />
   </div>;
 };

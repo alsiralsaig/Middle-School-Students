@@ -7,12 +7,18 @@
 
 export type SubjectCategory = 'all' | 'core' | 'science' | 'humanities' | 'tech';
 
+export interface ContentMediaAsset { id:string; kind:string; title:string; url:string; mimeType?:string|null; sizeBytes?:number|null; description?:string|null; originalName?:string|null }
 export interface LessonAttachment {
   id: string;
   title: string;
-  type: 'pdf' | 'worksheet' | 'summary' | 'audio';
-  size: string;
+  type: string;
+  size?: string;
   pages?: number;
+  url?:string|null;
+  filePath?:string|null;
+  kind?:string;
+  mimeType?:string|null;
+  originalName?:string|null;
 }
 export interface LessonExplanationSection {
   title: string;
@@ -43,6 +49,7 @@ export interface Lesson {
   isCompleted?: boolean;
 }
 export interface Unit {
+  mediaAssets?: ContentMediaAsset[];
   id: string;
   subjectId: string;
   unitNumber: number;
@@ -128,6 +135,7 @@ export interface SyllabusEntry {
 }
 
 export interface Subject {
+  mediaAssets?: ContentMediaAsset[];
   id: string;
   name: string;
   nameEn: string;
@@ -160,7 +168,8 @@ export interface ResourceItem {
   subjectId: string;
   subjectName: string;
   category: ResourceCategory;
-  fileType: 'PDF' | 'DOCX';
+  fileType: string;
+  filePath?: string | null;
   fileSize: string;
   pageCount: number;
   author: string;

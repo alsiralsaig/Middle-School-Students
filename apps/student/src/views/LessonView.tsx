@@ -36,6 +36,7 @@ import { ChatWidget } from '../components/ChatWidget';
 import { InteractiveQuiz } from '../components/InteractiveQuiz';
 import { LessonRatingPanel } from '../components/LessonRatingPanel';
 import { FocusModeOverlay } from '../components/FocusModeOverlay';
+import { MediaAssetViewer } from '../components/MediaAssetViewer';
 import { showToast } from '../utils/toastBus';
 
 
@@ -1000,7 +1001,8 @@ export const LessonView: React.FC<LessonViewProps> = ({
           </div>
 
           <div className="space-y-3">
-            {lesson.attachments.map((att) => (
+            <MediaAssetViewer assets={lesson.attachments.filter(att=>!!(att.filePath||att.url)).map(att=>({id:att.id,title:att.title,url:att.filePath||att.url||'',kind:att.kind||att.type,mimeType:att.mimeType,originalName:att.originalName}))}/>
+            {lesson.attachments.filter(att=>!(att.filePath||att.url)).map((att) => (
               <div
                 key={att.id}
                 className="p-4 rounded-xl border border-slate-200 dark:border-[#1E3A60] bg-slate-50 dark:bg-[#122844] flex items-center justify-between gap-4"
