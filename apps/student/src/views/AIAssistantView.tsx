@@ -38,6 +38,8 @@ export const AIAssistantView: React.FC = () => {
   ]);
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  /** أسماء الدروس التي استُخدمت كمصدر للإجابة */
+  const [sources, setSources] = useState<string[]>([]);
 
   /* ═══ الصوت: تسجيل بالميك + قراءة الردود صوتياً ═══ */
   const [voiceOut, setVoiceOut] = useState<boolean>(() => {
@@ -204,6 +206,11 @@ export const AIAssistantView: React.FC = () => {
     }
   };
 
+  /**
+   * إرسال السؤال — الرد يصل **متدفّقاً** كلمة بكلمة (stream).
+   * الفائدة: الطالب يشوف الإجابة تبدأ في أقل من ثانية بدل ما ينتظر الرد كامل،
+   * وهذا نفس أسلوب تطبيق «مساعد الشهادة السودانية» الذي طلب المالك تفعيله.
+   */
   const handleSend = async (textToSend?: string) => {
     const query = (textToSend || inputText).trim();
     if (!query || isTyping) return;
@@ -212,76 +219,106 @@ export const AIAssistantView: React.FC = () => {
       id: `user-${Date.now()}`,
       sender: 'user',
       text: query,
-      timestamp: 'الآن'
+      timestamp: 'الآن',
     };
-
     setMessages((prev) => [...prev, userMsg]);
     if (!textToSend) setInputText('');
     setIsTyping(true);
+    setSources([]);
+
+    const history = messages
+      .filter((m) => m.id !== 'welcome')
+      .slice(-6)
+      .map((m) => ({ sender: m.sender === 'user' ? 'user' : 'assistant', text: m.text }));
+
+    const botId = `bot-${Date.now()}`;
+    let appended = false;
+    let acc = '';
+
+    /** يضيف/يحدّث فقاعة المساعد أثناء وصول الكلمات */
+    const pushChunk = (piece: string) => {
+      acc += piece;
+      if (!appended) {
+        appended = true;
+        setMessages((prev) => [
+          ...prev,
+          { id: botId, sender: 'assistant', text: acc, timestamp: 'الآن', isSimulatedDemo: false },
+        ]);
+      } else {
+        setMessages((prev) => prev.map((m) => (m.id === botId ? { ...m, text: acc } : m)));
+      }
+    };
 
     try {
-      const history = messages
-        .filter((m) => m.id !== 'welcome')
-        .slice(-6)
-        .map((m) => ({ sender: m.sender === 'user' ? 'user' : 'assistant', text: m.text }));
-      const response = await fetch(`${getApiBase()}/api/ai/chat`, {
+      const res = await fetch(`${getApiBase()}/api/ai/chat`, {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json', 'X-App': 'student' },
-        body: JSON.stringify({ prompt: query, history }),
+        body: JSON.stringify({ prompt: query, history, stream: true }),
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        /* «غير مضبوط» = مفتاح الخادم غير مفعّل → نعتمد الردود التربوية المحلية */
-        if (data.reply && !String(data.reply).includes('غير مضبوط')) {
-          const botMsg: ChatMessage = {
-            id: `bot-${Date.now()}`,
-            sender: 'assistant',
-            text: data.reply,
-            timestamp: 'الآن',
-            isSimulatedDemo: false
-          };
-          setMessages((prev) => [...prev, botMsg]);
+      if (res.ok && res.body) {
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+        for (;;) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          // أول سطر قد يكون معلومات المصادر — نخفيه عن الطالب
+          if (buffer.startsWith('[[')) {
+            const nl = buffer.indexOf('\n');
+            if (nl === -1) continue;
+            const meta = buffer.slice(0, nl);
+            buffer = buffer.slice(nl + 1);
+            const m = /^\[\[sources:(.*)\]\]$/.exec(meta.trim());
+            if (m) setSources(m[1].split('|').map((x) => x.trim()).filter(Boolean));
+          }
+          if (buffer) {
+            const out = buffer;
+            buffer = '';
+            pushChunk(out);
+          }
+        }
+        if (acc.trim()) {
           setIsTyping(false);
+          if (voiceOut) speak(acc);
           return;
         }
       }
     } catch {
-      // Fallback to curriculum preset responses
+      /* نكمل للاحتياط المحلي */
     }
 
-    // Pedagogical curriculum presets fallback
+    // احتياط: ردود محلية جاهزة (تعمل بلا إنترنت أو لو الخدمة متوقفة)
     const matchedPreset = AI_ASSISTANT_PRESETS.find(
       (p) =>
         query.includes(p.subject) ||
         p.prompt.includes(query) ||
-        query.includes('صرف') ||
         (query.includes('فيثاغورس') && p.subject === 'الرياضيات') ||
         (query.includes('رابطة') && p.subject === 'العلوم') ||
-        (query.includes('شيكان') && p.subject === 'الدراسات الاجتماعية')
+        (query.includes('شيكان') && p.subject === 'الدراسات الاجتماعية'),
     );
 
-    let replyText = '';
-    if (matchedPreset) {
-      replyText = matchedPreset.reply;
-    } else {
-      replyText = `شكراً لسؤالك حول: "${query}"! في مقررات المنهج السوداني، ننصحك أيضاً باستخدام نافذة "معلم الدرس الذكي" في صفحة أي درس للحصول على شروحات تفصيلية فورية لكل مسألة وقانون بواسطة نموذج Gemini API.`;
-    }
+    const replyText =
+      matchedPreset?.reply ||
+      `سؤالك: «${query}»\n\nما قدرت أوصل لخدمة المساعد الآن. جرّب:\n• افتح تبويب «الدروس» واقرأ شرح الدرس والقواعد.\n• أو اضغط تبويب «التفاعلية» في المادة وجرّب الأسئلة.\n• وأعد السؤال بعد شوية لو النت رجع.`;
 
-    const botMsg: ChatMessage = {
-      id: `bot-${Date.now()}`,
-      sender: 'assistant',
-      text: replyText,
-      timestamp: 'الآن',
-      isSimulatedDemo: true
-    };
-
-    setMessages((prev) => [...prev, botMsg]);
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: appended ? `${botId}-fallback` : botId,
+        sender: 'assistant',
+        text: replyText,
+        timestamp: 'الآن',
+        isSimulatedDemo: !matchedPreset,
+      },
+    ]);
     setIsTyping(false);
   };
 
   const handleClearChat = () => {
+    setSources([]);
     setMessages([
       {
         id: 'welcome-reset',
@@ -393,6 +430,13 @@ export const AIAssistantView: React.FC = () => {
                 >
                   {msg.text}
 
+                  {!isUser && sources.length > 0 && msg.id === messages[messages.length - 1]?.id && (
+                    <div className="mt-2 border-t border-slate-200/60 pt-2 text-[10px] text-slate-500 dark:border-slate-700/60 dark:text-slate-400">
+                      <span className="font-bold">من منهجك: </span>
+                      {sources.join(' · ')}
+                    </div>
+                  )}
+
                   {msg.isSimulatedDemo && (
                     <div className="mt-3 pt-2 border-t border-slate-200/60 dark:border-slate-700/60 flex items-center justify-between text-[10px] text-slate-400 dark:text-slate-400">
                       <span>نموذج إرشادي للمنهج السوداني</span>
@@ -411,7 +455,7 @@ export const AIAssistantView: React.FC = () => {
                 <Bot className="w-5 h-5" />
               </div>
               <div className="bg-slate-50 dark:bg-[#122844] border border-slate-200 dark:border-[#1E3A60] p-4 rounded-2xl text-xs text-slate-500 dark:text-slate-400 flex items-center gap-2">
-                <span>جاري استرجاع القواعد من المنهج السوداني...</span>
+                <span>المساعد بجهّز الجواب…</span>
                 <span className="inline-block w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
               </div>
             </div>
@@ -465,7 +509,7 @@ export const AIAssistantView: React.FC = () => {
             </button>
           </form>
           <div className="mt-2 text-center text-[11px] text-slate-400 dark:text-slate-500">
-            واجهة تفاعلية تجريبية · سيتم ربطها بنموذج ذكاء اصطناعي مخصص للمناهج السودانية في المرحلة التالية.
+            مساعد ذكي مربوط بمنهجك — الإجابة تُكتب لحظياً، ومن كتبك ودروسك.
           </div>
         </div>
       </div>

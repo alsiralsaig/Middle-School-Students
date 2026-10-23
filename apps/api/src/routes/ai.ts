@@ -1,11 +1,19 @@
 import { Router } from 'express';
 import { GoogleGenAI } from '@google/genai';
 import { cleanText, currentUser, requireAuth } from '../lib/auth.js';
+import {
+  aiStatus,
+  answer,
+  answerStream,
+  contextToText,
+  findCurriculumContext,
+  type ChatTurn,
+} from '../lib/aiProviders.js';
 
 export const aiRouter = Router();
 
 /**
- * المفتاح يعيش على الخادم فقط (GEMINI_API_KEY) — لا يُرسل للمتصفح أبداً.
+ * المفتاح يعيش على الخادم فقط — لا يُرسل للمتصفح أبداً.
  * تحديد: 20 طلب / 10 دقائق لكل مستخدم، وسقف يومي عام.
  */
 const AI_RATE_WINDOW_MS = 10 * 60_000;
@@ -36,56 +44,27 @@ function guard(key: string): { ok: boolean; retryMinutes?: number; daily?: boole
     return { ok: true };
   }
   rec.count += 1;
-  return rec.count <= AI_RATE_MAX
-    ? { ok: true }
-    : { ok: false, retryMinutes: Math.ceil((rec.resetAt - now) / 60_000) };
+  return rec.count <= AI_RATE_MAX ? { ok: true } : { ok: false, retryMinutes: Math.ceil((rec.resetAt - now) / 60_000) };
 }
 
-const SYSTEM_PROMPT =
-  'أنت معلم سوداني خبير ومحبوب للصف الثالث المتوسط (الشهادة المتوسطة — جمهورية السودان). ' +
-  'اتكلم بالعامية السودانية البسيطة والودية (كلام الناس اليومي في السودان: يا بطل، خلاص، دي، بقول لك، ' +
-  'أوشة، شديد، تمام؟) عشان الطالب يحس إنك أخوه الأكبر، بس خلّي المصطلحات العلمية والقواعد ' +
-  'بالعربية الفصحى المبسطة عشان المنهج. ' +
-  'اربط الشرح بالمنهج السوداني، وحل المسائل والقواعد خطوة بخطوة، وشجّع الطالب دايماً. ' +
-  'استخدم تنسيقاً واضحاً بالعناوين والنقاط يناسب شاشة الهاتف، وخلّي الرد قصير ومباشر قدر الإمكان. ' +
-  'لا تتجاوز حدود المنهج، ولا تخترع معلومات خارج المقرر، وإن لم تعرف قل ذلك بصراحة.';
-
-function getClient(): GoogleGenAI | null {
-  const key = process.env.GEMINI_API_KEY;
-  if (!key) return null;
-  return new GoogleGenAI({ apiKey: key });
+function parseTurns(raw: unknown): ChatTurn[] {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map((m) => {
+      const item = m as { sender?: string; role?: string; text?: string };
+      const role: 'user' | 'bot' = (item.sender === 'user' || item.role === 'user') ? 'user' : 'bot';
+      return { role, text: cleanText(item.text, 800) };
+    })
+    .filter((t) => !!t.text);
 }
 
-type Role = 'user' | 'assistant';
+/* ============================ الحالة (تشخيص) ============================ */
 
-async function ask(history: Array<{ sender: Role; text: string }>, question: string): Promise<string | null> {
-  const ai = getClient();
-  if (!ai) return null;
-
-  const contents: Array<{ role: string; parts: Array<{ text: string }> }> = [];
-  history.slice(-4).forEach((m) => {
-    const txt = cleanText(m.text, 800);
-    if (!txt) return;
-    contents.push({ role: m.sender === 'user' ? 'user' : 'model', parts: [{ text: txt }] });
-  });
-  contents.push({ role: 'user', parts: [{ text: question }] });
-
-  for (const model of ['gemini-flash-latest', 'gemini-flash-lite-latest']) {
-    try {
-      const res = await ai.models.generateContent({
-        model,
-        contents,
-        config: { systemInstruction: SYSTEM_PROMPT },
-      });
-      const text = (res as { text?: string }).text;
-      if (text) return text;
-    } catch (e) {
-      console.warn(`[ai] ${model} فشل:`, (e as Error).message);
-    }
-  }
-  return null;
-}
-
+/** يعرض أي مزوّد ذكاء اصطناعي مفعّل فعلاً — بلا أي مفاتيح */
+aiRouter.get('/ai/status', (_req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
+  res.json(aiStatus());
+});
 
 /* ============================ السؤال الصوتي ============================ */
 
@@ -98,14 +77,12 @@ aiRouter.post('/ai/voice', requireAuth, async (req, res) => {
   const rawAudio = typeof req.body?.audio === 'string' ? req.body.audio : '';
   const audioB64 = rawAudio.replace(/^data:[^,]+,/, '');
   const mimeTypeRaw = cleanText(req.body?.mimeType, 60) || 'audio/webm';
-  // غلاف webm مع كودك أوبس — نبقيه كما هو إن كان مدعوماً
   const mimeType = mimeTypeRaw.startsWith('audio/') ? mimeTypeRaw.split(';')[0] : 'audio/webm';
 
   if (!audioB64) {
     res.status(400).json({ error: 'التسجيل الصوتي مطلوب' });
     return;
   }
-  // حد أقصى معقول (~650KB بعد فك base64 — دقائق بالأوبس)
   if (audioB64.length > 900_000) {
     res.status(413).json({ error: 'التسجيل طويل — اذكر سؤالك في أقل من دقيقة يا بطل' });
     return;
@@ -122,11 +99,12 @@ aiRouter.post('/ai/voice', requireAuth, async (req, res) => {
   }
   dayCount += 1;
 
-  const ai = getClient();
-  if (!ai) {
+  const key = (process.env.GEMINI_API_KEY || '').trim();
+  if (!key) {
     res.json({ reply: null, unconfigured: true });
     return;
   }
+  const ai = new GoogleGenAI({ apiKey: key });
 
   const instruction =
     'هذا تسجيل صوتي لطالب سوداني بيتكلم بالعامية السودانية (ممكن تتداخل معاها فصحى). ' +
@@ -137,16 +115,20 @@ aiRouter.post('/ai/voice', requireAuth, async (req, res) => {
   const parts: Array<Record<string, unknown>> = [{ text: instruction }];
   parts.push({ inlineData: { mimeType, data: audioB64 } });
 
-  for (const model of ['gemini-flash-latest', 'gemini-flash-lite-latest']) {
+  for (const model of ['gemini-flash-lite-latest', 'gemini-flash-latest']) {
     for (const mime of [mimeType, mimeType === 'audio/webm' ? 'audio/ogg' : mimeType]) {
       try {
         parts[1] = { inlineData: { mimeType: mime, data: audioB64 } };
-        const res2 = await ai.models.generateContent({
+        const out = await ai.models.generateContent({
           model,
           contents: [{ role: 'user', parts }],
-          config: { systemInstruction: SYSTEM_PROMPT },
+          config: {
+            systemInstruction:
+              'أنت معلم سوداني خبير ومحبوب للصف الثالث المتوسط. اتكلم بالعامية السودانية البسيطة، ' +
+              'وحل المسائل خطوة بخطوة، وخلّي الرد قصير ومباشر.',
+          },
         });
-        const text = (res2 as { text?: string }).text;
+        const text = (out as { text?: string }).text;
         if (text) {
           res.json({ reply: text });
           return;
@@ -161,10 +143,18 @@ aiRouter.post('/ai/voice', requireAuth, async (req, res) => {
 
 /* ============================ المحادثة العامة ============================ */
 
+/**
+ * POST /api/ai/chat
+ * الجسم: { prompt, subject?, history?, stream? }
+ *
+ * `stream: true` يرجّع نصاً متدفّقاً (text/plain) فيظهر الجواب كلمة بكلمة
+ * بدل ما الطالب ينتظر الرد كامل — أسرع إحساساً على نت ضعيف.
+ */
 aiRouter.post('/ai/chat', requireAuth, async (req, res) => {
   const uid = currentUser(req).uid;
   const prompt = cleanText(req.body?.prompt, 1200);
   const subject = cleanText(req.body?.subject, 100);
+  const wantsStream = req.body?.stream === true;
   if (!prompt) {
     res.status(400).json({ error: 'السؤال مطلوب' });
     return;
@@ -181,27 +171,50 @@ aiRouter.post('/ai/chat', requireAuth, async (req, res) => {
   }
   dayCount += 1;
 
-  const history = Array.isArray(req.body?.history)
-    ? (req.body.history as Array<{ sender?: string; text?: string }>).map((m) => ({
-        sender: (m.sender === 'user' ? 'user' : 'assistant') as Role,
-        text: cleanText(m.text, 800),
-      }))
-    : [];
+  const history = parseTurns(req.body?.history);
+  const question = subject ? `المادة: ${subject}\n\nسؤال الطالب: ${prompt}` : prompt;
 
-  const reply = await ask(history, subject ? `المادة: ${subject}\n\nسؤال الطالب: ${prompt}` : prompt);
+  // ١) سياق من المنهج — يجعل الإجابة من مقرر الطالب وأسرع
+  const hits = await findCurriculumContext(prompt, subject || undefined);
+  const context = contextToText(hits);
 
-  if (!reply) {
+  // ٢) الرد
+  if (wantsStream) {
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+    res.setHeader('Cache-Control', 'no-store');
+    res.setHeader('X-Accel-Buffering', 'no');
+    // نرسل المصادر كسطر أول مخفي يفهمه التطبيق
+    if (hits.length) {
+      res.write(`[[sources:${hits.map((h) => `${h.subjectName} — ${h.lessonTitle}`).join(' | ')}]]\n`);
+    }
+    const { text, provider } = await answerStream(history, question, context, (chunk) => {
+      res.write(chunk);
+    });
+    if (!text) {
+      res.write(
+        'أهلاً بك يا بطل! 🇸🇩 سؤالك وصل، لكن خدمة الذكاء الاصطناعي ما ردّت حالياً.\n' +
+          '• راجع الشرح التفصيلي للدرس والقواعد في تبويب «الدروس».\n' +
+          '• جرّب تسأل تاني بعد شوية.',
+      );
+    } else if (provider) {
+      res.setHeader('X-AI-Provider', provider);
+    }
+    res.end();
+    return;
+  }
+
+  const result = await answer(history, question, context);
+  if (!result.text) {
     res.json({
       reply:
-        'أهلاً بك يا بطل! 🇸🇩 سؤالك وصل، لكن خادم الذكاء الاصطناعي غير مضبوط حالياً ' +
-        '(مفتاح GEMINI_API_KEY غير مفعّل أو به ضغط مؤقت).\n\n' +
-        '• راجع الشرح التفصيلي للدرس والقواعد الأساسية في المذكرة.\n' +
-        '• أعد طرح السؤال بعد قليل لتحصل على إجابة لحظية كاملة.',
+        'أهلاً بك يا بطل! 🇸🇩 سؤالك وصل، لكن خدمة الذكاء الاصطناعي ما ردّت حالياً.\n\n' +
+        '• راجع الشرح التفصيلي للدرس والقواعد الأساسية في تبويب «الدروس».\n' +
+        '• أعد طرح السؤال بعد قليل.',
       offline: true,
     });
     return;
   }
-  res.json({ reply });
+  res.json({ reply: result.text, provider: result.provider, sources: hits.map((h) => `${h.subjectName} — ${h.lessonTitle}`) });
 });
 
 /* ============================ أسئلة داخل الدرس ============================ */
@@ -228,33 +241,27 @@ aiRouter.post('/ai/lesson-chat', requireAuth, async (req, res) => {
   }
   dayCount += 1;
 
-  const history = Array.isArray(req.body?.history)
-    ? (req.body.history as Array<{ sender?: string; text?: string }>).map((m) => ({
-        sender: (m.sender === 'user' ? 'user' : 'assistant') as Role,
-        text: cleanText(m.text, 800),
-      }))
-    : [];
+  const history = parseTurns(req.body?.history);
 
-  const prompt = [
-    `المادة: ${subjectName}`,
-    `الدرس: ${lessonTitle}`,
-    lessonContext ? `سياق الدرس:\n"""\n${lessonContext}\n"""` : '',
-    `سؤال الطالب: ${question}`,
+  // سياق الدرس المفتوح + سياق من باقي المنهج
+  const hits = await findCurriculumContext(question, subjectName);
+  const combined = [
+    lessonContext ? `الدرس المفتوح الآن: ${lessonTitle} (${subjectName})\n"""\n${lessonContext}\n"""` : '',
+    contextToText(hits),
   ]
     .filter(Boolean)
     .join('\n\n');
 
-  const reply = await ask(history, prompt);
-
-  if (!reply) {
+  const result = await answer(history, question, combined);
+  if (!result.text) {
     res.json({
       reply:
         `أهلاً بك يا بطل! 🇸🇩 بخصوص سؤالك عن درس «${lessonTitle}» في مادة ${subjectName}:\n\n` +
         '• راجع الشرح التفصيلي للدرس والقواعد الأساسية في المذكرة.\n' +
-        '• خادم الذكاء الاصطناعي غير مفعّل حالياً — أعد طرح السؤال بعد قليل.',
+        '• خدمة الذكاء الاصطناعي ما ردّت حالياً — أعد طرح السؤال بعد قليل.',
       offline: true,
     });
     return;
   }
-  res.json({ reply });
+  res.json({ reply: result.text, provider: result.provider });
 });
