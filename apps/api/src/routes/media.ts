@@ -39,7 +39,15 @@ const TYPES: Record<string, { ext: string; kind: Kind }> = {
   'video/quicktime': { ext: 'mov', kind: 'video' },
 };
 const ADMIN_OWNERS = new Set<Owner>(['subject', 'unit', 'lesson', 'exam', 'library', 'interactive-lesson']);
-const blobToken = (access: Access) => access === 'private' ? process.env.PRIVATE_BLOB_READ_WRITE_TOKEN : process.env.BLOB_READ_WRITE_TOKEN;
+/* Vercel يولّد اسم المتغيّر من اسم المخزن الذي تربطه. المخزن الخاص في هذا المشروع
+   مربوط بالبادئة BLOB_PRIVATE_READ_WRITE_TOKEN، فيصل الرمز باسم
+   BLOB_PRIVATE_READ_WRITE_TOKEN_READ_WRITE_TOKEN. نقبل الاسمين حتى يعمل المشروع
+   دون إعادة ربط المخزن أو نسخ أي سر يدوياً. */
+const blobToken = (access: Access) =>
+  access === 'private'
+    ? process.env.PRIVATE_BLOB_READ_WRITE_TOKEN ??
+      process.env.BLOB_PRIVATE_READ_WRITE_TOKEN_READ_WRITE_TOKEN
+    : process.env.BLOB_READ_WRITE_TOKEN;
 const userOf = (req: Request) => (req as Request & { user?: ReturnType<typeof currentUser> }).user;
 function parsePayload(value: string | null | undefined): Record<string, unknown> {
   if (!value) throw new Error('بيانات الرفع ناقصة');
