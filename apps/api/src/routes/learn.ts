@@ -86,28 +86,39 @@ learnRouter.get('/subjects', async (req, res) => {
 });
 
 learnRouter.get('/lessons/:id', async (req, res) => {
-  const lesson = await prisma.lesson.findUnique({
-    where: { id: req.params.id },
-    include: { unit: true, subject: true },
-  });
-  if (!lesson) {
-    res.status(404).json({ error: 'الدرس غير موجود' });
-    return;
+  /* أي خطأ في قاعدة البيانات هنا كان يُسقِط العملية بالكامل (unhandled rejection
+     في Express 4 + Node 20)، ويصير الخطر أكبر مع كل استعلام جديد.
+     لذلك نمسك الخطأ ونرجّع 500 بدل موت الخادم. */
+  try {
+    const lesson = await prisma.lesson.findUnique({
+      where: { id: req.params.id },
+      include: { unit: true, subject: true },
+    });
+    if (!lesson) {
+      res.status(404).json({ error: 'الدرس غير موجود' });
+      return;
+    }
+    const media = await prisma.mediaAsset.findMany({
+      where: { ownerType: 'lesson', ownerId: lesson.id, access: 'public' },
+      orderBy: { createdAt: 'asc' },
+    });
+    // الدرس نفسه لا يتغيّر إلا بحفظ من الإدارة — يُكاش على الحافة مثل المنهج.
+    res.setHeader('Cache-Control', CURRICULUM_CACHE);
+    res.json({
+      lesson: {
+        ...(lesson as Record<string, unknown>),
+        learningObjectives: JSON.parse(lesson.learningObjectives),
+        sections: JSON.parse(lesson.sections),
+        keyRules: JSON.parse(lesson.keyRules),
+        attachments: [...JSON.parse(lesson.attachments), ...media.map(mediaAssetDto)],
+        faq: JSON.parse(lesson.faq),
+        examTips: JSON.parse(lesson.examTips),
+      },
+    });
+  } catch (e) {
+    console.error('lesson error:', e);
+    res.status(500).json({ error: 'تعذّر تحميل الدرس' });
   }
-  const media=await prisma.mediaAsset.findMany({where:{ownerType:'lesson',ownerId:lesson.id,access:'public'},orderBy:{createdAt:'asc'}});
-  // الدرس نفسه لا يتغيّر إلا بحفظ من الإدارة — يُكاش على الحافة مثل المنهج.
-  res.setHeader('Cache-Control', CURRICULUM_CACHE);
-  res.json({
-    lesson: {
-      ...(lesson as Record<string, unknown>),
-      learningObjectives: JSON.parse(lesson.learningObjectives),
-      sections: JSON.parse(lesson.sections),
-      keyRules: JSON.parse(lesson.keyRules),
-      attachments: [...JSON.parse(lesson.attachments),...media.map(mediaAssetDto)],
-      faq: JSON.parse(lesson.faq),
-      examTips: JSON.parse(lesson.examTips),
-    },
-  });
 });
 
 /* ============================ التقدّم ============================ */
