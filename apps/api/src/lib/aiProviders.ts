@@ -98,15 +98,32 @@ function normalizeArabic(input: string): string {
     .replace(/ئ/g, 'ي');
 }
 
-/** كلمات السؤال المفيدة بعد التنظيف */
-function keywords(question: string): string[] {
+/**
+ * كلمات السؤال المفيدة بعد التنظيف.
+ *
+ * • «تجذيع خفيف» للعربية: إزالة «ال» و«و» من البداية ولاحقات الجمع والضمير
+ *   (ه/ة/ين/ات/ون) من النهاية. بدونه «وانواعه» لا تطابق «أنواع» فيضيع الدرس.
+ * • كل كلمة تُصنَّف «دقيقة» (٥ أحرف أو أكثر) أو عامة. لا يُعتبر الدرس مطابقاً
+ *   إلا بمطابقة كلمة دقيقة، وإلا فكلمة مثل «نظرية» تُرجع درساً عن الزوايا
+ *   المحيطية لسؤال عن فيثاغورس.
+ */
+function keywords(question: string): Array<{ token: string; weight: number; specific: boolean }> {
   const seen = new Set<string>();
+  const out: Array<{ token: string; weight: number; specific: boolean }> = [];
   for (const raw of normalizeArabic(question).split(/\s+/)) {
-    const w = raw.replace(/[^\w\u0621-\u064A]/g, '').replace(/^و(?=.{3,})/, '');
-    if (w.length < 3 || STOP_WORDS.has(w) || seen.has(w)) continue;
+    let w = raw.replace(/[^\w\u0621-\u064A]/g, '');
+    w = w
+      .replace(/^وا(?=.{3,})/, '')
+      .replace(/^با(?=.{3,})/, '')
+      .replace(/^ال/, '')
+      .replace(/^و(?=.{3,})/, '')
+      .replace(/(ه|ة|ين|ات|ون|كم|هم)$/, '')
+      .replace(/(ه|ة)$/, '');
+    if (w.length < 3 || STOP_WORDS.has(w) || STOP_WORDS.has(raw) || seen.has(w)) continue;
     seen.add(w);
+    out.push({ token: w, weight: Math.min(w.length, 10) / 4, specific: w.length >= 4 });
   }
-  return Array.from(seen).slice(0, 10);
+  return out.slice(0, 10);
 }
 
 function parseJson<T>(raw: string | null, fallback: T): T {
@@ -199,15 +216,21 @@ export async function findCurriculumContext(question: string, subjectName?: stri
         `${lesson.keyRules || ''} ${lesson.sections || ''} ${lesson.faq || ''} ${lesson.learningObjectives || ''} ${lesson.examTips || ''}`,
       );
       let score = 0;
-      for (const w of words) {
-        const weight = Math.min(w.length, 10) / 4;
-        if (title.includes(w)) score += 6 * weight;
-        else if (summary.includes(w)) score += 3 * weight;
-        else if (body.includes(w)) score += 1.5 * weight;
+      let specificScore = 0;
+      for (const { token, weight, specific } of words) {
+        let hit = 0;
+        if (title.includes(token)) hit = 6 * weight;
+        else if (summary.includes(token)) hit = 3 * weight;
+        else if (body.includes(token)) hit = 1.5 * weight;
+        if (hit) {
+          score += hit;
+          if (specific) specificScore += hit;
+        }
       }
-      return { lesson, score };
+      return { lesson, score, specificScore };
     })
-    .filter((x) => x.score > 0)
+    // لا مطابقة على كلمات عامة وحدها — تمنع إحالة درس لا علاقة له بالسؤال
+    .filter((x) => x.score > 0 && x.specificScore > 0)
     .sort((a, b) => b.score - a.score)
     .slice(0, limit);
 
