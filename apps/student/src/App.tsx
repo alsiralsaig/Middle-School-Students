@@ -271,6 +271,8 @@ function AppContent() {
             onToggleBookmark={toggleBookmarkedLesson}
             onBack={() => setCurrentView('subjects')}
             onSelectLesson={handleSelectLesson}
+            onOpenAssistant={() => setCurrentView('ai-assistant')}
+            onOpenExams={() => setCurrentView('exams')}
           />
         )}
 

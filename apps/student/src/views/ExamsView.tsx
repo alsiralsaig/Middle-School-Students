@@ -21,6 +21,7 @@ import {
 import { ExamSimulator } from '../components/ExamSimulator';
 import { api } from '../utils/apiClient';
 import { MediaAssetViewer, type MediaAssetView } from '../components/MediaAssetViewer';
+import { LessonAttachments } from '../components/LessonAttachments';
 
 export const ExamsView: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'simulator' | 'practice-quiz' | 'past-papers'>('simulator');
@@ -387,7 +388,7 @@ export const ExamsView: React.FC = () => {
       {/* Mode 2: Past Papers */}
       {activeTab === 'past-papers' && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {serverExams.map(exam=><article key={exam.id} className="bg-white dark:bg-[#0D1F35] rounded-2xl border border-slate-200 dark:border-[#1C3A62] p-6 shadow-sm text-right"><h3 className="text-base font-bold text-slate-900 dark:text-white">{exam.title}</h3><p className="text-xs text-slate-500 mt-1">{exam.subjectName} · مرفقات تعليمية</p><div className="mt-4"><MediaAssetViewer assets={exam.attachments}/></div></article>)}
+          {serverExams.map(exam=><article key={exam.id} className="bg-white dark:bg-[#0D1F35] rounded-2xl border border-slate-200 dark:border-[#1C3A62] p-6 shadow-sm text-right"><h3 className="text-base font-bold text-slate-900 dark:text-white">{exam.title}</h3><p className="text-xs text-slate-500 mt-1">{exam.subjectName} · مرفقات تعليمية</p><div className="mt-4"><LessonAttachments attachments={exam.attachments.map(a=>({id:a.id,title:a.title,url:a.url,kind:a.kind,mimeType:a.mimeType,originalName:a.originalName}))} subjectId={exam.subjectName} subjectName={exam.subjectName} /></div></article>)}
           {pastPapersList.map((paper, idx) => (
             <div
               key={idx}

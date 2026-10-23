@@ -11,6 +11,12 @@
 const VERSION = 'ssp-v1.0.0';
 const SHELL_CACHE = `${VERSION}-shell`;
 const ASSET_CACHE = `${VERSION}-assets`;
+/**
+ * كاش الملفات التي حمّلها الطالب للاستخدام بدون إنترنت.
+ * ⚠️ اسمه مستقل ولا يُحذف عند تحديث نسخة التطبيق — وإلا خسر الطالب كل
+ * ما حمّله من كتب ونماذج كل مرة ننشر تحديثاً (والمستخدمون على إنترنت ضعيف).
+ */
+const USER_FILES_CACHE = 'ssp-offline-files-v1';
 const OFFLINE_URL = '/offline.html';
 
 self.addEventListener('install', (event) => {
@@ -29,7 +35,9 @@ self.addEventListener('activate', (event) => {
       .keys()
       .then((keys) =>
         Promise.all(
-          keys.filter((k) => k !== SHELL_CACHE && k !== ASSET_CACHE).map((k) => caches.delete(k))
+          keys
+            .filter((k) => k !== SHELL_CACHE && k !== ASSET_CACHE && k !== USER_FILES_CACHE)
+            .map((k) => caches.delete(k))
         )
       )
       .then(() => self.clients.claim())

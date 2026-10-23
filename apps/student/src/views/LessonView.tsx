@@ -36,8 +36,8 @@ import { ChatWidget } from '../components/ChatWidget';
 import { InteractiveQuiz } from '../components/InteractiveQuiz';
 import { LessonRatingPanel } from '../components/LessonRatingPanel';
 import { FocusModeOverlay } from '../components/FocusModeOverlay';
-import { MediaAssetViewer } from '../components/MediaAssetViewer';
 import { showToast } from '../utils/toastBus';
+import { LessonAttachments } from '../components/LessonAttachments';
 
 
 interface EncouragementToast {
@@ -1001,7 +1001,11 @@ export const LessonView: React.FC<LessonViewProps> = ({
           </div>
 
           <div className="space-y-3">
-            <MediaAssetViewer assets={lesson.attachments.filter(att=>!!(att.filePath||att.url)).map(att=>({id:att.id,title:att.title,url:att.filePath||att.url||'',kind:att.kind||att.type,mimeType:att.mimeType,originalName:att.originalName}))}/>
+            <LessonAttachments
+              attachments={lesson.attachments}
+              subjectId={subject.id}
+              subjectName={subject.name}
+            />
             {lesson.attachments.filter(att=>!(att.filePath||att.url)).map((att) => (
               <div
                 key={att.id}
