@@ -7,7 +7,13 @@
 
 export type SubjectCategory = 'all' | 'core' | 'science' | 'humanities' | 'tech';
 
-export interface ContentMediaAsset { id:string; kind:string; title:string; url:string; mimeType?:string|null; sizeBytes?:number|null; description?:string|null; originalName?:string|null }
+/**
+ * تصنيف الوسيط كما تختاره الإدارة عند الرفع.
+ * 'textbook'|'notes'|'worksheets' → تبويب «الكتب»، و'exam'|'past-exams' → تبويب «الامتحانات».
+ * null يعني «لم يُحدَّد» — عندها يوزّعه التطبيق حسب عنوان الملف (ملفات قديمة فقط).
+ */
+export type MediaCategory = 'textbook' | 'exam' | 'notes' | 'worksheets' | 'past-exams';
+export interface ContentMediaAsset { id:string; kind:string; title:string; url:string; category?:string|null; mimeType?:string|null; sizeBytes?:number|null; description?:string|null; originalName?:string|null }
 export interface LessonAttachment {
   id: string;
   title: string;

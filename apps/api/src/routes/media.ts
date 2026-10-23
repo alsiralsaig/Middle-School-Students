@@ -243,6 +243,23 @@ mediaRouter.get('/media/:id/content', requireAuth, async (req, res) => {
   } catch (error) { console.error('[private media read]', error); res.status(502).end(); }
 });
 
+/**
+ * تغيير تصنيف وسيط موجود (كتاب / امتحان / مذكرة …) بدون إعادة رفع.
+ * الغرض: الملفات التي رُفعت قبل إضافة خيار النوع يمكن تصحيحها من اللوحة.
+ */
+mediaRouter.patch('/media/:id', requireAdmin, async (req, res) => {
+  const ALLOWED = new Set(['', 'textbook', 'exam', 'notes', 'worksheets', 'past-exams']);
+  const raw = cleanText(req.body?.category, 40);
+  if (!ALLOWED.has(raw)) { res.status(400).json({ error: 'تصنيف غير معروف' }); return; }
+  const existing = await prisma.mediaAsset.findUnique({ where: { id: req.params.id }, select: { id: true, ownerType: true } });
+  if (!existing) { res.status(404).json({ error: 'الوسيط غير موجود' }); return; }
+  const asset = await prisma.mediaAsset.update({ where: { id: existing.id }, data: { category: raw || null } });
+  if (existing.ownerType === 'library') {
+    await prisma.resource.updateMany({ where: { id: asset.id }, data: { category: asset.category || 'notes' } });
+  }
+  res.json({ asset: mediaAssetDto(asset) });
+});
+
 mediaRouter.delete('/media/:id', requireAuth, async (req, res) => {
   const user = currentUser(req);
   const asset = await prisma.mediaAsset.findUnique({ where: { id: req.params.id } });

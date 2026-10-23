@@ -50,8 +50,18 @@ const TABS: Array<{ key: TabKey; label: string; emoji: string }> = [
   { key: 'chat', label: 'الدردشة', emoji: '💬' },
 ];
 
-/** كلمات تدل على أن الملف امتحان/نموذج وليس كتاباً */
-const EXAM_PATTERN = /امتحان|امتحانات|نموذج|اختبار|مراجعة|أسئلة/;
+/**
+ * تصنيف الملف حسب ما اختارته الإدارة.
+ * لو التصنيف فارغ (ملفات رُفعت قبل إضافة الاختيار) نرجع لتخمين العنوان.
+ */
+const EXAM_CATEGORIES = new Set(['exam', 'past-exams']);
+const EXAM_PATTERN = /امتحان|امتحانات|نموذج|اختبار|مراجعة/;
+
+function isExamAsset(asset: { category?: string | null; title?: string | null }): boolean {
+  const c = (asset.category || '').trim();
+  if (c) return EXAM_CATEGORIES.has(c);
+  return EXAM_PATTERN.test(asset.title || '');
+}
 
 export const SubjectDetailView: React.FC<SubjectDetailViewProps> = ({
   subject,
@@ -93,14 +103,11 @@ export const SubjectDetailView: React.FC<SubjectDetailViewProps> = ({
     [subject.mediaAssets],
   );
 
-  const examFiles = useMemo(
-    () => mediaFiles.filter((a) => EXAM_PATTERN.test(a.title || '')),
-    [mediaFiles],
-  );
+  const examFiles = useMemo(() => mediaFiles.filter((a) => isExamAsset(a)), [mediaFiles]);
 
   const bookFiles = useMemo(() => {
     const books = mediaFiles
-      .filter((a) => !EXAM_PATTERN.test(a.title || ''))
+      .filter((a) => !isExamAsset(a))
       .map<ViewerFile>((a) => ({
         title: a.title,
         url: a.url,
