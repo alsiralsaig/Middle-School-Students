@@ -3,6 +3,7 @@ import { GoogleGenAI } from '@google/genai';
 import { cleanText, currentUser, requireAuth } from '../lib/auth.js';
 import {
   aiStatus,
+  getProviderConfig,
   answer,
   answerStream,
   contextToText,
@@ -61,9 +62,59 @@ function parseTurns(raw: unknown): ChatTurn[] {
 /* ============================ الحالة (تشخيص) ============================ */
 
 /** يعرض أي مزوّد ذكاء اصطناعي مفعّل فعلاً — بلا أي مفاتيح */
-aiRouter.get('/ai/status', (_req, res) => {
+/** فحص فعلي للمفتاح: هل المزوّد يردّ فعلاً؟ (مرة واحدة كل دقيقة، بلا أسرار) */
+let lastProbe = 0;
+let lastProbeResult: { at: string; ok: boolean; detail: string } | null = null;
+
+aiRouter.get('/ai/status', async (req, res) => {
   res.setHeader('Cache-Control', 'no-store');
-  res.json(aiStatus());
+  const base = aiStatus();
+
+  if (String(req.query.probe || '') !== '1') {
+    res.json({ ...base, lastProbe: lastProbeResult });
+    return;
+  }
+
+  // نحد الفحص حتى لا يُستنزف الحصة
+  if (Date.now() - lastProbe < 60_000 && lastProbeResult) {
+    res.json({ ...base, lastProbe: lastProbeResult });
+    return;
+  }
+  lastProbe = Date.now();
+
+  const cfg = getProviderConfig();
+  let ok = false;
+  let detail = 'لا يوجد مزوّد مفعّل';
+  try {
+    if (cfg.gemini.apiKey) {
+      const { GoogleGenAI } = await import('@google/genai');
+      const ai = new GoogleGenAI({ apiKey: cfg.gemini.apiKey });
+      const out = await ai.models.generateContent({
+        model: cfg.gemini.model,
+        contents: [{ role: 'user', parts: [{ text: 'قول: تمام' }] }],
+        config: { maxOutputTokens: 8 },
+      });
+      ok = !!((out as { text?: string }).text || '').trim();
+      detail = ok ? `gemini/${cfg.gemini.model} يردّ` : 'gemini أعاد رداً فارغاً';
+    } else if (cfg.groq.apiKey) {
+      ok = true;
+      detail = 'groq مضبوط (لم يُفحص)';
+    } else if (cfg.openai.apiKey) {
+      ok = true;
+      detail = 'openai مضبوط (لم يُفحص)';
+    }
+  } catch (e) {
+    const msg = (e as Error).message || '';
+    // نمرر نوع الخطأ فقط بلا أي جزء من المفتاح
+    detail = msg.includes('API key') || msg.includes('401') || msg.includes('400')
+      ? 'المفتاح مرفوض من Google (تحقق من صلاحية GEMINI_API_KEY)'
+      : msg.includes('quota') || msg.includes('429')
+        ? 'الحصة/المعدل مستنفد مؤقتاً'
+        : `فشل الاتصال: ${msg.slice(0, 120)}`;
+  }
+
+  lastProbeResult = { at: new Date().toISOString(), ok, detail };
+  res.json({ ...base, lastProbe: lastProbeResult });
 });
 
 /* ============================ السؤال الصوتي ============================ */
