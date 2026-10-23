@@ -1,10 +1,10 @@
 import React from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ArrowRight, Clock3, FileText, Pencil, Trash2, Upload } from 'lucide-react';
-import { put } from '@vercel/blob/client';
 import { Badge, Card, EmptyState, ErrorState, LoadingState, NotConnectedNote } from '../components/ui';
 import { api, type LessonRecord } from '../lib/contentApi';
 import { getApiBase } from '../lib/serverUrl';
+import { uploadLessonAttachmentBlob } from '../lib/lessonBlobUpload';
 
 interface LessonFile { id?: string; title?: string; name?: string; url?: string; path?: string; filePath?: string; type?: string; fileType?: string; fileSize?: string }
 type FullLesson = LessonRecord & { attachments: LessonFile[] };
@@ -36,41 +36,9 @@ export const LessonDetailPage: React.FC = () => {
   const uploadAttachment = async (file?: File) => {
     if (fileInput.current) fileInput.current.value = '';
     if (!file || !lesson || uploading) return;
-    if (file.size > 20 * 1024 * 1024) { setError('حجم الملف يتجاوز الحد الأقصى 20 ميغابايت'); return; }
     setUploading(true); setUploadProgress(0); setError('');
     try {
-      const extension = file.name.split('.').pop()?.toLowerCase() || '';
-      const mimeByExtension: Record<string, string> = {
-        pdf: 'application/pdf', doc: 'application/msword',
-        docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        xls: 'application/vnd.ms-excel', xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        ppt: 'application/vnd.ms-powerpoint', pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-        txt: 'text/plain', csv: 'text/csv', jpg: 'image/jpeg', jpeg: 'image/jpeg',
-        png: 'image/png', webp: 'image/webp',
-      };
-      const safeName = file.name.normalize('NFKD').replace(/[^\p{L}\p{N}._-]+/gu, '_').slice(-120) || `attachment.${extension}`;
-      const pathname = `lesson-attachments/${lesson.id}/${safeName}`;
-      const tokenResponse = await fetch(`${getApiBase()}/api/admin/lessons/${encodeURIComponent(lesson.id)}/attachments/client`, {
-        method: 'POST', credentials: 'include',
-        headers: { 'X-App': 'admin', 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify({
-          type: 'blob.generate-client-token',
-          payload: {
-            pathname,
-            clientPayload: JSON.stringify({ fileName: file.name, sizeBytes: file.size }),
-            multipart: false,
-          },
-        }),
-      });
-      const tokenData = await tokenResponse.json().catch(() => null) as { clientToken?: string; error?: string } | null;
-      if (!tokenResponse.ok || !tokenData?.clientToken) throw new Error(tokenData?.error || 'تعذّر إصدار إذن رفع الملف');
-
-      const blob = await put(pathname, file, {
-        access: 'public', token: tokenData.clientToken,
-        contentType: mimeByExtension[extension] || file.type,
-        onUploadProgress: ({ percentage }) => setUploadProgress(percentage),
-      });
-
+      const blob = await uploadLessonAttachmentBlob(lesson.id, file, setUploadProgress);
       // سجل المرفق يكتبه callback الخادمي بعد إتمام الرفع؛ ننتظره قبل تأكيد النجاح.
       let saved = false;
       for (let attempt = 0; attempt < 10; attempt++) {
