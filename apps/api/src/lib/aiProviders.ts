@@ -127,64 +127,101 @@ function parseJson<T>(raw: string | null, fallback: T): T {
  * تطابق العنوان أثقل من الملخص، والملخص أثقل من بقية النص، والكلمة الطويلة
  * (الاسم العلمي) أثقل من الكلمة القصيرة.
  */
+type LessonRow = {
+  id: string;
+  title: string;
+  lessonNumber: number | null;
+  summary: string | null;
+  keyRules: string | null;
+  sections: string | null;
+  faq: string | null;
+  learningObjectives: string | null;
+  examTips: string | null;
+  subject: { name: string } | null;
+};
+
+/**
+ * تحميل الدروس مع تخزين مؤقت قصير.
+ *
+ * ليه لا نبحث بـSQL مباشرة: الحروف العربية لها صور متعددة (أ/ا، ة/ه، ى/ي)،
+ * فكلمة «الأيونية» لا تطابق «الايونيه»، وكان البحث يرجع صفراً دائماً. الحل:
+ * نجلب دروس المادة مرة واحدة (٣٥ درساً كحد أقصى) ونوحّد الحروف في الكود ثم
+ * نُقيّم — أدقّ وأسرع، والتخزين المؤقت ٦٠ ثانية يُبقي التحديثات فورية.
+ */
+const lessonCache = new Map<string, { at: number; rows: LessonRow[] }>();
+const LESSON_CACHE_MS = 60_000;
+
+async function loadLessons(subjectName?: string): Promise<LessonRow[]> {
+  const key = (subjectName || '*').trim();
+  const cached = lessonCache.get(key);
+  if (cached && Date.now() - cached.at < LESSON_CACHE_MS) return cached.rows;
+
+  try {
+    const rows = (await prisma.lesson.findMany({
+      where: subjectName
+        ? { subject: { name: { contains: subjectName, mode: 'insensitive' as const } } }
+        : {},
+      take: 300,
+      orderBy: { lessonNumber: 'asc' },
+      select: {
+        id: true,
+        title: true,
+        lessonNumber: true,
+        summary: true,
+        keyRules: true,
+        sections: true,
+        faq: true,
+        learningObjectives: true,
+        examTips: true,
+        subject: { select: { name: true } },
+      },
+    })) as LessonRow[];
+    lessonCache.set(key, { at: Date.now(), rows });
+    return rows;
+  } catch (e) {
+    console.warn('[ai] تحميل دروس المنهج فشل:', (e as Error).message);
+    return [];
+  }
+}
+
 export async function findCurriculumContext(question: string, subjectName?: string, limit = 3): Promise<CurriculumHit[]> {
   const words = keywords(question);
   if (!words.length) return [];
 
-  const subjectFilter = subjectName
-    ? { subject: { name: { contains: subjectName, mode: 'insensitive' as const } } }
-    : {};
+  const lessons = await loadLessons(subjectName);
+  if (!lessons.length) return [];
 
-  try {
-    const lessons = await prisma.lesson.findMany({
-      where: {
-        ...subjectFilter,
-        OR: words.flatMap((w) => [
-          { title: { contains: w, mode: 'insensitive' as const } },
-          { summary: { contains: w, mode: 'insensitive' as const } },
-          { keyRules: { contains: w, mode: 'insensitive' as const } },
-          { sections: { contains: w, mode: 'insensitive' as const } },
-        ]),
-      },
-      take: 60,
-      include: { subject: { select: { name: true } } },
-    });
+  const scored = lessons
+    .map((lesson) => {
+      const title = normalizeArabic(lesson.title || '');
+      const summary = normalizeArabic(lesson.summary || '');
+      const body = normalizeArabic(
+        `${lesson.keyRules || ''} ${lesson.sections || ''} ${lesson.faq || ''} ${lesson.learningObjectives || ''} ${lesson.examTips || ''}`,
+      );
+      let score = 0;
+      for (const w of words) {
+        const weight = Math.min(w.length, 10) / 4;
+        if (title.includes(w)) score += 6 * weight;
+        else if (summary.includes(w)) score += 3 * weight;
+        else if (body.includes(w)) score += 1.5 * weight;
+      }
+      return { lesson, score };
+    })
+    .filter((x) => x.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, limit);
 
-    const scored = lessons
-      .map((lesson) => {
-        const title = normalizeArabic(lesson.title || '');
-        const summary = normalizeArabic(lesson.summary || '');
-        const body = normalizeArabic(
-          `${lesson.keyRules || ''} ${lesson.sections || ''} ${lesson.faq || ''} ${lesson.learningObjectives || ''} ${lesson.examTips || ''}`,
-        );
-        let score = 0;
-        for (const w of words) {
-          const weight = Math.min(w.length, 10) / 4;
-          if (title.includes(w)) score += 6 * weight;
-          else if (summary.includes(w)) score += 3 * weight;
-          else if (body.includes(w)) score += 1.5 * weight;
-        }
-        return { lesson, score };
-      })
-      .filter((x) => x.score > 0)
-      .sort((a, b) => b.score - a.score)
-      .slice(0, limit);
-
-    return scored.map(({ lesson }) => ({
-      subjectName: lesson.subject?.name || subjectName || 'المقرر',
-      lessonTitle: lesson.title,
-      lessonId: lesson.id,
-      summary: lesson.summary || '',
-      keyRules: parseJson<string[]>(lesson.keyRules, []).slice(0, 8),
-      sections: parseJson<Array<{ title: string; content: string; formulaOrRule?: string }>>(lesson.sections, [])
-        .slice(0, 3)
-        .map((sec) => ({ title: sec.title, content: (sec.content || '').slice(0, 400), formulaOrRule: sec.formulaOrRule })),
-      faq: parseJson<Array<{ question: string; answer: string }>>(lesson.faq, []).slice(0, 3),
-    }));
-  } catch (e) {
-    console.warn('[ai] سياق المنهج فشل:', (e as Error).message);
-    return [];
-  }
+  return scored.map(({ lesson }) => ({
+    subjectName: lesson.subject?.name || subjectName || 'المقرر',
+    lessonTitle: lesson.title,
+    lessonId: lesson.id,
+    summary: lesson.summary || '',
+    keyRules: parseJson<string[]>(lesson.keyRules, []).slice(0, 8),
+    sections: parseJson<Array<{ title: string; content: string; formulaOrRule?: string }>>(lesson.sections, [])
+      .slice(0, 3)
+      .map((sec) => ({ title: sec.title, content: (sec.content || '').slice(0, 400), formulaOrRule: sec.formulaOrRule })),
+    faq: parseJson<Array<{ question: string; answer: string }>>(lesson.faq, []).slice(0, 3),
+  }));
 }
 
 /**
@@ -196,17 +233,8 @@ export async function findCurriculumContext(question: string, subjectName?: stri
  */
 export async function findLessonIndex(subjectName?: string, max = 60): Promise<string[]> {
   if (!subjectName) return [];
-  try {
-    const rows = await prisma.lesson.findMany({
-      where: { subject: { name: { contains: subjectName, mode: 'insensitive' } } },
-      select: { title: true },
-      orderBy: { lessonNumber: 'asc' },
-      take: max,
-    });
-    return rows.map((r) => r.title);
-  } catch {
-    return [];
-  }
+  const rows = await loadLessons(subjectName);
+  return rows.slice(0, max).map((r) => r.title);
 }
 
 export function contextToText(hits: CurriculumHit[], indexTitles: string[] = []): string {
