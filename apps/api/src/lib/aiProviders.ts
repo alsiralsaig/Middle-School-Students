@@ -19,7 +19,8 @@ export function getProviderConfig(): Record<ProviderName, ProviderConfig> {
   return {
     groq: {
       apiKey: (process.env.GROQ_API_KEY || '').trim(),
-      model: (process.env.GROQ_MODEL || 'llama-3.3-70b-versatile').trim(),
+      // الموديل الافتراضي متاح في الحسابات المجانية الحالية
+      model: (process.env.GROQ_MODEL || 'openai/gpt-oss-120b').trim(),
     },
     gemini: {
       apiKey: (process.env.GEMINI_API_KEY || '').trim(),
@@ -181,6 +182,10 @@ async function openAiCompatible(name: 'groq' | 'openai', cfg: ProviderConfig, tu
           messages: toMessages(turns, question, context),
           temperature: 0.5,
           max_tokens: 700,
+          // موديلات gpt-oss تفكّر قبل الرد — نقلّل التفكير للسرعة ونمنع ظهوره
+          ...(name === 'groq' && cfg.model.includes('gpt-oss')
+            ? { reasoning_effort: 'low', include_reasoning: false }
+            : {}),
         }),
       },
     );
@@ -278,7 +283,16 @@ export async function answerStream(
             method: 'POST',
             signal,
             headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${cfg[name].apiKey}` },
-            body: JSON.stringify({ model: cfg[name].model, messages, temperature: 0.5, max_tokens: 700, stream: true }),
+            body: JSON.stringify({
+              model: cfg[name].model,
+              messages,
+              temperature: 0.5,
+              max_tokens: 700,
+              stream: true,
+              ...(name === 'groq' && cfg[name].model.includes('gpt-oss')
+                ? { reasoning_effort: 'low', include_reasoning: false }
+                : {}),
+            }),
           },
         );
         if (!res.ok || !res.body) {
