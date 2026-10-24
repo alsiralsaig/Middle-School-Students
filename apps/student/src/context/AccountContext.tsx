@@ -1,10 +1,49 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { StudentAccount } from '../types';
-import { INITIAL_STUDENT_ACCOUNTS } from '../data/platformFeaturesData';
+import { sessionStore } from '../utils/sessionStore';
 import { markDirty, registerSyncSource } from '../utils/syncBus';
 
 /** طوابع زمنية لكل درس تُستخدم في المزامنة (آخر كتابة تنتصر) */
 const STAMP_KEY = 'ssp_progress_stamps_v1';
+
+/**
+ * مفتاح جديد للحساب المحلي.
+ *
+ * لماذا مفتاح جديد: النسخ السابقة كانت تحفظ ثلاثة حسابات تجريبية
+ * (أحمد/فاطمة/عمر) في `sudanese_platform_accounts`، ومن عنده نسخة قديمة في
+ * جواله يظل يراها. المفتاح الجديد يبدأ نظيفاً: حساب واحد لصاحب الجلسة فقط.
+ */
+const ACCOUNT_KEY = 'ssp_my_account_v2';
+
+/** الحساب الوحيد: تقدّم الطالب المحلي، وبياناته من الخادم */
+function blankAccount(): StudentAccount {
+  return {
+    id: 'me',
+    name: '',
+    grade: 'الصف الثالث متوسط',
+    state: '',
+    school: '',
+    avatar: '',
+    completedLessonIds: [],
+    bookmarkedLessonIds: [],
+    quizScores: {},
+    streakDays: 0,
+    createdAt: new Date().toISOString().split('T')[0],
+  };
+}
+
+function loadAccount(): StudentAccount {
+  try {
+    const saved = localStorage.getItem(ACCOUNT_KEY);
+    if (saved) {
+      const parsed = JSON.parse(saved) as StudentAccount;
+      if (parsed && typeof parsed === 'object') return { ...blankAccount(), ...parsed, id: 'me' };
+    }
+  } catch {
+    /* تجاهل */
+  }
+  return blankAccount();
+}
 
 function readStamps(): Record<string, string> {
   try {
@@ -39,28 +78,8 @@ interface AccountContextType {
 const AccountContext = createContext<AccountContextType | undefined>(undefined);
 
 export const AccountProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [accounts, setAccounts] = useState<StudentAccount[]>(() => {
-    try {
-      const saved = localStorage.getItem('sudanese_platform_accounts');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      }
-    } catch {
-      // fallback
-    }
-    return INITIAL_STUDENT_ACCOUNTS;
-  });
-
-  const [activeAccountId, setActiveAccountId] = useState<string>(() => {
-    try {
-      const saved = localStorage.getItem('sudanese_platform_active_acc_id');
-      if (saved) return saved;
-    } catch {
-      // fallback
-    }
-    return INITIAL_STUDENT_ACCOUNTS[0]?.id || 'acc-1';
-  });
+  const [accounts, setAccounts] = useState<StudentAccount[]>(() => [loadAccount()]);
+  const [activeAccountId, setActiveAccountId] = useState<string>('me');
 
   const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
 
@@ -74,46 +93,53 @@ export const AccountProvider: React.FC<{ children: React.ReactNode }> = ({ child
   // Sync to localStorage
   useEffect(() => {
     try {
-      localStorage.setItem('sudanese_platform_accounts', JSON.stringify(accounts));
+      localStorage.setItem(ACCOUNT_KEY, JSON.stringify(accounts[0]));
     } catch {
       // ignore
     }
   }, [accounts]);
 
+  const activeAccount = accounts.find(a => a.id === activeAccountId) || accounts[0] || blankAccount();
+
+  /* بيانات صاحب الجلسة من الخادم هي المرجع: اسمه وصورته وصفّه */
   useEffect(() => {
-    try {
-      localStorage.setItem('sudanese_platform_active_acc_id', activeAccountId);
-    } catch {
-      // ignore
-    }
-  }, [activeAccountId]);
-
-  const activeAccount = accounts.find(a => a.id === activeAccountId) || accounts[0] || INITIAL_STUDENT_ACCOUNTS[0];
-
-  const switchAccount = (id: string) => {
-    const target = accounts.find(a => a.id === id);
-    if (target) {
-      setActiveAccountId(id);
-    }
-  };
-
-  const createAccount = (data: { name: string; grade: string; state: string; school: string; avatar?: string }) => {
-    const newAccount: StudentAccount = {
-      id: `acc-${Date.now()}`,
-      name: data.name,
-      grade: data.grade,
-      state: data.state,
-      school: data.school,
-      avatar: data.avatar || '👨‍🎓',
-      completedLessonIds: [],
-      bookmarkedLessonIds: [],
-      quizScores: {},
-      streakDays: 1,
-      createdAt: new Date().toISOString().split('T')[0],
+    const sync = () => {
+      const user = sessionStore.getState().user;
+      if (!user) return;
+      setAccounts(prev => {
+        const cur = prev[0] ?? blankAccount();
+        const next: StudentAccount = {
+          ...cur,
+          id: 'me',
+          name: user.name || cur.name,
+          grade: user.grade || cur.grade,
+          school: user.school || cur.school,
+          avatar: user.avatar || cur.avatar,
+        };
+        if (
+          next.name === cur.name &&
+          next.grade === cur.grade &&
+          next.school === cur.school &&
+          next.avatar === cur.avatar
+        ) {
+          return prev;
+        }
+        return [next];
+      });
     };
+    sync();
+    return sessionStore.subscribe(sync);
+  }, []);
 
-    setAccounts(prev => [newAccount, ...prev]);
-    setActiveAccountId(newAccount.id);
+  /* لا تبديل حسابات في تطبيق الطالب — الحساب حساب صاحب الجلسة فقط */
+  const switchAccount = (_id: string) => {};
+
+  /**
+   * إنشاء الحساب صار من بوابة الدخول فقط (رمز من الإدارة + هاتف + رقم سري)،
+   * فلم يبقَ للحساب المحلي دور — نحدّث بيانات الحساب الواحد بدلاً من إضافة آخر.
+   */
+  const createAccount = (data: { name: string; grade: string; state: string; school: string; avatar?: string }) => {
+    setAccounts(prev => [{ ...(prev[0] ?? blankAccount()), ...data, id: 'me' }]);
     setIsAccountModalOpen(false);
   };
 

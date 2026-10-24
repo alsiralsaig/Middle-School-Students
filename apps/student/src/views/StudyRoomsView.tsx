@@ -1,604 +1,360 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { 
-  Users, 
-  MessageSquare, 
-  Send, 
-  Pin, 
-  Sparkles, 
-  BookOpen, 
-  ArrowRight, 
-  Smile, 
-  CheckCircle2, 
-  HelpCircle, 
-  User, 
-  Clock, 
-  Search, 
-  Filter, 
-  Flame, 
-  School, 
-  MapPin, 
-  Paperclip,
-  Share2
-} from 'lucide-react';
-import { StudyRoom, StudyRoomMessage } from '../types';
-import { useAccount } from '../context/AccountContext';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ArrowRight, BookOpen, Clock, MessageSquare, Send, Sparkles, Users } from 'lucide-react';
+import { useSession } from '../hooks/useSession';
+import { StudentAvatar } from '../components/StudentAvatar';
+import { getApiBase } from '../utils/serverUrl';
 
-const INITIAL_ROOMS: StudyRoom[] = [
+/**
+ * المذاكرة الجماعية — صفحة مستقلة.
+ *
+ * ما تغيّر: كانت الصفحة تعرض رسائل مكتوبة مسبقاً و«٥٧ طالباً متصلين» وتردّ على
+ * الطالب بردود وهمية بعد ثانيتين — أي محادثة لا يراها أحد. الآن الرسائل تُحفظ
+ * في قاعدة البيانات عبر `/api/study/...` ويراها كل من يفتح الغرفة، وعدّاد
+ * المتصلين محسوب من نشاط حقيقي في آخر ٣٠ دقيقة، والتحديث كل ٧ ثوانٍ.
+ */
+
+interface RoomMeta {
+  id: string;
+  title: string;
+  subjectName: string;
+  topic: string;
+  description: string;
+  pinnedNote: string;
+  tags: string[];
+  accent: string;
+}
+
+const ROOMS: RoomMeta[] = [
   {
     id: 'room-math',
-    title: 'غرفة مراجعة الرياضيات وتطبيقات فيثاغورس',
-    subjectId: 'math',
+    title: 'غرفة الرياضيات',
     subjectName: 'الرياضيات',
-    topic: 'نظرية فيثاغورس وتحليل المقادير الجبرية',
-    activeCount: 14,
-    description: 'غرفة مذاكرة تفاعلية مخصصة لمناقشة مسائل الجبر، إثباتات الدائرة، ومسائل فيثاغورس الوزارية.',
-    pinnedNote: '📌 مسألة اليوم للمناقشة: في المثلث القائم (أ ب ج)، إذا كان الوتر ١٠ سم والضلع الأول ٦ سم، ما هي مساحة المثلث؟ شارك خطوتك في المحادثة!',
-    iconBg: 'bg-blue-600',
-    tags: ['#الرياضيات', '#فيثاغورس', '#حل_مسائل', '#امتحانات_الشهادة'],
+    topic: 'فيثاغورس، الجبر، وهندسة الدائرة',
+    description: 'ناقش المسائل الصعبة خطوة بخطوة مع زملائك — اكتب خطوتك وخلي غيرك يكمّل.',
+    pinnedNote: 'مسألة اليوم: في مثلث قائم الوتر ١٠ سم وأحد الضلعين ٦ سم — ما مساحة المثلث؟',
+    tags: ['#فيثاغورس', '#حل_مسائل'],
+    accent: 'from-blue-600 to-indigo-700',
   },
   {
     id: 'room-science',
-    title: 'مختبر العلوم وقوانين نيوتن والتفاعلات',
-    subjectId: 'science',
+    title: 'غرفة العلوم',
     subjectName: 'العلوم',
-    topic: 'الفيزياء، الكيمياء، وأجهزة جسم الإنسان',
-    activeCount: 9,
-    description: 'مساحة طلابية لمراجعة معادلات التكافؤ الكيميائي، قوانين الحركة، ورسومات أجهزة الجسم المقررة.',
-    pinnedNote: '📌 تنبيه المذاكرة: ركّزوا الليلة على الفرق بين الرابطة الأيونية والرابطة التساهمية مع ذكر مثال لكل منهما.',
-    iconBg: 'bg-emerald-600',
-    tags: ['#العلوم', '#قوانين_نيوتن', '#كيمياء', '#الدورة_الدموية'],
+    topic: 'نيوتن، التفاعلات، وأجهزة الجسم',
+    description: 'قوانين الحركة، معادلات التكافؤ، ورسومات أجهزة جسم الإنسان.',
+    pinnedNote: 'تنبيه: راجع الفرق بين الرابطة الأيونية والتساهمية مع مثال لكل واحدة.',
+    tags: ['#نيوتن', '#كيمياء'],
+    accent: 'from-emerald-600 to-teal-700',
   },
   {
     id: 'room-arabic',
-    title: 'ديوان لغة الضاد ومذاكرة النحو والبلاغة',
-    subjectId: 'arabic',
+    title: 'غرفة اللغة العربية',
     subjectName: 'اللغة العربية',
-    topic: 'الممنوع من الصرف، الحال، والتمييز',
-    activeCount: 12,
-    description: 'مناقشة أسرار الإعراب، علامات الجر بالفتحة، والتفريق الدقيق بين التمييز الملحوظ والملفوظ.',
-    pinnedNote: '📌 تدريب إعرابي مشترك: «سافرتُ إلى مساجدَ أثريةٍ». من يعرب (مساجد) إعراباً تاماً مع ذكر السبب؟',
-    iconBg: 'bg-amber-600',
-    tags: ['#اللغة_العربية', '#النحو', '#الممنوع_من_الصرف', '#إعراب'],
+    topic: 'النحو، البلاغة، والممنوع من الصرف',
+    description: 'إعراب مشترك وتدريبات على الحال والتمييز.',
+    pinnedNote: 'أعرب: «سافرتُ إلى مساجدَ أثريةٍ» — واذكر سبب منع (مساجد) من الصرف.',
+    tags: ['#نحو', '#إعراب'],
+    accent: 'from-amber-600 to-orange-700',
   },
   {
     id: 'room-general',
-    title: 'غرفة المراجعة القومية الشاملة للشهادة المتوسطة',
-    subjectId: 'general',
-    subjectName: 'المراجعة الشاملة',
-    topic: 'جميع المواد المقررة والتحضير للامتحانات',
-    activeCount: 22,
-    description: 'ملتقى مفتوح لطلاب الصف الثالث المتوسط من جميع ولايات السودان لتبادل النصائح وأوراق الامتحانات.',
-    pinnedNote: '📌 جدول اليوم: تبدأ المذاكرة الجماعية لورقة الدراسات الاجتماعية وأحداث الثورة المهدية في تمام الساعة 7 مساءً.',
-    iconBg: 'bg-purple-600',
-    tags: ['#الشهادة_المتوسطة', '#مذاكرة_جماعية', '#السودان', '#كل_المواد'],
+    title: 'غرفة المراجعة الشاملة',
+    subjectName: 'كل المواد',
+    topic: 'التحضير للامتحانات والنصائح',
+    description: 'ملتقى طلاب الصف الثالث متوسط من كل ولايات السودان.',
+    pinnedNote: 'اكتب هنا خطتك للمراجعة النهاردة — وخلّي غيرك يستفيد.',
+    tags: ['#مذاكرة_جماعية', '#امتحانات'],
+    accent: 'from-purple-600 to-fuchsia-700',
   },
 ];
 
-const INITIAL_MESSAGES: Record<string, StudyRoomMessage[]> = {
-  'room-math': [
-    {
-      id: 'm-1',
-      roomId: 'room-math',
-      senderName: 'محمد الفاتح',
-      senderAvatar: '👨‍🎓',
-      senderState: 'ولاية الخرطوم',
-      text: 'السلام عليكم يا شباب، بخصوص مسألة فيثاغورس المثبتة: الضلع الثاني = √(١٠٠ - ٣٦) = √٦٤ = ٨ سم!',
-      timestamp: 'منذ 10 دقائق',
-      reactions: { '👍': 5, '💡': 3 },
-    },
-    {
-      id: 'm-2',
-      roomId: 'room-math',
-      senderName: 'فاطمة الزهراء',
-      senderAvatar: '🧕',
-      senderState: 'ولاية الجزيرة',
-      text: 'ممتاز يا محمد! وبناءً عليه المساحة = ½ × ٨ × ٦ = ٢٤ سم². هل خطواتي صحيحة؟',
-      timestamp: 'منذ 7 دقائق',
-      reactions: { '👏': 6, '🇸🇩': 4 },
-    },
-    {
-      id: 'm-3',
-      roomId: 'room-math',
-      senderName: 'عمر صديق',
-      senderAvatar: '👨‍🎓',
-      senderState: 'ولاية البحر الأحمر',
-      text: 'صحيحة 100%! وأهم نقطة ألا ننسى وحدة القياس (سم²) لأن لجان الامتحانات تخصم نصف درجة عليها.',
-      timestamp: 'منذ 3 دقائق',
-      reactions: { '💡': 4 },
-    },
-  ],
-  'room-science': [
-    {
-      id: 's-1',
-      roomId: 'room-science',
-      senderName: 'رؤى عبد الله',
-      senderAvatar: '👩‍🎓',
-      senderState: 'ولاية نهر النيل',
-      text: 'مساء الخير، هل قانون نيوتن الثاني ق = ك × ت دائماً يُقاس بالنيوتن؟',
-      timestamp: 'منذ 15 دقيقة',
-    },
-    {
-      id: 's-2',
-      roomId: 'room-science',
-      senderName: 'أحمد التوم',
-      senderAvatar: '👨‍🎓',
-      senderState: 'ولاية كسلا',
-      text: 'نعم يا رؤى! ١ نيوتن = ١ كجم × ١ م/ث². هذا السؤال تكرر في امتحان ولاية الجزيرة العام الماضي.',
-      timestamp: 'منذ 11 دقيقة',
-      reactions: { '👍': 4 },
-    },
-  ],
-  'room-arabic': [
-    {
-      id: 'a-1',
-      roomId: 'room-arabic',
-      senderName: 'سارة مأمون',
-      senderAvatar: '🧕',
-      senderState: 'ولاية سنار',
-      text: 'إعراب مساجدَ: اسم مجرور بـ (إلى) وعلامة جره الفتحة نيابة عن الكسرة لأنه ممنوع من الصرف (صيغة منتهى الجموع)!',
-      timestamp: 'منذ 8 دقائق',
-      reactions: { '👏': 7, '💡': 2 },
-    },
-  ],
-  'room-general': [
-    {
-      id: 'g-1',
-      roomId: 'room-general',
-      senderName: 'إبراهيم علي',
-      senderAvatar: '👨‍🎓',
-      senderState: 'ولاية القضارف',
-      text: 'بالتوفيق لكل طلاب الشهادة المتوسطة في جميع أنحاء السودان! منصة ممتازة ومذاكرتنا سوا بتشجعنا جداً 🇸🇩💪',
-      timestamp: 'منذ 20 دقيقة',
-      reactions: { '🇸🇩': 12, '❤️': 8 },
-    },
-  ],
-};
-
-interface StudyRoomsViewProps {
-  onBackToDashboard?: () => void;
+interface Message {
+  id: string;
+  userId: string;
+  name: string;
+  avatar: string | null;
+  state: string | null;
+  body: string;
+  createdAt: string;
 }
 
-export const StudyRoomsView: React.FC<StudyRoomsViewProps> = ({ onBackToDashboard }) => {
-  const { activeAccount } = useAccount();
+interface RoomStat {
+  roomId: string;
+  online: number;
+  messages: number;
+  lastMessageAt: string | null;
+}
 
+const POLL_MS = 7000;
+
+/** «قبل ٣ دقائق» بدل التاريخ الخام */
+function timeAgo(iso: string): string {
+  const diff = Math.max(0, Date.now() - new Date(iso).getTime());
+  const min = Math.floor(diff / 60000);
+  if (min < 1) return 'الآن';
+  if (min < 60) return `قبل ${min} دقيقة`;
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return `قبل ${hr} ساعة`;
+  return `قبل ${Math.floor(hr / 24)} يوم`;
+}
+
+export const StudyRoomsView: React.FC<{ onBackToDashboard?: () => void }> = ({ onBackToDashboard }) => {
+  const { user } = useSession();
   const [activeRoomId, setActiveRoomId] = useState<string | null>(null);
-  const [messages, setMessages] = useState<Record<string, StudyRoomMessage[]>>(INITIAL_MESSAGES);
-  const [inputText, setInputText] = useState('');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedTag, setSelectedTag] = useState<string>('all');
+  const [stats, setStats] = useState<RoomStat[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [text, setText] = useState('');
+  const [error, setError] = useState('');
+  const bottomRef = useRef<HTMLDivElement>(null);
 
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const activeRoom = useMemo(() => ROOMS.find((r) => r.id === activeRoomId) || null, [activeRoomId]);
+  const statOf = (id: string) => stats.find((s) => s.roomId === id);
+  const totalOnline = stats.reduce((n, s) => n + s.online, 0);
 
-  const activeRoom = INITIAL_ROOMS.find((r) => r.id === activeRoomId) || null;
-  const currentMessages = activeRoomId ? messages[activeRoomId] || [] : [];
-
-  // Auto scroll to latest message
-  useEffect(() => {
-    if (activeRoomId) {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  /* إحصاءات الغرف — تُحدَّث كل ٣٠ ثانية */
+  const loadStats = useCallback(async () => {
+    try {
+      const res = await fetch(`${getApiBase()}/api/study/rooms`, { credentials: 'include' });
+      if (!res.ok) return;
+      const data = (await res.json()) as { rooms: RoomStat[] };
+      setStats(data.rooms);
+    } catch {
+      /* الشبكة غير متاحة — نُبقي آخر إحصاء */
     }
-  }, [messages, activeRoomId]);
+  }, []);
 
-  const handleSendMessage = (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    if (!inputText.trim() || !activeRoomId) return;
+  useEffect(() => {
+    void loadStats();
+    const t = setInterval(() => void loadStats(), 30_000);
+    return () => clearInterval(t);
+  }, [loadStats]);
 
-    const newMessage: StudyRoomMessage = {
-      id: `msg-${Date.now()}`,
-      roomId: activeRoomId,
-      senderName: activeAccount.name || 'طالب متميز',
-      senderAvatar: activeAccount.avatar || '👨‍🎓',
-      senderState: activeAccount.state || 'السودان',
-      text: inputText.trim(),
-      timestamp: 'الآن',
-      isSelf: true,
-      reactions: {},
-    };
-
-    setMessages((prev) => ({
-      ...prev,
-      [activeRoomId]: [...(prev[activeRoomId] || []), newMessage],
-    }));
-
-    setInputText('');
-
-    // Simulate smart peer feedback in study room after a short delay
-    setTimeout(() => {
-      const peerReplies = [
-        'أحسنت يا بطل! ملاحظة ممتازة ودقيقة للمنهج.',
-        'شكراً لمشاركتك المفيدة، فلنواصل حل بقية التمارين معاً.',
-        'فكرة رائعة! سأقوم بتدوين هذه النقطة في مذكرتي فوراً 📝',
-      ];
-      const randomReply = peerReplies[Math.floor(Math.random() * peerReplies.length)];
-
-      const peerMsg: StudyRoomMessage = {
-        id: `peer-${Date.now()}`,
-        roomId: activeRoomId,
-        senderName: 'عثمان عبد الله',
-        senderAvatar: '👨‍🎓',
-        senderState: 'ولاية الخرطوم',
-        text: randomReply,
-        timestamp: 'الآن',
-        reactions: { '👍': 1 },
-      };
-
-      setMessages((prev) => ({
-        ...prev,
-        [activeRoomId]: [...(prev[activeRoomId] || []), peerMsg],
-      }));
-    }, 2500);
-  };
-
-  const handleSendReaction = (msgId: string, emoji: string) => {
-    if (!activeRoomId) return;
-    setMessages((prev) => {
-      const roomMsgs = prev[activeRoomId] || [];
-      const updated = roomMsgs.map((m) => {
-        if (m.id === msgId) {
-          const reactions = { ...(m.reactions || {}) };
-          reactions[emoji] = (reactions[emoji] || 0) + 1;
-          return { ...m, reactions };
-        }
-        return m;
+  /* رسائل الغرفة المفتوحة — تحميل ثم تحديث دوري */
+  const loadMessages = useCallback(async (roomId: string, quiet = false) => {
+    if (!quiet) setLoading(true);
+    try {
+      const res = await fetch(`${getApiBase()}/api/study/rooms/${roomId}/messages`, {
+        credentials: 'include',
       });
-      return { ...prev, [activeRoomId]: updated };
-    });
+      if (!res.ok) throw new Error(String(res.status));
+      const data = (await res.json()) as { messages: Message[] };
+      setMessages(data.messages);
+      setError('');
+    } catch {
+      if (!quiet) setError('تعذّر تحميل رسائل الغرفة — تأكد من اتصال الإنترنت');
+    } finally {
+      if (!quiet) setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!activeRoomId) {
+      setMessages([]);
+      return;
+    }
+    void loadMessages(activeRoomId);
+    const t = setInterval(() => void loadMessages(activeRoomId, true), POLL_MS);
+    return () => clearInterval(t);
+  }, [activeRoomId, loadMessages]);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages.length, activeRoomId]);
+
+  const send = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const body = text.trim();
+    if (!body || !activeRoomId || sending) return;
+    setSending(true);
+    setError('');
+    try {
+      const res = await fetch(`${getApiBase()}/api/study/rooms/${activeRoomId}/messages`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json', 'X-App': 'student' },
+        body: JSON.stringify({ text: body }),
+      });
+      const data = (await res.json().catch(() => null)) as { message?: Message; error?: string } | null;
+      if (!res.ok || !data?.message) throw new Error(data?.error || 'تعذّر إرسال الرسالة');
+      setMessages((prev) => [...prev, data.message as Message]);
+      setText('');
+      void loadStats();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'تعذّر إرسال الرسالة');
+    } finally {
+      setSending(false);
+    }
   };
 
-  const handleQuickQuestion = (qText: string) => {
-    setInputText(qText);
-  };
+  /* ==================== قائمة الغرف ==================== */
+  if (!activeRoom) {
+    return (
+      <div className="space-y-5 text-right">
+        <div className="bg-gradient-to-r from-[#0B2A5B] via-[#0B1E36] to-[#071322] rounded-3xl p-6 sm:p-7 border border-[#1C3659] relative overflow-hidden">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#F1AC12]/15 border border-[#F1AC12]/30 text-[#F1AC12] text-[11px] font-bold">
+            <Users className="w-3.5 h-3.5" /> المذاكرة الجماعية
+          </div>
+          <h1 className="mt-3 text-xl sm:text-2xl font-black text-white">غرف المذاكرة — الصف الثالث متوسط</h1>
+          <p className="mt-1.5 text-[12px] sm:text-[13px] text-slate-300 leading-relaxed max-w-xl">
+            اختار غرفة واكتب سؤالك. رسالتك تظهر لكل الطلاب اللي فاتحين نفس الغرفة، وحد ما يرد عليك
+            تلقائياً — الردود من زملائك الحقيقيين.
+          </p>
+          <div className="mt-4 flex items-center gap-3 text-[11px]">
+            <span className="inline-flex items-center gap-1.5 text-emerald-400 font-bold">
+              <span className={`w-2 h-2 rounded-full ${totalOnline > 0 ? 'bg-emerald-400 animate-pulse' : 'bg-slate-500'}`} />
+              {totalOnline > 0 ? `${totalOnline} طالباً نشطاً الآن` : 'ما في حد متصل حالياً'}
+            </span>
+            <span className="text-slate-500">•</span>
+            <span className="text-slate-400">{ROOMS.length} غرف</span>
+          </div>
+        </div>
 
-  const quickPrompts = [
-    'من يشرح لي هذه النقطة خطوة بخطوة؟',
-    'ما هو القانون الرياضي المعتمد لهذه المسألة؟',
-    'هل هذا السؤال متوقع في امتحانات الشهادة المتوسطة؟',
-    'أنا جاهز لحل المسألة التالية معاً 🇸🇩',
-  ];
+        <div className="grid gap-3 sm:grid-cols-2">
+          {ROOMS.map((room) => {
+            const st = statOf(room.id);
+            return (
+              <button
+                key={room.id}
+                type="button"
+                onClick={() => setActiveRoomId(room.id)}
+                className="text-right rounded-2xl bg-[#0B1E36] border border-[#1C3659] hover:border-[#F1AC12]/50 transition-colors p-4 cursor-pointer"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${room.accent} flex items-center justify-center shrink-0`}>
+                    <BookOpen className="w-5 h-5 text-white" />
+                  </div>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#0E2440] border border-[#27446C] text-slate-300">
+                    {room.subjectName}
+                  </span>
+                </div>
+                <h2 className="mt-2.5 text-sm font-black text-white">{room.title}</h2>
+                <p className="mt-1 text-[11px] text-slate-400 leading-relaxed">{room.description}</p>
+                <div className="mt-3 flex items-center gap-3 text-[10px] text-slate-400">
+                  <span className="inline-flex items-center gap-1">
+                    <Users className="w-3 h-3 text-emerald-400" /> {st?.online ?? 0} متصل
+                  </span>
+                  <span className="inline-flex items-center gap-1">
+                    <MessageSquare className="w-3 h-3 text-sky-400" /> {st?.messages ?? 0} رسالة
+                  </span>
+                  {st?.lastMessageAt && (
+                    <span className="inline-flex items-center gap-1">
+                      <Clock className="w-3 h-3 text-amber-400" /> {timeAgo(st.lastMessageAt)}
+                    </span>
+                  )}
+                </div>
+              </button>
+            );
+          })}
+        </div>
 
-  const filteredRooms = INITIAL_ROOMS.filter((room) => {
-    const matchesSearch =
-      room.title.includes(searchQuery) ||
-      room.topic.includes(searchQuery) ||
-      room.subjectName.includes(searchQuery);
-    const matchesTag = selectedTag === 'all' || room.tags.includes(selectedTag);
-    return matchesSearch && matchesTag;
-  });
+        {onBackToDashboard && (
+          <button
+            type="button"
+            onClick={onBackToDashboard}
+            className="text-[11px] font-bold text-slate-400 hover:text-white inline-flex items-center gap-1.5"
+          >
+            <ArrowRight className="w-3.5 h-3.5" /> رجوع للواجهة
+          </button>
+        )}
+      </div>
+    );
+  }
+
+  /* ==================== غرفة مفتوحة ==================== */
+  const roomStat = statOf(activeRoom.id);
 
   return (
-    <div className="space-y-6 text-right">
-      
-      {/* ======================= VIEW 1: ROOMS DIRECTORY ======================= */}
-      {!activeRoom && (
-        <div className="space-y-6 animate-in fade-in duration-200">
-          
-          {/* Header Banner */}
-          <div className="bg-gradient-to-r from-blue-900 via-indigo-950 to-slate-900 rounded-3xl p-6 sm:p-8 text-white relative overflow-hidden shadow-xl border border-amber-400/20">
-            <div className="max-w-2xl space-y-3 relative z-10">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-400/20 border border-amber-400/30 text-amber-300 text-xs font-bold">
-                <Users className="w-4 h-4 text-amber-400" />
-                <span>مساحات المذاكرة الجماعية التفاعلية · الشهادة المتوسطة</span>
-              </div>
-              <h1 className="text-2xl sm:text-3xl font-black">
-                غرف المذاكرة الافتراضية للطلاب 🇸🇩
-              </h1>
-              <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-                انضم إلى غرف المذاكرة المخصصة لمواد الشهادة المتوسطة، وناقش المسائل والقوانين الصعبة مع زملائك من مختلف ولايات السودان عبر بيئة دراسية محفزة وآمنة.
+    <div className="space-y-3 text-right">
+      <div className="rounded-2xl bg-[#0B1E36] border border-[#1C3659] overflow-hidden flex flex-col h-[calc(100vh-11rem)] min-h-[420px]">
+        {/* رأس الغرفة */}
+        <div className="px-4 py-3 border-b border-[#1C3659] flex items-center justify-between gap-2 shrink-0">
+          <div className="flex items-center gap-2 min-w-0">
+            <button
+              type="button"
+              onClick={() => setActiveRoomId(null)}
+              aria-label="رجوع للغرف"
+              className="w-9 h-9 rounded-lg bg-[#0E2440] border border-[#1B3658] flex items-center justify-center shrink-0"
+            >
+              <ArrowRight className="w-4 h-4 text-slate-300" />
+            </button>
+            <div className="min-w-0">
+              <h2 className="text-sm font-black text-white truncate">{activeRoom.title}</h2>
+              <p className="text-[10px] text-slate-400 truncate">
+                {roomStat?.online ?? 0} متصل الآن · {activeRoom.topic}
               </p>
             </div>
-
-            {/* Quick stats banner */}
-            <div className="mt-6 pt-5 border-t border-white/10 flex flex-wrap items-center justify-between gap-4 text-xs">
-              <div className="flex items-center gap-3">
-                <span className="flex items-center gap-1.5 text-emerald-400 font-bold">
-                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
-                  <span>57 طالباً متصلين الآن في الغرف</span>
-                </span>
-                <span className="text-slate-400">•</span>
-                <span className="text-amber-300">4 غرف دراسية نشطة</span>
-              </div>
-
-              {onBackToDashboard && (
-                <button
-                  type="button"
-                  onClick={onBackToDashboard}
-                  className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold transition-all cursor-pointer flex items-center gap-1.5"
-                >
-                  <ArrowRight className="w-4 h-4" />
-                  <span>العودة للوحة التحكم</span>
-                </button>
-              )}
-            </div>
           </div>
-
-          {/* Search & Tags Filters */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
-            <div className="relative flex-1 max-w-md">
-              <input
-                type="text"
-                placeholder="ابحث عن غرفة مادة أو موضوع معين..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-4 pr-10 py-2.5 rounded-2xl bg-white dark:bg-[#0D1F35] border border-slate-200 dark:border-[#1E3A60] text-xs sm:text-sm text-slate-800 dark:text-slate-100 placeholder-slate-400 outline-none shadow-sm"
-              />
-              <Search className="w-4 h-4 text-slate-400 absolute right-3.5 top-3.5" />
-            </div>
-
-            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 text-xs">
-              {['all', '#الرياضيات', '#العلوم', '#النحو', '#الشهادة_المتوسطة'].map((tag) => (
-                <button
-                  key={tag}
-                  type="button"
-                  onClick={() => setSelectedTag(tag)}
-                  className={`px-3.5 py-2 min-h-[36px] inline-flex items-center rounded-xl font-bold transition-all cursor-pointer whitespace-nowrap ${
-                    selectedTag === tag
-                      ? 'bg-blue-700 text-white shadow-sm'
-                      : 'bg-slate-100 dark:bg-[#142A46] text-slate-600 dark:text-slate-300 hover:bg-slate-200'
-                  }`}
-                >
-                  {tag === 'all' ? 'جميع الغرف' : tag}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Rooms Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {filteredRooms.map((room) => (
-              <div
-                key={room.id}
-                className="bg-white dark:bg-[#0D1F35] rounded-3xl border border-slate-200 dark:border-[#1E3A60] p-6 flex flex-col justify-between hover:shadow-xl hover:border-amber-400/50 transition-all text-right group"
-              >
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className={`w-12 h-12 rounded-2xl ${room.iconBg} text-white flex items-center justify-center font-bold text-xl shadow-md group-hover:scale-105 transition-transform`}>
-                        <MessageSquare className="w-6 h-6" />
-                      </div>
-                      <div>
-                        <span className="text-[11px] font-bold text-amber-600 dark:text-amber-400">
-                          {room.subjectName}
-                        </span>
-                        <h3 className="text-base font-bold text-slate-900 dark:text-white leading-tight">
-                          {room.title}
-                        </h3>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 text-xs font-bold">
-                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                      <span>{room.activeCount} متصل</span>
-                    </div>
-                  </div>
-
-                  <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-                    {room.description}
-                  </p>
-
-                  {/* Pinned Note preview */}
-                  {room.pinnedNote && (
-                    <div className="p-3 rounded-2xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 text-xs text-amber-900 dark:text-amber-300 leading-relaxed">
-                      {room.pinnedNote}
-                    </div>
-                  )}
-
-                  {/* Tags */}
-                  <div className="flex flex-wrap gap-1.5 pt-1">
-                    {room.tags.map((t, idx) => (
-                      <span
-                        key={idx}
-                        className="text-[10px] px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-[#142A46] text-slate-600 dark:text-slate-300 font-mono"
-                      >
-                        {t}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                  <span className="text-xs text-slate-400">
-                    مناقشات تفاعلية فورية
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setActiveRoomId(room.id)}
-                    className="px-5 py-2.5 rounded-2xl bg-gradient-to-r from-blue-700 to-indigo-700 hover:from-blue-800 hover:to-indigo-800 text-white font-black text-xs sm:text-sm flex items-center gap-2 shadow-md hover:shadow-lg transition-all cursor-pointer"
-                  >
-                    <span>دخول الغرفة</span>
-                    <MessageSquare className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
+          <span className="text-[10px] font-bold text-emerald-300 bg-emerald-500/10 border border-emerald-500/25 rounded-full px-2 py-1 shrink-0">
+            مباشر
+          </span>
         </div>
-      )}
 
-      {/* ======================= VIEW 2: ACTIVE ROOM LIVE CHAT ======================= */}
-      {activeRoom && (
-        <div className="bg-white dark:bg-[#0D1F35] rounded-3xl border border-slate-200 dark:border-[#1E3A60] shadow-xl overflow-hidden flex flex-col h-[780px] max-h-[85vh] animate-in fade-in duration-200">
-          
-          {/* Room Top Header */}
-          <div className="p-4 sm:p-5 bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 text-white flex items-center justify-between gap-4 shrink-0 border-b border-amber-400/20">
-            <div className="flex items-center gap-3 min-w-0">
-              <button
-                type="button"
-                onClick={() => setActiveRoomId(null)}
-                className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer shrink-0"
-                title="مغادرة الغرفة والعودة للدليل"
-              >
-                <ArrowRight className="w-5 h-5" />
-              </button>
+        {/* الموضوع المثبّت */}
+        <div className="px-4 py-2 bg-[#F1AC12]/10 border-b border-[#F1AC12]/20 text-[11px] text-amber-200 flex items-start gap-2 shrink-0">
+          <Sparkles className="w-3.5 h-3.5 text-[#F1AC12] shrink-0 mt-0.5" />
+          <span className="leading-relaxed">{activeRoom.pinnedNote}</span>
+        </div>
 
-              <div className="min-w-0">
-                <div className="flex items-center gap-2">
-                  <h2 className="text-sm sm:text-base font-black text-white truncate">
-                    {activeRoom.title}
-                  </h2>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/30 text-emerald-300 border border-emerald-400/30 font-bold hidden sm:inline">
-                    {activeRoom.activeCount + 1} متصل الآن
-                  </span>
-                </div>
-                <p className="text-[11px] text-amber-200/80 truncate max-w-sm sm:max-w-md">
-                  الموضوع: {activeRoom.topic}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 shrink-0">
-              <span className="text-xs text-slate-300 font-bold hidden md:inline">
-                أنت تشارك كـ: <span className="text-amber-400">{activeAccount.name}</span>
-              </span>
-              <button
-                type="button"
-                onClick={() => setActiveRoomId(null)}
-                className="px-3.5 py-1.5 rounded-xl border border-white/20 hover:bg-white/10 text-xs font-bold text-white transition-colors cursor-pointer"
-              >
-                خروج
-              </button>
-            </div>
-          </div>
-
-          {/* Pinned Topic Banner */}
-          {activeRoom.pinnedNote && (
-            <div className="px-4 py-2.5 bg-amber-500/10 dark:bg-amber-400/15 border-b border-amber-500/20 text-xs text-amber-900 dark:text-amber-200 flex items-center justify-between gap-3 shrink-0">
-              <div className="flex items-center gap-2 truncate">
-                <Pin className="w-4 h-4 text-amber-500 shrink-0" />
-                <span className="truncate">{activeRoom.pinnedNote}</span>
-              </div>
-              <span className="text-[10px] bg-amber-400 text-slate-950 font-bold px-2 py-0.5 rounded-full shrink-0">
-                مثبّت للنقاش
-              </span>
+        {/* الرسائل */}
+        <div className="flex-1 overflow-y-auto p-3 space-y-3 bg-[#071322]">
+          {loading && <p className="text-center text-[11px] text-slate-500 py-6">جارٍ تحميل الرسائل…</p>}
+          {!loading && messages.length === 0 && (
+            <div className="text-center py-10 px-6 space-y-2">
+              <MessageSquare className="w-8 h-8 text-slate-600 mx-auto" />
+              <p className="text-[12px] text-slate-400">الغرفة فاضية — ابدأ أنت أول رسالة.</p>
+              <p className="text-[10px] text-slate-500">مثال: «من يشرح لي فيثاغورس بمثال بسيط؟»</p>
             </div>
           )}
-
-          {/* Messages Stream */}
-          <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 bg-slate-50/60 dark:bg-[#071322]">
-            {currentMessages.map((msg) => (
-              <div
-                key={msg.id}
-                className={`flex items-start gap-3 ${
-                  msg.isSelf ? 'flex-row-reverse' : 'flex-row'
-                }`}
-              >
-                {/* Avatar */}
-                <div
-                  className={`w-9 h-9 rounded-2xl flex items-center justify-center font-bold text-base shrink-0 shadow-sm ${
-                    msg.isSelf
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-white dark:bg-[#142A46] border border-slate-200 dark:border-[#1E3A60] text-slate-900 dark:text-white'
-                  }`}
-                >
-                  {msg.senderAvatar}
-                </div>
-
-                {/* Content Bubble */}
-                <div className={`max-w-[85%] sm:max-w-[75%] space-y-1.5 ${msg.isSelf ? 'text-left' : 'text-right'}`}>
-                  {/* Sender metadata */}
-                  <div className="flex items-center gap-2 text-[11px] text-slate-400 px-1">
-                    <span className="font-bold text-slate-800 dark:text-slate-200">
-                      {msg.senderName}
-                    </span>
+          {messages.map((m) => {
+            const mine = m.userId === user?.id;
+            return (
+              <div key={m.id} className={`flex items-start gap-2 ${mine ? 'flex-row-reverse' : ''}`}>
+                <StudentAvatar avatar={m.avatar} name={m.name} className="w-8 h-8" textClassName="text-[12px]" />
+                <div className={`max-w-[82%] space-y-1 ${mine ? 'text-left' : 'text-right'}`}>
+                  <div className="flex items-center gap-1.5 text-[10px] text-slate-400 px-1">
+                    <span className="font-bold text-slate-200">{mine ? 'أنت' : m.name}</span>
+                    {m.state && <><span>•</span><span className="text-amber-400">{m.state}</span></>}
                     <span>•</span>
-                    <span className="text-amber-600 dark:text-amber-400">{msg.senderState}</span>
-                    <span>•</span>
-                    <span>{msg.timestamp}</span>
+                    <span>{timeAgo(m.createdAt)}</span>
                   </div>
-
-                  {/* Bubble body */}
                   <div
-                    className={`p-3.5 sm:p-4 rounded-2xl text-xs sm:text-sm leading-relaxed shadow-sm ${
-                      msg.isSelf
-                        ? 'bg-blue-700 text-white rounded-tl-sm text-right'
-                        : 'bg-white dark:bg-[#0D1F35] border border-slate-200 dark:border-[#1C3A62] text-slate-800 dark:text-slate-100 rounded-tr-sm text-right'
+                    className={`px-3.5 py-2.5 rounded-2xl text-[12.5px] leading-relaxed whitespace-pre-line ${
+                      mine
+                        ? 'bg-[#1E4E8C] text-white rounded-tl-sm'
+                        : 'bg-[#0E2440] border border-[#1C3659] text-slate-100 rounded-tr-sm'
                     }`}
                   >
-                    <p className="whitespace-pre-line">{msg.text}</p>
-
-                    {/* Reactions Pill Display */}
-                    {msg.reactions && Object.keys(msg.reactions).length > 0 && (
-                      <div className="flex flex-wrap items-center gap-1.5 mt-2.5 pt-2 border-t border-slate-100 dark:border-slate-800">
-                        {Object.entries(msg.reactions).map(([emoji, count]) => (
-                          <span
-                            key={emoji}
-                            className={`px-2 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1 border ${
-                              msg.isSelf
-                                ? 'bg-white/20 border-white/30 text-white'
-                                : 'bg-slate-100 dark:bg-[#142A46] border-slate-200 dark:border-[#1E3A60] text-slate-700 dark:text-slate-300'
-                            }`}
-                          >
-                            <span>{emoji}</span>
-                            <span>{count}</span>
-                          </span>
-                        ))}
-                      </div>
-                    )}
+                    {m.body}
                   </div>
-
-                  {/* Quick Reactions Bar below others' messages */}
-                  {!msg.isSelf && (
-                    <div className="flex items-center gap-1 px-1">
-                      {['👍', '💡', '👏', '🇸🇩', '❓'].map((em) => (
-                        <button
-                          key={em}
-                          type="button"
-                          onClick={() => handleSendReaction(msg.id, em)}
-                          className="px-1.5 py-0.5 rounded-md hover:bg-slate-200 dark:hover:bg-slate-800 text-[11px] transition-colors cursor-pointer"
-                          title={`تفاعل بـ ${em}`}
-                        >
-                          {em}
-                        </button>
-                      ))}
-                    </div>
-                  )}
                 </div>
               </div>
-            ))}
-
-            <div ref={messagesEndRef} />
-          </div>
-
-          {/* Quick Prompts Bar */}
-          <div className="px-4 py-2 bg-slate-100 dark:bg-[#091524] border-t border-slate-200 dark:border-[#162E4D] flex items-center gap-1.5 overflow-x-auto no-scrollbar shrink-0 text-xs">
-            {quickPrompts.map((prompt, idx) => (
-              <button
-                key={idx}
-                type="button"
-                onClick={() => handleQuickQuestion(prompt)}
-                className="whitespace-nowrap px-3 py-1 rounded-xl bg-white dark:bg-[#10243C] hover:bg-amber-50 dark:hover:bg-[#18365D] border border-slate-200 dark:border-[#1E3A60] text-slate-700 dark:text-slate-300 text-[11px] font-medium transition-all cursor-pointer shrink-0"
-              >
-                {prompt}
-              </button>
-            ))}
-          </div>
-
-          {/* Bottom Message Input Box */}
-          <div className="p-3 sm:p-4 bg-white dark:bg-[#0D1F35] border-t border-slate-200 dark:border-[#162E4D] shrink-0">
-            <form onSubmit={handleSendMessage} className="flex items-center gap-2">
-              <input
-                type="text"
-                placeholder="اكتب رسالتك أو استفسارك وشاركه مع زملائك في الغرفة..."
-                value={inputText}
-                onChange={(e) => setInputText(e.target.value)}
-                className="flex-1 px-4 py-3 rounded-2xl bg-slate-100 dark:bg-[#11233B] border border-slate-200 dark:border-[#1E3A60] text-xs sm:text-sm text-slate-800 dark:text-slate-100 placeholder-slate-400 outline-none focus:border-blue-500"
-              />
-
-              <button
-                type="submit"
-                disabled={!inputText.trim()}
-                className="px-5 py-3 rounded-2xl bg-gradient-to-r from-blue-700 to-indigo-700 hover:from-blue-800 hover:to-indigo-800 disabled:from-slate-300 disabled:to-slate-300 dark:disabled:from-slate-800 text-white font-bold text-xs flex items-center gap-1.5 shadow-md cursor-pointer transition-all shrink-0"
-              >
-                <span>إرسال</span>
-                <Send className="w-4 h-4 rotate-180" />
-              </button>
-            </form>
-          </div>
-
+            );
+          })}
+          <div ref={bottomRef} />
         </div>
-      )}
 
+        {/* الإدخال */}
+        <form onSubmit={send} className="p-2.5 border-t border-[#1C3659] bg-[#0B1E36] shrink-0">
+          {error && <p className="text-[10.5px] text-red-300 mb-1.5 px-1">{error}</p>}
+          <div className="flex items-center gap-2">
+            <input
+              value={text}
+              onChange={(e) => setText(e.target.value.slice(0, 600))}
+              placeholder="اكتب رسالتك لزملائك…"
+              className="flex-1 min-h-[44px] rounded-xl bg-[#0E2440] border border-[#1B3658] px-3.5 text-[13px] text-white placeholder:text-slate-500 focus:outline-none focus:border-[#F1AC12]/70"
+            />
+            <button
+              type="submit"
+              disabled={sending || !text.trim()}
+              aria-label="إرسال"
+              className="w-11 h-11 rounded-xl bg-[#F1AC12] text-[#071322] flex items-center justify-center disabled:opacity-50 shrink-0"
+            >
+              <Send className="w-4.5 h-4.5" />
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 };
-
-export default StudyRoomsView;

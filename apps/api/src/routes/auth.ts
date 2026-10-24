@@ -313,7 +313,23 @@ authRouter.patch('/me', requireAuth, async (req, res) => {
     }
     if (typeof req.body?.school === 'string') data.school = cleanText(req.body.school, 80) || null;
     if (typeof req.body?.state === 'string') data.state = cleanText(req.body.state, 40) || null;
-    if (typeof req.body?.avatar === 'string') data.avatar = cleanText(req.body.avatar, 8) || null;
+    /* صورة الطالب الشخصية: data URL مضغوطة (JPG/PNG) أو رمز قصير قديم */
+    if (typeof req.body?.avatar === 'string') {
+      const av = req.body.avatar.trim();
+      if (av === '') {
+        data.avatar = null;
+      } else if (av.length <= 8) {
+        data.avatar = av; // رموز تعبيرية قديمة
+      } else if (!/^data:image\/(png|jpeg|jpg|webp);base64,[A-Za-z0-9+/=]+$/.test(av)) {
+        res.status(400).json({ error: 'صيغة الصورة غير مدعومة — اختر صورة JPG أو PNG' });
+        return;
+      } else if (av.length > 400_000) {
+        res.status(400).json({ error: 'الصورة كبيرة — جرّب صورة أصغر' });
+        return;
+      } else {
+        data.avatar = av;
+      }
+    }
 
     /* البريد والهاتف: معرّفان للدخول — نتحقق من الصيغة ومن عدم تكرارهما */
     if (typeof req.body?.email === 'string') {

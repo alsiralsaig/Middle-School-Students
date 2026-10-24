@@ -1,6 +1,6 @@
 import React from 'react';
 import { ViewMode } from '../types';
-import { BookOpen, Layers, FileText, CheckSquare, Sparkles, Trophy } from 'lucide-react';
+import { BookOpen, Layers, FileText, CheckSquare, Trophy, Users } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
 interface MobileBottomNavProps {
@@ -16,6 +16,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ currentView, o
     { view: 'subjects', label: t('subjects'), icon: <Layers className="w-5 h-5" /> },
     { view: 'resources', label: t('resources'), icon: <FileText className="w-5 h-5" /> },
     { view: 'exams', label: t('exams'), icon: <CheckSquare className="w-5 h-5" /> },
+    { view: 'study-rooms', label: 'المذاكرة الجماعية', icon: <Users className="w-5 h-5" /> },
     { view: 'leaderboard', label: t('leaderboard'), icon: <Trophy className="w-5 h-5" /> },
   ];
 
@@ -25,7 +26,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ currentView, o
       className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#0B1E36]/95 backdrop-blur-md border-t border-[#1C3659] pb-safe"
       dir={isRtl ? 'rtl' : 'ltr'}
     >
-      <div className="grid grid-cols-5 h-16 items-center px-0.5 gap-0.5">
+      <div className="grid grid-cols-6 h-16 items-center px-0.5 gap-0.5">
         {tabs.map((tab) => {
           const isActive =
             currentView === tab.view ||
@@ -44,7 +45,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ currentView, o
                   <span className="absolute -top-1 -right-1 w-1.5 h-1.5 rounded-full bg-amber-400" />
                 )}
               </div>
-              <span className="text-[10px] leading-tight font-medium tracking-tight mt-1 text-center w-full break-words">
+              <span className="text-[9px] leading-tight font-medium tracking-tight mt-1 text-center w-full break-words">
                 {tab.label}
               </span>
             </button>

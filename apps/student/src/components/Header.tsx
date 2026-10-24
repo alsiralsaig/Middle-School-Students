@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { ViewMode } from '../types';
 import { useLanguage } from '../context/LanguageContext';
 import { useAccount } from '../context/AccountContext';
+import { StudentAvatar } from './StudentAvatar';
 import { NotificationCenter } from './NotificationCenter';
 import { 
   BookOpen, 
@@ -167,9 +168,9 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             onClick={() => setIsAccountModalOpen(true)}
             className="flex items-center gap-2 px-3 py-2 text-xs font-semibold rounded-xl transition-all cursor-pointer border border-[#27446C] bg-[#162D4A] hover:bg-[#1E3A60] text-white shadow-sm"
-            title="تبديل حساب الطالب أو إنشاء حساب جديد"
+            title="حسابي — بياناتي وصورتي"
           >
-            <span className="text-base">{activeAccount.avatar || '👨‍🎓'}</span>
+            <StudentAvatar avatar={activeAccount.avatar} name={activeAccount.name} className="w-7 h-7" textClassName="text-[12px]" />
             <span className="hidden sm:inline font-bold truncate max-w-[90px]">
               {activeAccount.name.split(' ')[0]}
             </span>
@@ -250,11 +251,11 @@ export const Header: React.FC<HeaderProps> = ({
               className="w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-sm font-medium bg-[#162D4A] text-slate-200 cursor-pointer min-h-[44px]"
             >
               <div className="flex items-center gap-2.5">
-                <span className="text-lg">{activeAccount.avatar || '👨‍🎓'}</span>
+                <StudentAvatar avatar={activeAccount.avatar} name={activeAccount.name} className="w-8 h-8" textClassName="text-[13px]" />
                 <span>{activeAccount.name}</span>
               </div>
               <span className="text-xs text-emerald-400 font-semibold bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
-                {t('switchAccount')}
+                حسابي
               </span>
             </button>
           </div>

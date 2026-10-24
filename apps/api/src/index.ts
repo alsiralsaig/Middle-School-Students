@@ -17,6 +17,7 @@ import { adminContentRouter } from './routes/adminContent.js';
 import { adminStudentsRouter } from './routes/adminStudents.js';
 import { adminOverviewRouter } from './routes/adminOverview.js';
 import { adminDataRouter } from './routes/adminData.js';
+import { studyRouter } from './routes/study.js';
 import { assertEnv } from './lib/envCheck.js';
 
 /* فحص بيئة التشغيل قبل أي شيء: يوقف الخادم إن كان الإنتاج بسرّ افتراضي */
@@ -44,6 +45,8 @@ app.use(
 );
 /* استيراد المكتبة يرسل مئات العناصر في طلب واحد — سقف أعلى لهذا المسار وحده */
 app.use('/api/admin/library/import', express.json({ limit: '16mb' }));
+/* صورة الطالب تُرسل كـ data URL مضغوطة (~40KB) — سقف خاص بالحساب */
+app.use('/api/auth/me', express.json({ limit: '2mb' }));
 app.use(express.json({ limit: '1mb' }));
 app.use(cookieParser());
 app.use(attachUser);
@@ -90,6 +93,7 @@ app.use('/api', aiRouter);
 app.use('/api', uploadsRouter);
 app.use('/api', mediaRouter);
 app.use('/api', syncRouter);
+app.use('/api', studyRouter);
 // مسارات الإدارة — وراء requireAdmin (دور مدير + رمز صادر عن لوحة الإدارة)
 app.use('/api/admin', adminCodesRouter);
 app.use('/api/admin', adminContentRouter);

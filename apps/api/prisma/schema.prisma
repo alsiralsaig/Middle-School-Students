@@ -323,3 +323,18 @@ model AccessCode {
   usedById String?
   usedBy   User?   @relation(fields: [usedById], references: [id])
 }
+
+/// رسالة في غرفة مذاكرة جماعية — مشتركة بين كل الطلاب فعلياً (لا محاكاة).
+model StudyMessage {
+  id        String   @id @default(cuid())
+  roomId    String
+  userId    String
+  name      String
+  avatar    String?
+  state     String?
+  body      String
+  createdAt DateTime @default(now())
+
+  @@index([roomId, createdAt])
+  @@index([userId, createdAt])
+}

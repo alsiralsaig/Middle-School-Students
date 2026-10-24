@@ -164,10 +164,10 @@ export const StudentDashboardView: React.FC<StudentDashboardViewProps> = ({
             <button
               onClick={() => setIsAccountModalOpen(true)}
               className="bg-[#122846] hover:bg-[#1A3860] border border-[#21416E] hover:border-emerald-500/50 px-3.5 py-2.5 rounded-2xl flex items-center gap-2 text-xs text-slate-200 transition-all cursor-pointer shadow-sm"
-              title="التبديل بين حسابات الطلاب أو إنشاء حساب جديد"
+              title="حسابي — بياناتي وصورتي"
             >
-              <Users className="w-4 h-4 text-emerald-400" />
-              <span className="font-semibold">{t('switchAccount')}</span>
+              <User className="w-4 h-4 text-emerald-400" />
+              <span className="font-semibold">حسابي</span>
             </button>
 
             <div className="bg-[#122846] border border-[#21416E] p-2.5 rounded-2xl flex items-center gap-2.5 text-xs">
