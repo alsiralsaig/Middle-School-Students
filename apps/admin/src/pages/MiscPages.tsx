@@ -1,5 +1,5 @@
 import React from 'react';
-import { CheckCircle2, KeyRound, Loader2, RefreshCw, ShieldAlert } from 'lucide-react';
+import { AtSign, CheckCircle2, KeyRound, Loader2, RefreshCw, ShieldAlert } from 'lucide-react';
 import { BarChart3, Database, RotateCcw, Server, Settings as SettingsIcon, Users } from 'lucide-react';
 import {
   getApiBase,
@@ -459,6 +459,102 @@ export const ServerUrlCard: React.FC = () => {
 
 const adminHeaders = { 'Content-Type': 'application/json', Accept: 'application/json', 'X-App': 'admin' } as const;
 
+/** بيانات الدخول: البريد والهاتف — كلاهما يصلح للدخول */
+export const LoginContactCard: React.FC = () => {
+  const [email, setEmail] = React.useState('');
+  const [phone, setPhone] = React.useState('');
+  const [loaded, setLoaded] = React.useState(false);
+  const [busy, setBusy] = React.useState(false);
+  const [note, setNote] = React.useState('');
+  const [isError, setIsError] = React.useState(false);
+
+  React.useEffect(() => {
+    void (async () => {
+      try {
+        const res = await fetch(`${getApiBase()}/api/auth/me`, { headers: adminHeaders, credentials: 'include' });
+        const data = (await res.json()) as { user?: { email?: string | null; phone?: string | null } };
+        setEmail(data.user?.email || '');
+        setPhone(data.user?.phone || '');
+      } catch {
+        /* تجاهل: الحقول تبقى فارغة */
+      } finally {
+        setLoaded(true);
+      }
+    })();
+  }, []);
+
+  const submit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (busy) return;
+    setNote(''); setIsError(false);
+    if (!email.trim() && !phone.trim()) { setIsError(true); setNote('لازم يبقى واحد منهم على الأقل للدخول.'); return; }
+    if (email.trim() && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.trim())) {
+      setIsError(true); setNote('صيغة البريد غير صحيحة.'); return;
+    }
+    setBusy(true);
+    try {
+      const res = await fetch(`${getApiBase()}/api/auth/me`, {
+        method: 'PATCH', headers: adminHeaders, credentials: 'include',
+        body: JSON.stringify({ email: email.trim().toLowerCase(), phone: phone.trim() }),
+      });
+      const data = (await res.json().catch(() => null)) as { error?: string; user?: { email?: string | null; phone?: string | null } } | null;
+      if (!res.ok) throw new Error(data?.error || String(res.status));
+      setEmail(data?.user?.email || '');
+      setPhone(data?.user?.phone || '');
+      setNote('تم الحفظ — تقدر تدخل بالبريد أو بالهاتف.');
+    } catch (e) {
+      setIsError(true);
+      setNote(e instanceof Error ? e.message : 'تعذّر الحفظ');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <form onSubmit={submit} className="bg-white border border-slate-200 rounded-2xl p-4 space-y-3">
+      <div className="flex items-center gap-2">
+        <AtSign className="w-4 h-4 text-navy-800" />
+        <h2 className="text-sm font-black text-navy-800">بيانات الدخول</h2>
+      </div>
+      <p className="text-[11px] text-slate-500 leading-relaxed">
+        الهاتف والبريد يشتغلان كمعرّفين للدخول — أي واحد فيهم وكلمة المرور.
+      </p>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <label className="space-y-1 text-[11px] font-bold text-slate-700">
+          رقم الهاتف
+          <input
+            type="tel"
+            inputMode="tel"
+            autoComplete="tel"
+            value={phone}
+            disabled={!loaded}
+            onChange={(e) => setPhone(e.target.value)}
+            className="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm font-normal focus:border-navy-800 focus:outline-none disabled:bg-slate-50"
+          />
+        </label>
+        <label className="space-y-1 text-[11px] font-bold text-slate-700">
+          البريد الإلكتروني
+          <input
+            type="email"
+            autoComplete="email"
+            value={email}
+            disabled={!loaded}
+            placeholder="مثال: name@gmail.com"
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm font-normal focus:border-navy-800 focus:outline-none disabled:bg-slate-50"
+          />
+        </label>
+      </div>
+      {note && (
+        <p className={`text-[11px] rounded-xl px-3 py-2 border ${isError ? 'bg-rose-50 border-rose-200 text-rose-700' : 'bg-emerald-50 border-emerald-200 text-emerald-800'}`}>{note}</p>
+      )}
+      <button type="submit" disabled={busy || !loaded} className="inline-flex items-center gap-2 rounded-xl bg-navy-800 px-4 py-2.5 text-xs font-bold text-white hover:bg-navy-700 disabled:opacity-50">
+        {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <AtSign className="w-4 h-4" />} حفظ بيانات الدخول
+      </button>
+    </form>
+  );
+};
+
 /** تغيير كلمة مرور المدير الحالي */
 export const PasswordChangeCard: React.FC = () => {
   const [current, setCurrent] = React.useState('');
@@ -660,6 +756,8 @@ export const SettingsPage: React.FC = () => {
           إعدادات العرض والهوية — القيم تُقرأ من الحزمة المشتركة shared/brand.ts.
         </p>
       </header>
+
+      <LoginContactCard />
 
       <PasswordChangeCard />
 

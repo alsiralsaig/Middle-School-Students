@@ -273,15 +273,72 @@ authRouter.get('/me', requireAuth, async (req, res) => {
 
 /* ============================ تحديث الملف الشخصي ============================ */
 authRouter.patch('/me', requireAuth, async (req, res) => {
-  const payload = currentUser(req);
-  const data: Record<string, string | null> = {};
-  if (typeof req.body?.name === 'string' && req.body.name.trim().length >= 3) {
-    data.name = cleanText(req.body.name, 60);
-  }
-  if (typeof req.body?.school === 'string') data.school = cleanText(req.body.school, 80) || null;
-  if (typeof req.body?.state === 'string') data.state = cleanText(req.body.state, 40) || null;
-  if (typeof req.body?.avatar === 'string') data.avatar = cleanText(req.body.avatar, 8) || null;
+  try {
+    const payload = currentUser(req);
+    const data: Record<string, string | null> = {};
+    if (typeof req.body?.name === 'string' && req.body.name.trim().length >= 3) {
+      data.name = cleanText(req.body.name, 60);
+    }
+    if (typeof req.body?.school === 'string') data.school = cleanText(req.body.school, 80) || null;
+    if (typeof req.body?.state === 'string') data.state = cleanText(req.body.state, 40) || null;
+    if (typeof req.body?.avatar === 'string') data.avatar = cleanText(req.body.avatar, 8) || null;
 
-  const user = await prisma.user.update({ where: { id: payload.uid }, data });
-  res.json({ user: publicUser(user) });
+    /* البريد والهاتف: معرّفان للدخول — نتحقق من الصيغة ومن عدم تكرارهما */
+    if (typeof req.body?.email === 'string') {
+      const email = cleanText(req.body.email, 120).toLowerCase();
+      if (email && !isEmail(email)) {
+        res.status(400).json({ error: 'صيغة البريد الإلكتروني غير صحيحة' });
+        return;
+      }
+      if (email) {
+        const taken = await prisma.user.findFirst({
+          where: { email, NOT: { id: payload.uid } },
+          select: { id: true },
+        });
+        if (taken) {
+          res.status(409).json({ error: 'هذا البريد مستخدم في حساب آخر' });
+          return;
+        }
+      }
+      data.email = email || null;
+    }
+    if (typeof req.body?.phone === 'string') {
+      const phone = cleanText(req.body.phone, 20).replace(/[\s+]/g, '');
+      if (phone && !isPhone(phone)) {
+        res.status(400).json({ error: 'صيغة رقم الهاتف غير صحيحة' });
+        return;
+      }
+      if (phone) {
+        const taken = await prisma.user.findFirst({
+          where: { phone, NOT: { id: payload.uid } },
+          select: { id: true },
+        });
+        if (taken) {
+          res.status(409).json({ error: 'هذا الرقم مستخدم في حساب آخر' });
+          return;
+        }
+      }
+      data.phone = phone || null;
+    }
+
+    /* لا نسمح بترك الحساب بلا أي معرّف — وإلا تعذّر الدخول إليه */
+    if (req.body?.email !== undefined || req.body?.phone !== undefined) {
+      const before = await prisma.user.findUnique({
+        where: { id: payload.uid },
+        select: { phone: true, email: true },
+      });
+      const nextPhone = req.body?.phone === undefined ? before?.phone : (data.phone ?? null);
+      const nextEmail = req.body?.email === undefined ? before?.email : (data.email ?? null);
+      if (!nextPhone && !nextEmail) {
+        res.status(400).json({ error: 'يجب أن يبقى للحساب رقم هاتف أو بريد للدخول' });
+        return;
+      }
+    }
+
+    const user = await prisma.user.update({ where: { id: payload.uid }, data });
+    res.json({ user: publicUser(user) });
+  } catch (e) {
+    console.error('update me error:', e);
+    res.status(500).json({ error: 'تعذّر تحديث بيانات الحساب' });
+  }
 });
