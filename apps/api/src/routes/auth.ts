@@ -13,6 +13,7 @@ import {
   verifyPassword,
 } from '../lib/auth.js';
 import { requireAuth } from '../lib/auth.js';
+import { clearFails, isBlocked, recordFail, retryAfterSeconds } from '../lib/throttle.js';
 
 export const authRouter = Router();
 
@@ -137,14 +138,30 @@ authRouter.post('/login', async (req, res) => {
     }
 
     const isMail = isEmail(identifier);
+    const phoneLike = identifier.replace(/[\s+]/g, '');
+    // مفتاح الحدّ: المعرّف نفسه + عنوان الطالب — يمنع تخمين رقم سري من ٤ أرقام
+    const throttleKey = `login:${isMail ? identifier.toLowerCase() : phoneLike}`;
+
+    if (isBlocked(throttleKey)) {
+      const wait = retryAfterSeconds(throttleKey);
+      res.status(429).json({
+        error: `محاولات كثيرة خاطئة — جرّب بعد ${Math.ceil(wait / 60)} دقيقة`,
+        retryAfter: wait,
+      });
+      return;
+    }
+
     const user = await prisma.user.findFirst({
-      where: isMail ? { email: identifier.toLowerCase() } : { phone: identifier.replace(/[\s+]/g, '') },
+      where: isMail ? { email: identifier.toLowerCase() } : { phone: phoneLike },
     });
 
     if (!user || !(await verifyPassword(password, user.passwordHash))) {
+      recordFail(throttleKey);
       res.status(401).json({ error: 'رقم الهاتف أو الرقم السري غير صحيح' });
       return;
     }
+
+    clearFails(throttleKey);
 
     /* التطبيقان منفصلان: نطابق بين التطبيق الذي يطلب الدخول ونوع الحساب.
        الترويسة X-App يرسلها كل تطبيق عن نفسه (تطبيق الطالب: student). */

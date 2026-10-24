@@ -30,13 +30,15 @@ export const AuthGate: React.FC = () => {
         setError('أدخل رقم هاتفك والرقم السري');
         return;
       }
+      /* الدخول يقبل الرقم السري الجديد (أرقام) أو كلمة قديمة فيها حروف */
+      if (password.length < 4) { setError('الرقم السري ٤ خانات على الأقل'); return; }
     } else {
       if (name.trim().length < 3) { setError('اكتب اسمك (٣ أحرف على الأقل)'); return; }
       if (!accessCode.trim()) { setError('رمز الدخول من الإدارة مطلوب'); return; }
       if (!phone.trim()) { setError('أدخل رقم هاتفك'); return; }
       if (!/^[0-9]{9,15}$/.test(phone.replace(/[\s+]/g, ''))) { setError('رقم الهاتف ٩ أرقام على الأقل'); return; }
     }
-    if (!/^[0-9]{4,6}$/.test(password)) { setError('الرقم السري ٤ إلى ٦ أرقام فقط'); return; }
+    if (mode === 'register' && !/^[0-9]{4,6}$/.test(password)) { setError('الرقم السري ٤ إلى ٦ أرقام فقط'); return; }
     setBusy(true);
     try {
       if (mode === 'login') {
@@ -53,7 +55,8 @@ export const AuthGate: React.FC = () => {
     } catch (err) {
       const e = err as { status?: number; message?: string };
       if (e.status === 0) setError('تعذّر الوصول للخادم — تأكد من اتصال الإنترنت وحاول مرة أخرى');
-      else if (e.status === 401) setError('بيانات الدخول غير صحيحة');
+      else if (e.status === 401) setError('رقم الهاتف أو الرقم السري غير صحيح');
+      else if (e.status === 429) setError('محاولات كثيرة خاطئة — استنى دقائق وجرّب تاني');
       else if (e.status === 403) setError('رمز الدخول غير صالح أو مستخدم من قبل — راجع الإدارة');
       else if (e.status === 409) setError('يوجد حساب بنفس الرقم — سجّل الدخول بدلاً من ذلك');
       else setError(e.message || 'حدث خطأ غير متوقع، حاول مرة أخرى');
@@ -172,12 +175,10 @@ export const AuthGate: React.FC = () => {
                 />
                 <PasswordInput
                   value={password}
-                  onChange={(e) => setPassword(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))}
+                  onChange={(e) => setPassword(e.target.value.slice(0, 32))}
                   placeholder="الرقم السري"
-                  inputMode="numeric"
-                  maxLength={6}
                   autoComplete="current-password"
-                  className={`${inputCls} tracking-[0.3em]`}
+                  className={inputCls}
                 />
                 <button
                   type="button"

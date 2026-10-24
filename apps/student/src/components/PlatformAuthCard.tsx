@@ -41,8 +41,12 @@ export const PlatformAuthCard: React.FC = () => {
       setError('أدخل رقم الهاتف والرقم السري');
       return;
     }
-    if (!/^[0-9]{4,6}$/.test(password.trim())) {
+    if (mode === 'register' && !/^[0-9]{4,6}$/.test(password.trim())) {
       setError('الرقم السري ٤ إلى ٦ أرقام فقط');
+      return;
+    }
+    if (mode === 'login' && password.trim().length < 4) {
+      setError('الرقم السري ٤ خانات على الأقل');
       return;
     }
     if (mode === 'register' && !/^[0-9]{9,15}$/.test(identifier.replace(/[\s+]/g, ''))) {
@@ -144,10 +148,9 @@ export const PlatformAuthCard: React.FC = () => {
           <div className="space-y-2 rounded-lg border border-[#1B3658] bg-[#0B2039] p-2.5">
             <PasswordInput
               autoComplete="current-password"
-              inputMode="numeric"
-              maxLength={6}
+              maxLength={32}
               value={pwCurrent}
-              onChange={(e) => setPwCurrent(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))}
+              onChange={(e) => setPwCurrent(e.target.value.slice(0, 32))}
               placeholder="الرقم السري الحالي"
               className="w-full min-h-[40px] rounded-lg bg-[#0E2440] border border-[#1B3658] px-3 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-[#F1AC12]/60 tracking-[0.3em]"
             />
@@ -260,11 +263,13 @@ export const PlatformAuthCard: React.FC = () => {
         />
         <PasswordInput
           value={password}
-          onChange={(e) => setPassword(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))}
-          placeholder="الرقم السري (٤–٦ أرقام)"
-          inputMode="numeric"
+          onChange={(e) => setPassword(
+            mode === 'register' ? e.target.value.replace(/[^0-9]/g, '').slice(0, 6) : e.target.value.slice(0, 32),
+          )}
+          placeholder={mode === 'register' ? 'الرقم السري (٤–٦ أرقام)' : 'الرقم السري'}
+          inputMode={mode === 'register' ? 'numeric' : 'text'}
           autoComplete={mode === 'register' ? 'new-password' : 'current-password'}
-          maxLength={6}
+          maxLength={mode === 'register' ? 6 : 32}
           className="w-full min-h-[44px] rounded-lg bg-[#0E2440] border border-[#1B3658] px-3 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-[#F1AC12]/60 tracking-[0.3em]"
         />
 
