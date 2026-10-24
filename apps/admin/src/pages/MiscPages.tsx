@@ -1,5 +1,5 @@
 import React from 'react';
-import { AtSign, CheckCircle2, Copy, KeyRound, Loader2, RefreshCw, ShieldAlert } from 'lucide-react';
+import { AtSign, CheckCircle2, Copy, KeyRound, Loader2, Pencil, RefreshCw, ShieldAlert, Trash2 } from 'lucide-react';
 import { BarChart3, Database, RotateCcw, Server, Settings as SettingsIcon, Users } from 'lucide-react';
 import {
   getApiBase,
@@ -14,6 +14,11 @@ import { PasswordInput } from '../components/PasswordInput';
 const adminHeaders = { 'Content-Type': 'application/json', Accept: 'application/json', 'X-App': 'admin' } as const;
 
 /* ============================ الطلاب ============================ */
+
+/** صفوف المنصة — الثلاثة المتوسطة */
+const GRADE_OPTIONS = ['الصف الأول متوسط', 'الصف الثاني متوسط', 'الصف الثالث متوسط'];
+
+
 
 interface StudentRow {
   id: string;
@@ -51,6 +56,77 @@ export const StudentsPage: React.FC = () => {
   const [pinResult, setPinResult] = React.useState<{ pin: string; name: string; phone: string | null } | null>(null);
   const [pinError, setPinError] = React.useState('');
   const [copied, setCopied] = React.useState(false);
+  // تعديل/حذف طالب
+  const [editTarget, setEditTarget] = React.useState<StudentRow | null>(null);
+  const [editForm, setEditForm] = React.useState({ name: '', phone: '', grade: '', school: '', state: '' });
+  const [editBusy, setEditBusy] = React.useState(false);
+  const [editNote, setEditNote] = React.useState('');
+  const [editError, setEditError] = React.useState(false);
+  const [deleteTarget, setDeleteTarget] = React.useState<StudentRow | null>(null);
+  const [deleteBusy, setDeleteBusy] = React.useState(false);
+
+  const reload = async () => {
+    try {
+      const res = await fetch(`${getApiBase()}/api/admin/students`, {
+        headers: { Accept: 'application/json', 'X-App': 'admin' }, credentials: 'include',
+      });
+      if (!res.ok) throw new Error(String(res.status));
+      const data = (await res.json()) as { students: StudentRow[]; summary: StudentsSummary };
+      setRows(data.students); setSummary(data.summary);
+    } catch {
+      /* نترك الجدول كما هو */
+    }
+  };
+
+  const openEdit = (student: StudentRow) => {
+    setEditTarget(student);
+    setEditForm({
+      name: student.name,
+      phone: student.phone || '',
+      grade: student.grade === '—' ? GRADE_OPTIONS[2] : student.grade,
+      school: student.school === '—' ? '' : student.school,
+      state: student.state === '—' ? '' : student.state,
+    });
+    setEditNote(''); setEditError(false);
+  };
+
+  const submitEdit = async () => {
+    if (!editTarget || editBusy) return;
+    setEditBusy(true); setEditNote(''); setEditError(false);
+    try {
+      const res = await fetch(`${getApiBase()}/api/admin/students/${editTarget.id}`, {
+        method: 'PATCH', headers: adminHeaders, credentials: 'include',
+        body: JSON.stringify(editForm),
+      });
+      const data = (await res.json().catch(() => null)) as { error?: string } | null;
+      if (!res.ok) throw new Error(data?.error || String(res.status));
+      setEditNote('تم حفظ التعديلات ✓');
+      await reload();
+      setTimeout(() => setEditTarget(null), 900);
+    } catch (e) {
+      setEditError(true);
+      setEditNote(e instanceof Error ? e.message : 'تعذّر الحفظ');
+    } finally {
+      setEditBusy(false);
+    }
+  };
+
+  const submitDelete = async () => {
+    if (!deleteTarget || deleteBusy) return;
+    setDeleteBusy(true);
+    try {
+      const res = await fetch(`${getApiBase()}/api/admin/students/${deleteTarget.id}`, {
+        method: 'DELETE', headers: adminHeaders, credentials: 'include',
+      });
+      if (!res.ok) throw new Error(String(res.status));
+      setDeleteTarget(null);
+      await reload();
+    } catch {
+      setDeleteTarget(null);
+    } finally {
+      setDeleteBusy(false);
+    }
+  };
 
   const openReset = (student: StudentRow) => {
     setResetTarget(student); setPinDraft(''); setPinResult(null); setPinError(''); setCopied(false);
@@ -213,13 +289,32 @@ export const StudentsPage: React.FC = () => {
                   </span>
                 </td>
                 <td className="py-2.5 px-3">
-                  <button
-                    type="button"
-                    onClick={() => openReset(s)}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-2.5 py-1.5 text-[11px] font-bold text-navy-800 hover:border-navy-800 hover:bg-slate-50 whitespace-nowrap"
-                  >
-                    <KeyRound className="w-3.5 h-3.5" /> تصفير الرقم السري
-                  </button>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => openReset(s)}
+                      title="تصفير الرقم السري"
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-2.5 py-1.5 text-[11px] font-bold text-navy-800 hover:border-navy-800 hover:bg-slate-50 whitespace-nowrap"
+                    >
+                      <KeyRound className="w-3.5 h-3.5" /> <span className="hidden sm:inline">تصفير الرقم السري</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => openEdit(s)}
+                      title="تعديل بيانات الطالب"
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-2.5 py-1.5 text-[11px] font-bold text-slate-700 hover:border-navy-800 hover:bg-slate-50"
+                    >
+                      <Pencil className="w-3.5 h-3.5" /> <span className="hidden sm:inline">تعديل</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDeleteTarget(s)}
+                      title="حذف الحساب"
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-rose-200 px-2.5 py-1.5 text-[11px] font-bold text-rose-600 hover:bg-rose-50"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" /> <span className="hidden sm:inline">حذف</span>
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
@@ -319,6 +414,119 @@ export const StudentsPage: React.FC = () => {
                 </div>
               </>
             )}
+          </div>
+        </div>
+      )}
+
+      {editTarget && (
+        <div className="fixed inset-0 z-50 bg-black/40 grid place-items-center px-4" onClick={() => { if (!editBusy) setEditTarget(null); }}>
+          <div className="w-full max-w-md bg-white rounded-2xl p-5 space-y-3 shadow-2xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-2">
+              <Pencil className="w-4 h-4 text-navy-800" />
+              <h2 className="text-sm font-black text-navy-800">تعديل بيانات الطالب</h2>
+            </div>
+            <label className="block space-y-1 text-[11px] font-bold text-slate-700">
+              الاسم
+              <input
+                value={editForm.name}
+                onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                className="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm font-normal focus:border-navy-800 focus:outline-none"
+              />
+            </label>
+            <label className="block space-y-1 text-[11px] font-bold text-slate-700">
+              رقم الهاتف (للدخول)
+              <input
+                value={editForm.phone}
+                dir="ltr"
+                inputMode="numeric"
+                onChange={(e) => setEditForm({ ...editForm, phone: e.target.value.replace(/[^0-9]/g, '') })}
+                className="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm font-normal nums focus:border-navy-800 focus:outline-none"
+              />
+            </label>
+            <label className="block space-y-1 text-[11px] font-bold text-slate-700">
+              الصف
+              <select
+                value={editForm.grade}
+                onChange={(e) => setEditForm({ ...editForm, grade: e.target.value })}
+                className="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm font-normal focus:border-navy-800 focus:outline-none bg-white"
+              >
+                {[editForm.grade, ...GRADE_OPTIONS].filter((g, i, arr) => g && arr.indexOf(g) === i).map((g) => (
+                  <option key={g} value={g}>{g}</option>
+                ))}
+              </select>
+            </label>
+            <div className="grid grid-cols-2 gap-3">
+              <label className="block space-y-1 text-[11px] font-bold text-slate-700">
+                المدرسة
+                <input
+                  value={editForm.school}
+                  onChange={(e) => setEditForm({ ...editForm, school: e.target.value })}
+                  className="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm font-normal focus:border-navy-800 focus:outline-none"
+                />
+              </label>
+              <label className="block space-y-1 text-[11px] font-bold text-slate-700">
+                الولاية
+                <input
+                  value={editForm.state}
+                  onChange={(e) => setEditForm({ ...editForm, state: e.target.value })}
+                  className="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm font-normal focus:border-navy-800 focus:outline-none"
+                />
+              </label>
+            </div>
+            {editNote && (
+              <p className={`text-[11px] rounded-xl px-3 py-2 border ${editError ? 'bg-rose-50 border-rose-200 text-rose-700' : 'bg-emerald-50 border-emerald-200 text-emerald-800'}`}>{editNote}</p>
+            )}
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={submitEdit}
+                disabled={editBusy || editForm.name.trim().length < 3}
+                className="inline-flex items-center gap-2 rounded-xl bg-navy-800 px-4 py-2.5 text-xs font-bold text-white hover:bg-navy-700 disabled:opacity-50"
+              >
+                {editBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />} حفظ
+              </button>
+              <button
+                type="button"
+                onClick={() => setEditTarget(null)}
+                disabled={editBusy}
+                className="rounded-xl border border-slate-300 px-3 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+              >
+                إلغاء
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {deleteTarget && (
+        <div className="fixed inset-0 z-50 bg-black/40 grid place-items-center px-4" onClick={() => { if (!deleteBusy) setDeleteTarget(null); }}>
+          <div className="w-full max-w-sm bg-white rounded-2xl p-5 space-y-3 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-2">
+              <Trash2 className="w-4 h-4 text-rose-600" />
+              <h2 className="text-sm font-black text-rose-700">حذف حساب الطالب</h2>
+            </div>
+            <p className="text-[12px] text-slate-700 leading-relaxed">
+              تحذف حساب <strong>{deleteTarget.name}</strong> نهائياً مع تقدّمه وجلساته ومحاولاته.
+              الخطوة ما ترجع — لو عندك شك، عطّله بتصفير الرقم السري بدلاً من الحذف.
+            </p>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={submitDelete}
+                disabled={deleteBusy}
+                className="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2.5 text-xs font-bold text-white hover:bg-rose-700 disabled:opacity-50"
+              >
+                {deleteBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />} نعم، احذف
+              </button>
+              <button
+                type="button"
+                onClick={() => setDeleteTarget(null)}
+                disabled={deleteBusy}
+                className="rounded-xl border border-slate-300 px-3 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+              >
+                إلغاء
+              </button>
+            </div>
           </div>
         </div>
       )}

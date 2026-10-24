@@ -9,6 +9,7 @@ import {
   contextToText,
   findCurriculumContext,
   findLessonIndex,
+  subjectBrief,
   type ChatTurn,
 } from '../lib/aiProviders.js';
 
@@ -177,6 +178,8 @@ aiRouter.post('/ai/voice', requireAuth, async (req, res) => {
   const audioB64 = rawAudio.replace(/^data:[^,]+,/, '');
   const mimeTypeRaw = cleanText(req.body?.mimeType, 60) || 'audio/webm';
   const mimeType = mimeTypeRaw.startsWith('audio/') ? mimeTypeRaw.split(';')[0] : 'audio/webm';
+  // المادة تصل من التطبيق — نستخدمها لتغذية النموذج بحدود المنهج
+  const voiceSubject = cleanText(req.body?.subject, 100);
 
   if (!audioB64) {
     res.status(400).json({ error: 'التسجيل الصوتي مطلوب' });
@@ -218,14 +221,16 @@ aiRouter.post('/ai/voice', requireAuth, async (req, res) => {
     for (const mime of [mimeType, mimeType === 'audio/webm' ? 'audio/ogg' : mimeType]) {
       try {
         parts[1] = { inlineData: { mimeType: mime, data: audioB64 } };
+        const brief = await subjectBrief(voiceSubject || undefined, 16);
+        const voiceSys =
+          'أنت معلم سوداني خبير ومحبوب للصف الثالث المتوسط. اتكلم بالعامية السودانية البسيطة، ' +
+          'وحل المسائل خطوة بخطوة، وخلّي الرد قصير ومباشر. ' +
+          'التزم بمنهج السودان المرفق أدناه ولا تخرج عنه في المصطلحات والقوانين.' +
+          (brief ? `\n\nخريطة المنهج:\n${brief}` : '');
         const out = await ai.models.generateContent({
           model,
           contents: [{ role: 'user', parts }],
-          config: {
-            systemInstruction:
-              'أنت معلم سوداني خبير ومحبوب للصف الثالث المتوسط. اتكلم بالعامية السودانية البسيطة، ' +
-              'وحل المسائل خطوة بخطوة، وخلّي الرد قصير ومباشر.',
-          },
+          config: { systemInstruction: voiceSys },
         });
         const text = (out as { text?: string }).text;
         if (text) {
@@ -274,12 +279,14 @@ aiRouter.post('/ai/chat', requireAuth, async (req, res) => {
   const question = subject ? `المادة: ${subject}\n\nسؤال الطالب: ${prompt}` : prompt;
 
   // ١) سياق من المنهج — يجعل الإجابة من مقرر الطالب وأسرع
-  const [hits, indexTitles] = await Promise.all([
+  const [hits, indexTitles, brief] = await Promise.all([
     findCurriculumContext(prompt, subject || undefined),
     // الفهرس يعرّف النموذج بحدود المادة لما ما يكون في سياق مطابق
     subject ? findLessonIndex(subject, 40) : Promise.resolve<string[]>([]),
+    // وخريطة المنهج تضمن ألا يخرج النموذج عن المقرر في الأسئلة العامة
+    subjectBrief(subject || undefined),
   ]);
-  const context = contextToText(hits, indexTitles);
+  const context = [contextToText(hits, indexTitles), brief].filter(Boolean).join('\n\n');
 
   // ٢) الرد
   if (wantsStream) {
@@ -347,10 +354,14 @@ aiRouter.post('/ai/lesson-chat', requireAuth, async (req, res) => {
   const history = parseTurns(req.body?.history);
 
   // سياق الدرس المفتوح + سياق من باقي المنهج
-  const hits = await findCurriculumContext(question, subjectName);
+  const [hits, brief] = await Promise.all([
+    findCurriculumContext(question, subjectName),
+    subjectBrief(subjectName, 16),
+  ]);
   const combined = [
     lessonContext ? `الدرس المفتوح الآن: ${lessonTitle} (${subjectName})\n"""\n${lessonContext}\n"""` : '',
     contextToText(hits),
+    brief,
   ]
     .filter(Boolean)
     .join('\n\n');

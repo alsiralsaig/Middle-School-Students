@@ -260,6 +260,39 @@ export async function findLessonIndex(subjectName?: string, max = 60): Promise<s
   return rows.slice(0, max).map((r) => r.title);
 }
 
+/**
+ * «ملخّص المنهج» — يغذّي النموذج بحدود المادة حتى لو ما في درس مطابق للسؤال.
+ *
+ * لماذا: مطابقة الكلمات المفتاحية ترجّع لا شيء في أسئلة عامة («اشرحلي الوحدة
+ * الأولى»)، فيردّ النموذج من معرفته العامة. هنا نمرّر له فهرس المادة مع ملخص
+ * قصير لكل درس، فيبقى داخل مقرر الطالب ويقدر يوجّهه للدرس الصحيح.
+ * الناتج محدود الطول ومُخزَّن مؤقتاً حتى لا نضرب قاعدة البيانات كل سؤال.
+ */
+const briefCache = new Map<string, { at: number; text: string }>();
+const BRIEF_CACHE_MS = 5 * 60 * 1000;
+const BRIEF_MAX_CHARS = 2600;
+
+export async function subjectBrief(subjectName?: string, maxLessons = 24): Promise<string> {
+  if (!subjectName) return '';
+  const key = subjectName.trim();
+  const cached = briefCache.get(key);
+  if (cached && Date.now() - cached.at < BRIEF_CACHE_MS) return cached.text;
+
+  const rows = await loadLessons(key);
+  if (!rows.length) return '';
+
+  const lines: string[] = [];
+  for (const row of rows.slice(0, maxLessons)) {
+    const summary = (row.summary || '').replace(/\s+/g, ' ').trim().slice(0, 120);
+    const n = row.lessonNumber ? `${row.lessonNumber}. ` : '';
+    lines.push(`${n}${row.title}${summary ? ` — ${summary}` : ''}`);
+  }
+  let text = `منهج ${rows[0]?.subject?.name || key} (${rows.length} درساً):\n${lines.join('\n')}`;
+  if (text.length > BRIEF_MAX_CHARS) text = `${text.slice(0, BRIEF_MAX_CHARS)}…`;
+  briefCache.set(key, { at: Date.now(), text });
+  return text;
+}
+
 export function contextToText(hits: CurriculumHit[], indexTitles: string[] = []): string {
   const parts = hits.map((h, i) => {
     const rules = h.keyRules.length ? `\n   القواعد: ${h.keyRules.join(' | ')}` : '';

@@ -119,7 +119,7 @@ authRouter.post('/register', async (req, res) => {
     });
 
     const token = signToken({ uid: user.id, role: 'student', name: user.name, app: 'student' });
-    setAuthCookie(res, token);
+    setAuthCookie(res, token, 'student');
     res.status(201).json({ user: publicUser(user), token });
   } catch (e) {
     console.error('register error:', e);
@@ -186,7 +186,7 @@ authRouter.post('/login', async (req, res) => {
       name: user.name,
       app,
     });
-    setAuthCookie(res, token);
+    setAuthCookie(res, token, user.role as 'student' | 'admin');
     res.json({ user: publicUser(user), token });
   } catch (e) {
     console.error('login error:', e);

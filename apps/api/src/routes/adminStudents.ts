@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { prisma } from '../lib/prisma.js';
-import { hashPassword, isPin, requireAdmin } from '../lib/auth.js';
+import { cleanText, hashPassword, isPhone, isPin, requireAdmin } from '../lib/auth.js';
 
 /**
  * إدارة الطلاب — الإدارة فقط.
@@ -173,5 +173,89 @@ adminStudentsRouter.post('/students/:id/pin', requireAdmin, async (req, res) => 
   } catch (e) {
     console.error('reset student pin error:', e);
     res.status(500).json({ error: 'تعذّر تصفير الرقم السري' });
+  }
+});
+
+/* ============================ تعديل وحذف طالب ============================ */
+
+/**
+ * PATCH /api/admin/students/:id — تعديل اسم الطالب وصفّه ومدرسته وولايته.
+ *
+ * لماذا: كان الحساب يُنشأ ثم لا يمكن تصحيح خطأ مطبعي في الاسم، ولا تحديث
+ * الصف بعد النقل. كلاهما يحتاج المدير فعلاً.
+ */
+adminStudentsRouter.patch('/students/:id', requireAdmin, async (req, res) => {
+  try {
+    const student = await prisma.user.findFirst({
+      where: { id: req.params.id, role: 'student' },
+      select: { id: true },
+    });
+    if (!student) {
+      res.status(404).json({ error: 'الطالب غير موجود' });
+      return;
+    }
+    const data: Record<string, string | null> = {};
+    if (typeof req.body?.name === 'string') {
+      const name = cleanText(req.body.name, 60);
+      if (name.length < 3) {
+        res.status(400).json({ error: 'الاسم ٣ أحرف على الأقل' });
+        return;
+      }
+      data.name = name;
+    }
+    if (typeof req.body?.grade === 'string') data.grade = cleanText(req.body.grade, 40) || null;
+    if (typeof req.body?.school === 'string') data.school = cleanText(req.body.school, 80) || null;
+    if (typeof req.body?.state === 'string') data.state = cleanText(req.body.state, 40) || null;
+    if (typeof req.body?.phone === 'string') {
+      const phone = cleanText(req.body.phone, 20).replace(/[\s+]/g, '');
+      if (!isPhone(phone)) {
+        res.status(400).json({ error: 'رقم الهاتف غير صحيح' });
+        return;
+      }
+      const taken = await prisma.user.findFirst({
+        where: { phone, NOT: { id: student.id } },
+        select: { id: true },
+      });
+      if (taken) {
+        res.status(409).json({ error: 'الرقم مستخدم في حساب آخر' });
+        return;
+      }
+      data.phone = phone;
+    }
+    if (!Object.keys(data).length) {
+      res.status(400).json({ error: 'لا يوجد ما يُعدَّل' });
+      return;
+    }
+    const updated = await prisma.user.update({
+      where: { id: student.id },
+      data,
+      select: { id: true, name: true, phone: true, grade: true, school: true, state: true },
+    });
+    res.json({ ok: true, student: updated });
+  } catch (e) {
+    console.error('admin student update error:', e);
+    res.status(500).json({ error: 'تعذّر تعديل بيانات الطالب' });
+  }
+});
+
+/**
+ * DELETE /api/admin/students/:id — حذف حساب طالب نهائياً.
+ * علاقات التقدّم والجلسات والمحاولات تُحذف معه (Cascade في المخطط).
+ */
+adminStudentsRouter.delete('/students/:id', requireAdmin, async (req, res) => {
+  try {
+    const student = await prisma.user.findFirst({
+      where: { id: req.params.id, role: 'student' },
+      select: { id: true, name: true },
+    });
+    if (!student) {
+      res.status(404).json({ error: 'الطالب غير موجود' });
+      return;
+    }
+    await prisma.user.delete({ where: { id: student.id } });
+    res.json({ ok: true, deleted: student.name });
+  } catch (e) {
+    console.error('admin student delete error:', e);
+    res.status(500).json({ error: 'تعذّر حذف الطالب' });
   }
 });

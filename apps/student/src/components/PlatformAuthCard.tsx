@@ -26,6 +26,11 @@ export const PlatformAuthCard: React.FC = () => {
   const [pwCurrent, setPwCurrent] = useState('');
   const [pwNext, setPwNext] = useState('');
   const [pwNote, setPwNote] = useState('');
+  const [grade, setGrade] = useState('الصف الثالث متوسط');
+  const [nameOpen, setNameOpen] = useState(false);
+  const [nameDraft, setNameDraft] = useState('');
+  const [nameNote, setNameNote] = useState('');
+  const [nameBusy, setNameBusy] = useState(false);
   const [pwBusy, setPwBusy] = useState(false);
   const [success, setSuccess] = useState('');
   const [busy, setBusy] = useState(false);
@@ -73,6 +78,7 @@ export const PlatformAuthCard: React.FC = () => {
           password: password.trim(),
           accessCode: accessCode.trim(),
           phone: identifier.trim(),
+          grade,
         });
         setSuccess('تم إنشاء الحساب ✓');
       }
@@ -133,6 +139,55 @@ export const PlatformAuthCard: React.FC = () => {
             </span>
           )}
         </div>
+
+        {/* تعديل الاسم — الحساب المسجّل على الخادم */}
+        <button
+          type="button"
+          onClick={() => { setNameOpen((v) => !v); setNameDraft(user.name); setNameNote(''); }}
+          className="inline-flex items-center gap-1.5 text-[11px] font-bold text-slate-300 hover:text-white"
+        >
+          <UserPlus className="w-3.5 h-3.5" />
+          تعديل الاسم
+        </button>
+
+        {nameOpen && (
+          <div className="space-y-2 rounded-lg border border-[#1B3658] bg-[#0B2039] p-2.5">
+            <input
+              value={nameDraft}
+              onChange={(e) => setNameDraft(e.target.value)}
+              placeholder="الاسم الجديد"
+              className="w-full min-h-[40px] rounded-lg bg-[#0E2440] border border-[#1B3658] px-3 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-[#F1AC12]/60"
+            />
+            <button
+              type="button"
+              disabled={nameBusy || nameDraft.trim().length < 3}
+              onClick={async () => {
+                setNameBusy(true); setNameNote('');
+                try {
+                  const res = await fetch(`${getApiBase()}/api/auth/me`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json', 'X-App': 'student' },
+                    credentials: 'include',
+                    body: JSON.stringify({ name: nameDraft.trim() }),
+                  });
+                  const data = await res.json().catch(() => null) as { error?: string } | null;
+                  if (!res.ok) throw new Error(data?.error || String(res.status));
+                  setNameNote('تم تحديث الاسم — هيظهر بعد المزامنة.');
+                  window.dispatchEvent(new Event('ssp:session-refresh'));
+                  setTimeout(() => window.location.reload(), 900);
+                } catch (e) {
+                  setNameNote(e instanceof Error ? e.message : 'تعذّر تحديث الاسم');
+                } finally {
+                  setNameBusy(false);
+                }
+              }}
+              className="w-full min-h-[40px] rounded-lg bg-[#F1AC12] text-[#0B1E36] text-xs font-black hover:bg-amber-300 disabled:opacity-50"
+            >
+              {nameBusy ? 'جارٍ الحفظ…' : 'حفظ الاسم'}
+            </button>
+            {nameNote && <p className="text-[11px] text-slate-200 leading-relaxed">{nameNote}</p>}
+          </div>
+        )}
 
         {/* تغيير كلمة المرور — للحساب المسجّل على الخادم */}
         <button
@@ -261,6 +316,17 @@ export const PlatformAuthCard: React.FC = () => {
           inputMode="numeric"
           className="w-full min-h-[44px] rounded-lg bg-[#0E2440] border border-[#1B3658] px-3 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-[#F1AC12]/60"
         />
+        {mode === 'register' && (
+          <select
+            value={grade}
+            onChange={(e) => setGrade(e.target.value)}
+            className="w-full min-h-[44px] rounded-lg bg-[#0E2440] border border-[#1B3658] px-3 text-sm text-white focus:outline-none focus:border-[#F1AC12]/60"
+          >
+            {['الصف الأول متوسط', 'الصف الثاني متوسط', 'الصف الثالث متوسط'].map((g) => (
+              <option key={g} value={g} className="bg-[#0E2440]">{g}</option>
+            ))}
+          </select>
+        )}
         <PasswordInput
           value={password}
           onChange={(e) => setPassword(

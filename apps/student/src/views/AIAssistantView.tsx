@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { AI_ASSISTANT_PRESETS } from '../data/curriculumData';
+import { AI_ASSISTANT_PRESETS, useSubjects } from '../data/curriculumData';
 import { getApiBase } from '../utils/serverUrl';
 import { 
   Sparkles, 
@@ -27,6 +27,9 @@ interface ChatMessage {
 }
 
 export const AIAssistantView: React.FC = () => {
+  // المادة المختارة: تُغذّي الخادم بحدود المنهج فيتجنّب النموذج الإجابات العامة
+  const subjects = useSubjects();
+  const [activeSubject, setActiveSubject] = useState('');
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: 'welcome',
@@ -177,7 +180,7 @@ export const AIAssistantView: React.FC = () => {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json', 'X-App': 'student' },
-        body: JSON.stringify({ audio: dataUrl, mimeType: blob.type }),
+        body: JSON.stringify({ audio: dataUrl, mimeType: blob.type, subject: activeSubject || undefined }),
       });
       if (res.ok) {
         const data = await res.json();
@@ -268,7 +271,7 @@ export const AIAssistantView: React.FC = () => {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json', 'X-App': 'student' },
-        body: JSON.stringify({ prompt: query, history, stream: true }),
+        body: JSON.stringify({ prompt: query, history, stream: true, subject: activeSubject || undefined }),
       });
 
       if (!res.ok) {
@@ -414,6 +417,23 @@ export const AIAssistantView: React.FC = () => {
         <div className="text-xs font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
           <HelpCircle className="w-4 h-4 text-blue-900 dark:text-amber-400" />
           <span>أسئلة شائعة في المنهج يمكنك تجربتها فوراً:</span>
+        </div>
+        <div className="flex flex-wrap gap-1.5 pt-1 border-b border-slate-100 dark:border-[#1C3A62] pb-2">
+          <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 self-center ml-1">المادة:</span>
+          {['', ...subjects.map((s) => s.name)].map((name) => (
+            <button
+              key={name || 'all'}
+              type="button"
+              onClick={() => setActiveSubject(name)}
+              className={`text-[11px] py-1.5 px-2.5 rounded-lg border transition-colors cursor-pointer ${
+                activeSubject === name
+                  ? 'bg-amber-100 border-amber-300 text-amber-900 dark:bg-amber-400/20 dark:border-amber-400/50 dark:text-amber-200 font-bold'
+                  : 'bg-slate-50 border-slate-200 text-slate-600 dark:bg-[#122844] dark:border-[#1E3A60] dark:text-slate-300'
+              }`}
+            >
+              {name || 'كل المواد'}
+            </button>
+          ))}
         </div>
         <div className="flex flex-wrap gap-2 pt-1">
           {AI_ASSISTANT_PRESETS.map((p) => (

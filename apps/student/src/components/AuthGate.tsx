@@ -17,6 +17,7 @@ export const AuthGate: React.FC = () => {
   const [name, setName] = useState('');
   const [accessCode, setAccessCode] = useState('');
   const [phone, setPhone] = useState('');
+  const [grade, setGrade] = useState('الصف الثالث متوسط');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [forgotBusy, setForgotBusy] = useState(false);
@@ -49,6 +50,7 @@ export const AuthGate: React.FC = () => {
           phone: phone.trim(),
           password,
           accessCode: accessCode.trim().toUpperCase(),
+          grade,
         });
       }
       /* نجاح الدخول: sessionStore يتحدّث ويُفتح التطبيق تلقائياً */
@@ -150,6 +152,15 @@ export const AuthGate: React.FC = () => {
                   autoComplete="tel"
                   className={inputCls}
                 />
+                <select
+                  value={grade}
+                  onChange={(e) => setGrade(e.target.value)}
+                  className={inputCls}
+                >
+                  {['الصف الأول متوسط', 'الصف الثاني متوسط', 'الصف الثالث متوسط'].map((g) => (
+                    <option key={g} value={g} className="bg-[#0E2440]">{g}</option>
+                  ))}
+                </select>
                 <PasswordInput
                   value={password}
                   onChange={(e) => setPassword(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))}

@@ -4,7 +4,9 @@ import type { Request, Response, NextFunction } from 'express';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-me-please-32chars';
 const COOKIE_NAME = 'ssp_token';
-const TOKEN_TTL = '30d';
+const ADMIN_TTL = '30d';
+/** جلسة الطالب أقصر: الجهاز قد يكون مشتركاً في المدرسة أو البيت */
+const STUDENT_TTL = '7d';
 
 export type UserRole = 'student' | 'admin';
 
@@ -32,7 +34,7 @@ export function verifyPassword(plain: string, hash: string): Promise<boolean> {
 }
 
 export function signToken(payload: JwtPayload): string {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: TOKEN_TTL });
+  return jwt.sign(payload, JWT_SECRET, { expiresIn: payload.role === 'admin' ? ADMIN_TTL : STUDENT_TTL });
 }
 
 export function readToken(token: string): JwtPayload | null {
@@ -43,12 +45,13 @@ export function readToken(token: string): JwtPayload | null {
   }
 }
 
-export function setAuthCookie(res: Response, token: string): void {
+export function setAuthCookie(res: Response, token: string, role: UserRole = 'student'): void {
+  const days = role === 'admin' ? 30 : 7;
   res.cookie(COOKIE_NAME, token, {
     httpOnly: true,
     sameSite: 'lax',
     secure: process.env.NODE_ENV === 'production',
-    maxAge: 30 * 24 * 60 * 60 * 1000,
+    maxAge: days * 24 * 60 * 60 * 1000,
     path: '/',
   });
 }
