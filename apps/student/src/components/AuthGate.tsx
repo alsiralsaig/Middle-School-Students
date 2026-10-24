@@ -3,6 +3,7 @@ import { GraduationCap, ShieldCheck, KeyRound, WifiOff, Loader2 } from 'lucide-r
 import { login, register } from '../utils/sessionStore';
 import { useSession } from '../hooks/useSession';
 import { getApiBase } from '../utils/serverUrl';
+import { PasswordInput } from './PasswordInput';
 
 /**
  * بوابة الدخول — لا يُفتح التطبيق إلا بحساب مُفعَّل برمز من الإدارة.
@@ -146,8 +147,7 @@ export const AuthGate: React.FC = () => {
                   autoComplete="tel"
                   className={inputCls}
                 />
-                <input
-                  type="password"
+                <PasswordInput
                   value={password}
                   onChange={(e) => setPassword(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))}
                   placeholder="الرقم السري — ٤ إلى ٦ أرقام"
@@ -170,8 +170,7 @@ export const AuthGate: React.FC = () => {
                   autoComplete="username"
                   className={inputCls}
                 />
-                <input
-                  type="password"
+                <PasswordInput
                   value={password}
                   onChange={(e) => setPassword(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))}
                   placeholder="الرقم السري"

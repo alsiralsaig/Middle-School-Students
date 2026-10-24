@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { PasswordInput } from './PasswordInput';
 import { KeyRound, LogIn, MailQuestion, ShieldCheck } from 'lucide-react';
 import { getApiBase } from '../lib/serverUrl';
 
@@ -83,13 +84,12 @@ export const AdminLogin: React.FC<{
 
           <label className="block">
             <span className="text-[11px] font-bold text-slate-600">كلمة المرور</span>
-            <input
-              type="password"
+            <PasswordInput
               autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
-              className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm focus:border-navy-800 focus:outline-none"
+              className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm font-normal focus:border-navy-800 focus:outline-none"
             />
           </label>
 

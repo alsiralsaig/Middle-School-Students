@@ -9,6 +9,7 @@ import {
   getDefaultApiBase,
 } from '../lib/serverUrl';
 import { EmptyState, NotConnectedNote, Table } from '../components/ui';
+import { PasswordInput } from '../components/PasswordInput';
 
 /* ============================ الطلاب ============================ */
 
@@ -602,8 +603,7 @@ export const PasswordChangeCard: React.FC = () => {
         ].map(([label, value, setter, auto]) => (
           <label key={label as string} className="space-y-1 text-[11px] font-bold text-slate-700">
             {label as string}
-            <input
-              type="password"
+            <PasswordInput
               autoComplete={auto as string}
               value={value as string}
               onChange={(e) => (setter as (v: string) => void)(e.target.value)}

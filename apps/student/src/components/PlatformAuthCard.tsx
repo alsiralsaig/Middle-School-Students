@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { LogIn, LogOut, UserPlus, Wifi, WifiOff, Loader2, ShieldCheck, KeyRound } from 'lucide-react';
 import { getApiBase } from '../utils/serverUrl';
+import { PasswordInput } from './PasswordInput';
 import { useSession } from '../hooks/useSession';
 import { login, logout, register } from '../utils/sessionStore';
 import { runSync } from '../utils/syncEngine';
@@ -141,8 +142,7 @@ export const PlatformAuthCard: React.FC = () => {
 
         {pwOpen && (
           <div className="space-y-2 rounded-lg border border-[#1B3658] bg-[#0B2039] p-2.5">
-            <input
-              type="password"
+            <PasswordInput
               autoComplete="current-password"
               inputMode="numeric"
               maxLength={6}
@@ -151,8 +151,7 @@ export const PlatformAuthCard: React.FC = () => {
               placeholder="الرقم السري الحالي"
               className="w-full min-h-[40px] rounded-lg bg-[#0E2440] border border-[#1B3658] px-3 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-[#F1AC12]/60 tracking-[0.3em]"
             />
-            <input
-              type="password"
+            <PasswordInput
               autoComplete="new-password"
               inputMode="numeric"
               maxLength={6}
@@ -259,8 +258,7 @@ export const PlatformAuthCard: React.FC = () => {
           inputMode="numeric"
           className="w-full min-h-[44px] rounded-lg bg-[#0E2440] border border-[#1B3658] px-3 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-[#F1AC12]/60"
         />
-        <input
-          type="password"
+        <PasswordInput
           value={password}
           onChange={(e) => setPassword(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))}
           placeholder="الرقم السري (٤–٦ أرقام)"
