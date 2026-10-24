@@ -10,6 +10,7 @@ import {
   isPin,
   setAuthCookie,
   signToken,
+  toLatinDigits,
   verifyPassword,
 } from '../lib/auth.js';
 import { requireAuth } from '../lib/auth.js';
@@ -41,12 +42,13 @@ const publicUser = (u: {
 authRouter.post('/register', async (req, res) => {
   try {
     const name = cleanText(req.body?.name, 60);
-    const phoneRaw = cleanText(req.body?.phone, 20);
-    const password = typeof req.body?.password === 'string' ? req.body.password.trim() : '';
+    const phoneRaw = toLatinDigits(cleanText(req.body?.phone, 20));
+    const password =
+      typeof req.body?.password === 'string' ? toLatinDigits(req.body.password) : '';
     const grade = cleanText(req.body?.grade, 40) || null;
     const school = cleanText(req.body?.school, 80) || null;
     // رمز الدخول الذي أصدرته الإدارة — شرط لإنشاء الحساب
-    const codeRaw = cleanText(req.body?.accessCode, 20).toUpperCase().replace(/[\s-]/g, '');
+    const codeRaw = toLatinDigits(cleanText(req.body?.accessCode, 20)).toUpperCase().replace(/[\s-]/g, '');
 
     if (name.length < 3) {
       res.status(400).json({ error: 'الاسم يجب أن يكون ٣ أحرف على الأقل' });
@@ -130,8 +132,8 @@ authRouter.post('/register', async (req, res) => {
 /* ============================ تسجيل الدخول ============================ */
 authRouter.post('/login', async (req, res) => {
   try {
-    const identifier = cleanText(req.body?.identifier, 120);
-    const password = typeof req.body?.password === 'string' ? req.body.password : '';
+    const identifier = toLatinDigits(cleanText(req.body?.identifier, 120));
+    const password = typeof req.body?.password === 'string' ? toLatinDigits(req.body.password) : '';
     if (!identifier || !password) {
       res.status(400).json({ error: 'أدخل رقم الهاتف والرقم السري' });
       return;
@@ -200,8 +202,10 @@ authRouter.post('/login', async (req, res) => {
 authRouter.post('/password', requireAuth, async (req, res) => {
   try {
     const uid = currentUser(req).uid;
-    const currentPassword = typeof req.body?.currentPassword === 'string' ? req.body.currentPassword : '';
-    const newPassword = typeof req.body?.newPassword === 'string' ? req.body.newPassword.trim() : '';
+    const currentPassword =
+      typeof req.body?.currentPassword === 'string' ? toLatinDigits(req.body.currentPassword) : '';
+    const newPassword =
+      typeof req.body?.newPassword === 'string' ? toLatinDigits(req.body.newPassword) : '';
     const user = await prisma.user.findUnique({ where: { id: uid } });
     if (!user) {
       res.status(404).json({ error: 'الحساب غير موجود' });

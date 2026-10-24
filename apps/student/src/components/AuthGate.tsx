@@ -6,6 +6,17 @@ import { getApiBase } from '../utils/serverUrl';
 import { PasswordInput } from './PasswordInput';
 
 /**
+ * تحويل الأرقام العربية/الفارسية إلى لاتينية.
+ * لوحة مفاتيح الجوال العربية تُنتج «١١٤٤٧٧»، وبدون هذا التحويل تُرفض
+ * أو لا تطابق ما حُفظ في الخادم.
+ */
+const toLatinDigits = (v: string) =>
+  v
+    .replace(/[\u0660-\u0669]/g, (d) => String(d.charCodeAt(0) - 0x0660))
+    .replace(/[\u06f0-\u06f9]/g, (d) => String(d.charCodeAt(0) - 0x06f0))
+    .replace(/[\u200e\u200f\u061c]/g, '');
+
+/**
  * بوابة الدخول — لا يُفتح التطبيق إلا بحساب مُفعَّل برمز من الإدارة.
  * (نظام رموز الدخول: الإدارة تولّد الرمز ← الطالب يفعّل حسابه به)
  */
@@ -57,10 +68,16 @@ export const AuthGate: React.FC = () => {
     } catch (err) {
       const e = err as { status?: number; message?: string };
       if (e.status === 0) setError('تعذّر الوصول للخادم — تأكد من اتصال الإنترنت وحاول مرة أخرى');
-      else if (e.status === 401) setError('رقم الهاتف أو الرقم السري غير صحيح');
+      else if (e.status === 401) setError('الرقم السري غير صحيح — جرّب تاني، ولو نسيته اضغط «نسيت الرقم السري؟»');
       else if (e.status === 429) setError('محاولات كثيرة خاطئة — استنى دقائق وجرّب تاني');
       else if (e.status === 403) setError('رمز الدخول غير صالح أو مستخدم من قبل — راجع الإدارة');
-      else if (e.status === 409) setError('يوجد حساب بنفس الرقم — سجّل الدخول بدلاً من ذلك');
+      else if (e.status === 409) {
+        /* الرقم مسجّل من قبل: بدل ما نقفله، نفتح له تبويب الدخول برقمه جاهزاً */
+        setIdentifier(phone.replace(/[\s+]/g, ''));
+        setPassword('');
+        setMode('login');
+        setError('الرقم ده مسجّل قبل كده — اكتب رقمك السري واضغط «دخول». لو نسيته اضغط «نسيت الرقم السري؟»');
+      }
       else setError(e.message || 'حدث خطأ غير متوقع، حاول مرة أخرى');
     } finally {
       setBusy(false);
@@ -139,14 +156,14 @@ export const AuthGate: React.FC = () => {
                   <KeyRound className="w-4 h-4 text-[#F1AC12] absolute top-3.5 right-3" />
                   <input
                     value={accessCode}
-                    onChange={(e) => setAccessCode(e.target.value)}
+                    onChange={(e) => setAccessCode(toLatinDigits(e.target.value).toUpperCase())}
                     placeholder="رمز الدخول من الإدارة"
                     className={`${inputCls} pr-9 tracking-[0.25em] font-mono uppercase`}
                   />
                 </div>
                 <input
                   value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
+                  onChange={(e) => setPhone(toLatinDigits(e.target.value))}
                   placeholder="رقم الهاتف (مثال: 0912345678)"
                   inputMode="numeric"
                   autoComplete="tel"
@@ -163,7 +180,7 @@ export const AuthGate: React.FC = () => {
                 </select>
                 <PasswordInput
                   value={password}
-                  onChange={(e) => setPassword(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))}
+                  onChange={(e) => setPassword(toLatinDigits(e.target.value).replace(/[^0-9]/g, '').slice(0, 6))}
                   placeholder="الرقم السري — ٤ إلى ٦ أرقام"
                   inputMode="numeric"
                   maxLength={6}
@@ -178,7 +195,7 @@ export const AuthGate: React.FC = () => {
               <>
                 <input
                   value={identifier}
-                  onChange={(e) => setIdentifier(e.target.value)}
+                  onChange={(e) => setIdentifier(toLatinDigits(e.target.value).replace(/[^0-9]/g, ''))}
                   placeholder="رقم الهاتف"
                   inputMode="numeric"
                   autoComplete="username"
@@ -186,7 +203,7 @@ export const AuthGate: React.FC = () => {
                 />
                 <PasswordInput
                   value={password}
-                  onChange={(e) => setPassword(e.target.value.slice(0, 32))}
+                  onChange={(e) => setPassword(toLatinDigits(e.target.value).slice(0, 32))}
                   placeholder="الرقم السري"
                   autoComplete="current-password"
                   className={inputCls}

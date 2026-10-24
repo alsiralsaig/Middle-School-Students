@@ -12,6 +12,13 @@ import { getApiBase } from '../lib/serverUrl';
  *
  * الحساب التجريبي في بيانات البذر: الهاتف ١٠٠٠٠٠٠٠٠٠ · admin12345
  */
+/** أرقام عربية/فارسية ⟹ لاتينية (لوحة المفاتيح العربية) */
+const toLatinDigits = (v: string) =>
+  v
+    .replace(/[\u0660-\u0669]/g, (d) => String(d.charCodeAt(0) - 0x0660))
+    .replace(/[\u06f0-\u06f9]/g, (d) => String(d.charCodeAt(0) - 0x06f0))
+    .replace(/[\u200e\u200f\u061c]/g, '');
+
 export const AdminLogin: React.FC<{
   onLogin: (identifier: string, password: string) => Promise<unknown>;
   error?: string;
@@ -76,7 +83,7 @@ export const AdminLogin: React.FC<{
               inputMode="tel"
               autoComplete="username"
               value={identifier}
-              onChange={(e) => setIdentifier(e.target.value)}
+              onChange={(e) => setIdentifier(toLatinDigits(e.target.value))}
               placeholder="1000000000"
               className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm nums focus:border-navy-800 focus:outline-none"
             />
@@ -87,7 +94,7 @@ export const AdminLogin: React.FC<{
             <PasswordInput
               autoComplete="current-password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => setPassword(toLatinDigits(e.target.value))}
               placeholder="••••••••"
               className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm font-normal focus:border-navy-800 focus:outline-none"
             />

@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { prisma } from '../lib/prisma.js';
-import { cleanText, hashPassword, isPhone, isPin, requireAdmin } from '../lib/auth.js';
+import { cleanText, toLatinDigits, hashPassword, isPhone, isPin, requireAdmin } from '../lib/auth.js';
 
 /**
  * إدارة الطلاب — الإدارة فقط.
@@ -147,7 +147,7 @@ function randomPin(): string {
 adminStudentsRouter.post('/students/:id/pin', requireAdmin, async (req, res) => {
   try {
     const raw = typeof req.body?.pin === 'string' ? req.body.pin.trim() : '';
-    const pin = raw || randomPin();
+    const pin = toLatinDigits(raw) || randomPin();
     if (!isPin(pin)) {
       res.status(400).json({ error: 'الرقم السري ٤ إلى ٦ أرقام فقط' });
       return;

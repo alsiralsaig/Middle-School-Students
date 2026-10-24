@@ -110,10 +110,27 @@ export function currentUser(req: Request): JwtPayload {
 
 /* ==================== التحقق من المدخلات ==================== */
 
-export const isPhone = (v: string) => /^[0-9]{9,15}$/.test(v.replace(/[\s+]/g, ''));
+
+/**
+ * تحويل الأرقام العربية/الفارسية إلى لاتينية.
+ *
+ * لماذا: لوحة المفاتيح العربية في الجوال تُنتج «١١٤٤٧٧» لا «114477»، والدالة
+ * `isPin` ترفضها، ورقم الهاتف بالعربية لا يطابق المخزَّن — فيرى الطالب
+ * «الرقم السري غير صحيح» وهو يكتب رقمه الصحيح. نحوّل في الخادم حتى لا يعتمد
+ * الأمر على إصدار التطبيق المثبَّت على جواله.
+ */
+export function toLatinDigits(value: string): string {
+  return value
+    .replace(/[\u0660-\u0669]/g, (d) => String(d.charCodeAt(0) - 0x0660))
+    .replace(/[\u06f0-\u06f9]/g, (d) => String(d.charCodeAt(0) - 0x06f0))
+    .replace(/[\u200e\u200f\u061c\u00a0]/g, '')
+    .trim();
+}
+
+export const isPhone = (v: string) => /^[0-9]{9,15}$/.test(toLatinDigits(v).replace(/[\s+]/g, ''));
 export const isEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
 /** رقم سري للطالب: أرقام فقط، من ٤ إلى ٦ خانات */
-export const isPin = (v: string) => /^[0-9]{4,6}$/.test(v);
+export const isPin = (v: string) => /^[0-9]{4,6}$/.test(toLatinDigits(v));
 
 /** تنظيف النصوص القادمة من المستخدم (يمنع HTML وقيود طول) */
 export function cleanText(value: unknown, max = 2000): string {
