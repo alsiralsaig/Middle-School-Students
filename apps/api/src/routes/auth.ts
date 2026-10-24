@@ -187,8 +187,8 @@ authRouter.post('/password', requireAuth, async (req, res) => {
     const uid = currentUser(req).uid;
     const currentPassword = typeof req.body?.currentPassword === 'string' ? req.body.currentPassword : '';
     const newPassword = typeof req.body?.newPassword === 'string' ? req.body.newPassword : '';
-    if (newPassword.length < 8) {
-      res.status(400).json({ error: 'كلمة المرور الجديدة يجب أن تكون ٨ أحرف على الأقل' });
+    if (newPassword.length < 6) {
+      res.status(400).json({ error: 'كلمة المرور الجديدة يجب أن تكون ٦ أحرف على الأقل' });
       return;
     }
     const user = await prisma.user.findUnique({ where: { id: uid } });

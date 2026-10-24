@@ -151,12 +151,12 @@ export const PlatformAuthCard: React.FC = () => {
               autoComplete="new-password"
               value={pwNext}
               onChange={(e) => setPwNext(e.target.value)}
-              placeholder="الجديدة (٨ أحرف أو أكثر)"
+              placeholder="الجديدة (٦ أحرف أو أكثر)"
               className="w-full min-h-[40px] rounded-lg bg-[#0E2440] border border-[#1B3658] px-3 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-[#F1AC12]/60"
             />
             <button
               type="button"
-              disabled={pwBusy || !pwCurrent || pwNext.length < 8}
+              disabled={pwBusy || !pwCurrent || pwNext.length < 6}
               onClick={async () => {
                 setPwBusy(true); setPwNote('');
                 try {

@@ -568,7 +568,7 @@ export const PasswordChangeCard: React.FC = () => {
     event.preventDefault();
     if (busy) return;
     setNote(''); setIsError(false);
-    if (next.length < 8) { setIsError(true); setNote('كلمة المرور الجديدة ٨ أحرف على الأقل.'); return; }
+    if (next.length < 6) { setIsError(true); setNote('كلمة المرور الجديدة ٦ أحرف على الأقل.'); return; }
     if (next !== confirm) { setIsError(true); setNote('التأكيد لا يطابق كلمة المرور الجديدة.'); return; }
     setBusy(true);
     try {
@@ -597,7 +597,7 @@ export const PasswordChangeCard: React.FC = () => {
       <div className="grid gap-3 sm:grid-cols-3">
         {[
           ['كلمة المرور الحالية', current, setCurrent, 'current-password'],
-          ['الجديدة (٨ أحرف أو أكثر)', next, setNext, 'new-password'],
+          ['الجديدة (٦ أحرف أو أكثر)', next, setNext, 'new-password'],
           ['تأكيد الجديدة', confirm, setConfirm, 'new-password'],
         ].map(([label, value, setter, auto]) => (
           <label key={label as string} className="space-y-1 text-[11px] font-bold text-slate-700">
