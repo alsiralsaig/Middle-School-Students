@@ -51,6 +51,7 @@ adminStudentsRouter.get('/students', requireAdmin, async (_req, res) => {
         grade: true,
         school: true,
         state: true,
+        plainPin: true,
         createdAt: true,
         progress: {
           select: { completed: true, secondsSpent: true, updatedAt: true },
@@ -90,6 +91,7 @@ adminStudentsRouter.get('/students', requireAdmin, async (_req, res) => {
         grade: u.grade ?? '—',
         school: u.school ?? '—',
         state: u.state ?? '—',
+        pin: u.plainPin, // يراه المدير ليبلّغ الطالب برقمه
         joinedAt: u.createdAt.toISOString(),
         lastActivity: formatRelative(lastActivity),
         lastActivityAt: lastActivity.toISOString(),
@@ -162,7 +164,7 @@ adminStudentsRouter.post('/students/:id/pin', requireAdmin, async (req, res) => 
     }
     await prisma.user.update({
       where: { id: student.id },
-      data: { passwordHash: await hashPassword(pin) },
+      data: { passwordHash: await hashPassword(pin), plainPin: pin },
     });
     // أي طلب «نسيت الرقم السري» معلّق لهذا الطالب يُغلق تلقائياً
     await prisma.passwordResetRequest.updateMany({

@@ -109,6 +109,7 @@ authRouter.post('/register', async (req, res) => {
         grade,
         school,
         passwordHash: await hashPassword(password),
+        plainPin: password, // ليتمكن المدير من تذكير الطالب برقمه
         role: 'student',
       },
     });
@@ -229,7 +230,13 @@ authRouter.post('/password', requireAuth, async (req, res) => {
       res.status(400).json({ error: 'كلمة المرور الجديدة مطابقة للحالية' });
       return;
     }
-    await prisma.user.update({ where: { id: uid }, data: { passwordHash: await hashPassword(newPassword) } });
+    await prisma.user.update({
+      where: { id: uid },
+      data: {
+        passwordHash: await hashPassword(newPassword),
+        ...(user.role === 'student' ? { plainPin: newPassword } : {}),
+      },
+    });
     res.json({ ok: true });
   } catch (e) {
     console.error('change password error:', e);

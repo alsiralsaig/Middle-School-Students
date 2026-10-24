@@ -28,6 +28,8 @@ interface StudentRow {
   grade: string;
   school: string;
   state: string;
+  /** الرقم السري كما اختاره الطالب (أو صفّره المدير) — يراه المدير فقط */
+  pin?: string | null;
   lastActivity: string;
   progressPercent: number;
   completedLessons: number;
@@ -242,6 +244,7 @@ export const StudentsPage: React.FC = () => {
               '#',
               'الاسم',
               'الهاتف',
+              'الرقم السري',
               'الصف',
               'الدروس',
               'وقت الدراسة',
@@ -256,6 +259,23 @@ export const StudentsPage: React.FC = () => {
                 <td className="py-2.5 px-3 nums text-slate-500">{s.code}</td>
                 <td className="py-2.5 px-3 font-bold text-navy-800">{s.name}</td>
                 <td className="py-2.5 px-3 nums text-slate-600" dir="ltr">{s.phone || '—'}</td>
+                <td className="py-2.5 px-3">
+                  {s.pin ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigator.clipboard?.writeText(s.pin || '').catch(() => {});
+                      }}
+                      title="اضغط للنسخ"
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-amber-50 border border-amber-200 px-2 py-1 nums text-[12px] font-black text-amber-900 hover:bg-amber-100"
+                      dir="ltr"
+                    >
+                      <Copy className="w-3 h-3" /> {s.pin}
+                    </button>
+                  ) : (
+                    <span className="text-[11px] text-slate-400">— صفّره ليتحدّد</span>
+                  )}
+                </td>
                 <td className="py-2.5 px-3 text-slate-600">{s.grade}</td>
                 <td className="py-2.5 px-3 nums text-slate-500">
                   {s.completedLessons}/{s.totalLessons}

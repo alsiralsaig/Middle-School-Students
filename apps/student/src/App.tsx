@@ -62,6 +62,7 @@ const ViewLoader = () => (
 import { AuthGate } from './components/AuthGate';
 import { WelcomeBanner } from './components/WelcomeBanner';
 import { AIAssistantFab } from './components/AIAssistantFab';
+import { WhatsAppFab } from './components/WhatsAppFab';
 import { useSession } from './hooks/useSession';
 import { ServerSetupDialog } from './components/ServerSetupDialog';
 
@@ -359,6 +360,9 @@ function AppContent() {
 
       {/* المساعد الذكي العائم — في كل الصفحات */}
       <AIAssistantFab />
+
+      {/* زر واتساب العائم — تواصل مباشر مع الدعم */}
+      <WhatsAppFab />
 
       {/* التنبيهات المنبثقة (Toasts) — تُدار عبر ناقل الأحداث */}
       <ToastHost

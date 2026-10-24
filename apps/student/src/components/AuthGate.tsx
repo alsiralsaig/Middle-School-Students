@@ -4,6 +4,7 @@ import { login, register } from '../utils/sessionStore';
 import { useSession } from '../hooks/useSession';
 import { getApiBase } from '../utils/serverUrl';
 import { PasswordInput } from './PasswordInput';
+import { SUPPORT_PHONES, waHref } from './WhatsAppFab';
 
 /**
  * تحويل الأرقام العربية/الفارسية إلى لاتينية.
@@ -255,6 +256,19 @@ export const AuthGate: React.FC = () => {
             </button>
           </form>
         </div>
+
+        {/* تواصل مع الدعم — يحتاجه أكثر من لا يستطيع الدخول */}
+        <a
+          href={waHref(
+            SUPPORT_PHONES[0].raw,
+            'مرحباً، عندي مشكلة في الدخول على منصة الطالب السوداني الذكية. اسمي: ',
+          )}
+          target="_blank"
+          rel="noreferrer"
+          className="mt-4 w-full min-h-[46px] rounded-xl bg-[#25D366] text-[#06240f] font-black text-[13px] flex items-center justify-center gap-2"
+        >
+          محتاج مساعدة؟ كلّمنا على واتساب
+        </a>
 
         {/* حالة الاتصال */}
         <div className="mt-4 text-center">

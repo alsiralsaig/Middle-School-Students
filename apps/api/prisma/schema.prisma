@@ -20,6 +20,16 @@ model User {
   phone        String?  @unique
   email        String?  @unique
   passwordHash String
+  /**
+   * الرقم السري كما كتبه الطالب (أو صفّره المدير) — نصّ صريح.
+   *
+   * لماذا: طلاب المرحلة المتوسطة صغار وينسون أرقامهم، وكان المدير يضطر
+   * لإصدار رمز جديد وإرساله. الآن يرى المدير الرقم الذي اختاره الطالب نفسه
+   * ويبلّغه ليه أو لولي أمره مباشرة.
+   * لا يُرسل لأي واجهة إلا لواجهة الإدارة (`role = admin`)، ولا يُحفظ لحساب
+   * إدارة إطلاقاً.
+   */
+  plainPin     String?
   role         String   @default("student") // student | admin
   grade        String?
   school       String?
