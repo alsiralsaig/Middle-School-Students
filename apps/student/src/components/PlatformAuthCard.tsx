@@ -37,11 +37,15 @@ export const PlatformAuthCard: React.FC = () => {
     setSuccess('');
 
     if (!identifier.trim() || !password.trim()) {
-      setError('أدخل رقم الهاتف (أو البريد) وكلمة المرور');
+      setError('أدخل رقم الهاتف والرقم السري');
       return;
     }
-    if (password.length < 6) {
-      setError('كلمة المرور يجب أن تكون ٦ أحرف على الأقل');
+    if (!/^[0-9]{4,6}$/.test(password.trim())) {
+      setError('الرقم السري ٤ إلى ٦ أرقام فقط');
+      return;
+    }
+    if (mode === 'register' && !/^[0-9]{9,15}$/.test(identifier.replace(/[\s+]/g, ''))) {
+      setError('أدخل رقم هاتف صحيح (٩ أرقام على الأقل)');
       return;
     }
     if (mode === 'register' && name.trim().length < 3) {
@@ -59,12 +63,11 @@ export const PlatformAuthCard: React.FC = () => {
         await login(identifier.trim(), password);
         setSuccess('تم تسجيل الدخول ✓');
       } else {
-        const isMail = identifier.includes('@');
         await register({
           name: name.trim(),
-          password,
+          password: password.trim(),
           accessCode: accessCode.trim(),
-          ...(isMail ? { email: identifier.trim() } : { phone: identifier.trim() }),
+          phone: identifier.trim(),
         });
         setSuccess('تم إنشاء الحساب ✓');
       }
@@ -133,7 +136,7 @@ export const PlatformAuthCard: React.FC = () => {
           className="inline-flex items-center gap-1.5 text-[11px] font-bold text-slate-300 hover:text-white"
         >
           <KeyRound className="w-3.5 h-3.5" />
-          تغيير كلمة المرور
+          تغيير الرقم السري
         </button>
 
         {pwOpen && (
@@ -141,22 +144,26 @@ export const PlatformAuthCard: React.FC = () => {
             <input
               type="password"
               autoComplete="current-password"
+              inputMode="numeric"
+              maxLength={6}
               value={pwCurrent}
-              onChange={(e) => setPwCurrent(e.target.value)}
-              placeholder="كلمة المرور الحالية"
-              className="w-full min-h-[40px] rounded-lg bg-[#0E2440] border border-[#1B3658] px-3 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-[#F1AC12]/60"
+              onChange={(e) => setPwCurrent(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))}
+              placeholder="الرقم السري الحالي"
+              className="w-full min-h-[40px] rounded-lg bg-[#0E2440] border border-[#1B3658] px-3 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-[#F1AC12]/60 tracking-[0.3em]"
             />
             <input
               type="password"
               autoComplete="new-password"
+              inputMode="numeric"
+              maxLength={6}
               value={pwNext}
-              onChange={(e) => setPwNext(e.target.value)}
-              placeholder="الجديدة (٦ أحرف أو أكثر)"
-              className="w-full min-h-[40px] rounded-lg bg-[#0E2440] border border-[#1B3658] px-3 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-[#F1AC12]/60"
+              onChange={(e) => setPwNext(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))}
+              placeholder="الرقم السري الجديد (٤–٦ أرقام)"
+              className="w-full min-h-[40px] rounded-lg bg-[#0E2440] border border-[#1B3658] px-3 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-[#F1AC12]/60 tracking-[0.3em]"
             />
             <button
               type="button"
-              disabled={pwBusy || !pwCurrent || pwNext.length < 6}
+              disabled={pwBusy || !pwCurrent || !/^[0-9]{4,6}$/.test(pwNext)}
               onClick={async () => {
                 setPwBusy(true); setPwNote('');
                 try {
@@ -168,17 +175,17 @@ export const PlatformAuthCard: React.FC = () => {
                   });
                   const data = await res.json().catch(() => null) as { error?: string } | null;
                   if (!res.ok) throw new Error(data?.error || String(res.status));
-                  setPwNote('تم تغيير كلمة المرور بنجاح.');
+                  setPwNote('تم تغيير الرقم السري بنجاح.');
                   setPwCurrent(''); setPwNext('');
                 } catch (e) {
-                  setPwNote(e instanceof Error ? e.message : 'تعذّر تغيير كلمة المرور');
+                  setPwNote(e instanceof Error ? e.message : 'تعذّر تغيير الرقم السري');
                 } finally {
                   setPwBusy(false);
                 }
               }}
               className="w-full min-h-[40px] rounded-lg bg-[#F1AC12] text-[#0B1E36] text-xs font-black hover:bg-amber-300 disabled:opacity-50"
             >
-              {pwBusy ? 'جارٍ الحفظ…' : 'حفظ كلمة المرور'}
+              {pwBusy ? 'جارٍ الحفظ…' : 'حفظ الرقم السري'}
             </button>
             {pwNote && <p className="text-[11px] text-slate-200 leading-relaxed">{pwNote}</p>}
           </div>
@@ -248,16 +255,19 @@ export const PlatformAuthCard: React.FC = () => {
         <input
           value={identifier}
           onChange={(e) => setIdentifier(e.target.value)}
-          placeholder="رقم الهاتف أو البريد الإلكتروني"
-          inputMode={mode === 'register' ? 'text' : 'numeric'}
+          placeholder="رقم الهاتف"
+          inputMode="numeric"
           className="w-full min-h-[44px] rounded-lg bg-[#0E2440] border border-[#1B3658] px-3 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-[#F1AC12]/60"
         />
         <input
           type="password"
           value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="كلمة المرور (٦ أحرف على الأقل)"
-          className="w-full min-h-[44px] rounded-lg bg-[#0E2440] border border-[#1B3658] px-3 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-[#F1AC12]/60"
+          onChange={(e) => setPassword(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))}
+          placeholder="الرقم السري (٤–٦ أرقام)"
+          inputMode="numeric"
+          autoComplete={mode === 'register' ? 'new-password' : 'current-password'}
+          maxLength={6}
+          className="w-full min-h-[44px] rounded-lg bg-[#0E2440] border border-[#1B3658] px-3 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-[#F1AC12]/60 tracking-[0.3em]"
         />
 
         {mode === 'login' && (
@@ -283,7 +293,7 @@ export const PlatformAuthCard: React.FC = () => {
             className="w-full min-h-[40px] inline-flex items-center justify-center gap-1.5 rounded-lg border border-[#1B3658] text-[11px] font-bold text-slate-300 hover:border-[#F1AC12]/60 disabled:opacity-40"
           >
             <KeyRound className="w-3.5 h-3.5" />
-            {forgotBusy ? 'جارٍ الإرسال…' : 'نسيت كلمة المرور؟'}
+            {forgotBusy ? 'جارٍ الإرسال…' : 'نسيت الرقم السري؟'}
           </button>
         )}
 

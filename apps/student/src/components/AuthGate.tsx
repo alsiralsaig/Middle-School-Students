@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { GraduationCap, ShieldCheck, KeyRound, WifiOff, Loader2 } from 'lucide-react';
 import { login, register } from '../utils/sessionStore';
 import { useSession } from '../hooks/useSession';
+import { getApiBase } from '../utils/serverUrl';
 
 /**
  * بوابة الدخول — لا يُفتح التطبيق إلا بحساب مُفعَّل برمز من الإدارة.
@@ -17,21 +18,24 @@ export const AuthGate: React.FC = () => {
   const [phone, setPhone] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [forgotBusy, setForgotBusy] = useState(false);
+  const [forgotNote, setForgotNote] = useState('');
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     if (mode === 'login') {
       if (!identifier.trim() || !password) {
-        setError('أدخل رقم هاتفك (أو بريدك) وكلمة المرور');
+        setError('أدخل رقم هاتفك والرقم السري');
         return;
       }
     } else {
       if (name.trim().length < 3) { setError('اكتب اسمك (٣ أحرف على الأقل)'); return; }
       if (!accessCode.trim()) { setError('رمز الدخول من الإدارة مطلوب'); return; }
       if (!phone.trim()) { setError('أدخل رقم هاتفك'); return; }
-      if (password.length < 6) { setError('كلمة المرور ٦ أحرف على الأقل'); return; }
+      if (!/^[0-9]{9,15}$/.test(phone.replace(/[\s+]/g, ''))) { setError('رقم الهاتف ٩ أرقام على الأقل'); return; }
     }
+    if (!/^[0-9]{4,6}$/.test(password)) { setError('الرقم السري ٤ إلى ٦ أرقام فقط'); return; }
     setBusy(true);
     try {
       if (mode === 'login') {
@@ -138,17 +142,19 @@ export const AuthGate: React.FC = () => {
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder="رقم الهاتف (مثال: 0912345678)"
-                  inputMode="tel"
+                  inputMode="numeric"
                   autoComplete="tel"
                   className={inputCls}
                 />
                 <input
                   type="password"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="كلمة المرور (٦ أحرف على الأقل)"
+                  onChange={(e) => setPassword(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))}
+                  placeholder="الرقم السري — ٤ إلى ٦ أرقام"
+                  inputMode="numeric"
+                  maxLength={6}
                   autoComplete="new-password"
-                  className={inputCls}
+                  className={`${inputCls} tracking-[0.3em]`}
                 />
                 <p className="text-[11px] text-slate-400 leading-relaxed px-1">
                   لا تملك رمزاً؟ تواصل مع إدارة المنصة للحصول على رمز دخول خاص بك.
@@ -159,18 +165,49 @@ export const AuthGate: React.FC = () => {
                 <input
                   value={identifier}
                   onChange={(e) => setIdentifier(e.target.value)}
-                  placeholder="رقم الهاتف أو البريد الإلكتروني"
+                  placeholder="رقم الهاتف"
+                  inputMode="numeric"
                   autoComplete="username"
                   className={inputCls}
                 />
                 <input
                   type="password"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="كلمة المرور"
+                  onChange={(e) => setPassword(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))}
+                  placeholder="الرقم السري"
+                  inputMode="numeric"
+                  maxLength={6}
                   autoComplete="current-password"
-                  className={inputCls}
+                  className={`${inputCls} tracking-[0.3em]`}
                 />
+                <button
+                  type="button"
+                  disabled={forgotBusy || !identifier.trim()}
+                  onClick={async () => {
+                    setForgotBusy(true); setForgotNote('');
+                    try {
+                      const res = await fetch(`${getApiBase()}/api/auth/forgot`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-App': 'student' },
+                        body: JSON.stringify({ identifier: identifier.trim() }),
+                      });
+                      const data = (await res.json().catch(() => null)) as { message?: string; error?: string } | null;
+                      setForgotNote(data?.message || data?.error || 'تم إرسال الطلب للإدارة.');
+                    } catch {
+                      setForgotNote('تعذّر الوصول إلى الخادم.');
+                    } finally {
+                      setForgotBusy(false);
+                    }
+                  }}
+                  className="w-full min-h-[40px] rounded-xl border border-[#1B3658] text-[12px] font-bold text-slate-300 hover:border-[#F1AC12]/60 disabled:opacity-40"
+                >
+                  {forgotBusy ? 'جارٍ الإرسال…' : 'نسيت الرقم السري؟'}
+                </button>
+                {forgotNote && (
+                  <p className="text-[11px] text-emerald-200 bg-emerald-500/10 border border-emerald-500/25 rounded-xl px-3 py-2 leading-relaxed">
+                    {forgotNote}
+                  </p>
+                )}
               </>
             )}
 

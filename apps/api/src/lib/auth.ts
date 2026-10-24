@@ -109,6 +109,8 @@ export function currentUser(req: Request): JwtPayload {
 
 export const isPhone = (v: string) => /^[0-9]{9,15}$/.test(v.replace(/[\s+]/g, ''));
 export const isEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+/** رقم سري للطالب: أرقام فقط، من ٤ إلى ٦ خانات */
+export const isPin = (v: string) => /^[0-9]{4,6}$/.test(v);
 
 /** تنظيف النصوص القادمة من المستخدم (يمنع HTML وقيود طول) */
 export function cleanText(value: unknown, max = 2000): string {

@@ -683,13 +683,13 @@ export const PasswordRequestsCard: React.FC = () => {
       </div>
 
       <p className="text-[11px] text-slate-500 leading-relaxed">
-        الطالب يضغط «نسيت كلمة المرور» فيدخل طلبه هنا. أصدر له كلمة مؤقتة وأبلغه بها (واتساب)، ويغيّرها بعد الدخول.
+        الطالب يضغط «نسيت الرقم السري؟» فيدخل طلبه هنا. أصدر له رقماً مؤقتاً وأبلغه به (واتساب). للطلاب الرقم من ٦ أرقام، وللإدارة كلمة مرور بحروف.
         {pending.length > 0 && <span className="font-bold text-amber-700"> — عندك {pending.length} طلب معلّق.</span>}
       </p>
 
       {issued && (
         <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 space-y-1">
-          <p className="text-[11px] font-bold text-emerald-900">كلمة المرور المؤقتة لـ {issued.who}:</p>
+          <p className="text-[11px] font-bold text-emerald-900">الرمز المؤقت لـ {issued.who} (يُعرض مرة واحدة):</p>
           <p className="nums text-lg font-black tracking-widest text-emerald-900">{issued.password}</p>
           <p className="text-[10px] text-emerald-700">تُعرض مرة واحدة فقط — انسخها الآن وأرسلها للمستخدم.</p>
         </div>
@@ -720,7 +720,7 @@ export const PasswordRequestsCard: React.FC = () => {
                 {r.status === 'pending' ? (
                   <div className="flex gap-1.5">
                     <button type="button" disabled={busy === r.id} onClick={() => void act(r.id, 'issue')} className="rounded-lg bg-navy-800 px-2.5 py-1.5 text-[10px] font-bold text-white hover:bg-navy-700 disabled:opacity-50">
-                      {busy === r.id ? '…' : 'إصدار كلمة مؤقتة'}
+                      {busy === r.id ? '…' : 'إصدار رمز مؤقت'}
                     </button>
                     <button type="button" disabled={busy === r.id} onClick={() => void act(r.id, 'dismiss')} className="rounded-lg border border-slate-200 px-2.5 py-1.5 text-[10px] font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-50">
                       إغلاق

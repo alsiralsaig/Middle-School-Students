@@ -7,6 +7,7 @@ import {
   hashPassword,
   isEmail,
   isPhone,
+  isPin,
   setAuthCookie,
   signToken,
   verifyPassword,
@@ -40,8 +41,7 @@ authRouter.post('/register', async (req, res) => {
   try {
     const name = cleanText(req.body?.name, 60);
     const phoneRaw = cleanText(req.body?.phone, 20);
-    const emailRaw = cleanText(req.body?.email, 120).toLowerCase();
-    const password = typeof req.body?.password === 'string' ? req.body.password : '';
+    const password = typeof req.body?.password === 'string' ? req.body.password.trim() : '';
     const grade = cleanText(req.body?.grade, 40) || null;
     const school = cleanText(req.body?.school, 80) || null;
     // رمز الدخول الذي أصدرته الإدارة — شرط لإنشاء الحساب
@@ -51,8 +51,9 @@ authRouter.post('/register', async (req, res) => {
       res.status(400).json({ error: 'الاسم يجب أن يكون ٣ أحرف على الأقل' });
       return;
     }
-    if (password.length < 6) {
-      res.status(400).json({ error: 'كلمة المرور يجب أن تكون ٦ أحرف على الأقل' });
+    // الطلاب صغار: الدخول برقم الهاتف ورقم سري من الأرقام فقط (٤–٦ خانات)
+    if (!isPin(password)) {
+      res.status(400).json({ error: 'الرقم السري ٤ إلى ٦ أرقام فقط' });
       return;
     }
     if (!codeRaw) {
@@ -61,17 +62,14 @@ authRouter.post('/register', async (req, res) => {
     }
 
     const phone = phoneRaw && isPhone(phoneRaw) ? phoneRaw.replace(/[\s+]/g, '') : null;
-    const email = emailRaw && isEmail(emailRaw) ? emailRaw : null;
-    if (!phone && !email) {
-      res.status(400).json({ error: 'أدخل رقم هاتف صحيح أو بريداً إلكترونياً صحيحاً' });
+    if (!phone) {
+      res.status(400).json({ error: 'أدخل رقم هاتف صحيح (٩ أرقام على الأقل)' });
       return;
     }
 
-    const exists = await prisma.user.findFirst({
-      where: { OR: [phone ? { phone } : {}, email ? { email } : {}].filter((o) => Object.keys(o).length) },
-    });
+    const exists = await prisma.user.findUnique({ where: { phone } });
     if (exists) {
-      res.status(409).json({ error: 'يوجد حساب مسجّل بنفس الهاتف أو البريد' });
+      res.status(409).json({ error: 'يوجد حساب مسجّل بنفس رقم الهاتف' });
       return;
     }
 
@@ -104,7 +102,7 @@ authRouter.post('/register', async (req, res) => {
       data: {
         name,
         phone,
-        email,
+        email: null,
         grade,
         school,
         passwordHash: await hashPassword(password),
@@ -134,7 +132,7 @@ authRouter.post('/login', async (req, res) => {
     const identifier = cleanText(req.body?.identifier, 120);
     const password = typeof req.body?.password === 'string' ? req.body.password : '';
     if (!identifier || !password) {
-      res.status(400).json({ error: 'أدخل الهاتف/البريد وكلمة المرور' });
+      res.status(400).json({ error: 'أدخل رقم الهاتف والرقم السري' });
       return;
     }
 
@@ -144,7 +142,7 @@ authRouter.post('/login', async (req, res) => {
     });
 
     if (!user || !(await verifyPassword(password, user.passwordHash))) {
-      res.status(401).json({ error: 'الهاتف/البريد أو كلمة المرور غير صحيحة' });
+      res.status(401).json({ error: 'رقم الهاتف أو الرقم السري غير صحيح' });
       return;
     }
 
@@ -186,14 +184,20 @@ authRouter.post('/password', requireAuth, async (req, res) => {
   try {
     const uid = currentUser(req).uid;
     const currentPassword = typeof req.body?.currentPassword === 'string' ? req.body.currentPassword : '';
-    const newPassword = typeof req.body?.newPassword === 'string' ? req.body.newPassword : '';
-    if (newPassword.length < 6) {
-      res.status(400).json({ error: 'كلمة المرور الجديدة يجب أن تكون ٦ أحرف على الأقل' });
-      return;
-    }
+    const newPassword = typeof req.body?.newPassword === 'string' ? req.body.newPassword.trim() : '';
     const user = await prisma.user.findUnique({ where: { id: uid } });
     if (!user) {
       res.status(404).json({ error: 'الحساب غير موجود' });
+      return;
+    }
+    /* الطالب: رقم سري من ٤–٦ أرقام · الإدارة: كلمة مرور ٦ أحرف على الأقل */
+    if (user.role === 'student') {
+      if (!isPin(newPassword)) {
+        res.status(400).json({ error: 'الرقم السري ٤ إلى ٦ أرقام فقط' });
+        return;
+      }
+    } else if (newPassword.length < 6) {
+      res.status(400).json({ error: 'كلمة المرور الجديدة يجب أن تكون ٦ أحرف على الأقل' });
       return;
     }
     if (!(await verifyPassword(currentPassword, user.passwordHash))) {
@@ -285,6 +289,10 @@ authRouter.patch('/me', requireAuth, async (req, res) => {
 
     /* البريد والهاتف: معرّفان للدخول — نتحقق من الصيغة ومن عدم تكرارهما */
     if (typeof req.body?.email === 'string') {
+      if (payload.role === 'student') {
+        res.status(400).json({ error: 'حساب الطالب بالهاتف والرقم السري — بلا بريد إلكتروني' });
+        return;
+      }
       const email = cleanText(req.body.email, 120).toLowerCase();
       if (email && !isEmail(email)) {
         res.status(400).json({ error: 'صيغة البريد الإلكتروني غير صحيحة' });

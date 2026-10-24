@@ -262,7 +262,14 @@ adminDataRouter.get('/password-requests', requireAdmin, async (_req, res) => {
   }
 });
 
-/** يحوّل كلمة مرور عشوائية سهلة القراءة والكتابة */
+/** رقم سري مؤقت للطالب: ٦ أرقام — يكتبه الطالب بسهولة من غير حروف */
+function makeTempPin(): string {
+  let out = '';
+  for (let i = 0; i < 6; i++) out += String(Math.floor(Math.random() * 10));
+  return out;
+}
+
+/** يحوّل كلمة مرور عشوائية سهلة القراءة والكتابة (لحسابات الإدارة) */
 function makeTempPassword(): string {
   const letters = 'abcdefghjkmnpqrstuvwxyz';
   const digits = '23456789';
@@ -280,13 +287,13 @@ adminDataRouter.post('/password-requests/:id/issue', requireAdmin, async (req, r
   try {
     const row = await prisma.passwordResetRequest.findUnique({
       where: { id: req.params.id },
-      include: { user: { select: { id: true, name: true, phone: true, email: true } } },
+      include: { user: { select: { id: true, name: true, phone: true, email: true, role: true } } },
     });
     if (!row) {
       res.status(404).json({ error: 'الطلب غير موجود' });
       return;
     }
-    const tempPassword = makeTempPassword();
+    const tempPassword = row.user.role === 'student' ? makeTempPin() : makeTempPassword();
     await prisma.user.update({ where: { id: row.userId }, data: { passwordHash: await hashPassword(tempPassword) } });
     await prisma.passwordResetRequest.update({
       where: { id: row.id },
