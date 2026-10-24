@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { LogOut } from 'lucide-react';
 import { NotificationsBell } from '../components/NotificationsBell';
+import { WhatsAppFab } from '../components/WhatsAppFab';
 import { LoadingState } from '../components/ui';
 import AdminLogin from '../components/AdminLogin';
 import { useAdminSession } from '../lib/adminApi';
@@ -216,6 +217,9 @@ export const AdminLayout: React.FC = () => {
           <Outlet />
         </div>
       </main>
+
+      {/* زر واتساب العائم — أرقام الدعم */}
+      <WhatsAppFab />
     </div>
   );
 };
