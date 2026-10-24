@@ -34,6 +34,7 @@ model User {
   attempts    ExamAttempt[]
   notifications Notification[]
   accessCodes AccessCode[]
+  passwordResets PasswordResetRequest[]
   mediaAssets MediaAsset[]
 }
 
@@ -281,6 +282,19 @@ model ExamAnswer {
 ///
 /// لماذا موجود: تطبيق الطالب مخصّص للطلاب، والإدارة هي من يأذن بالدخول.
 /// الرمز قد يكون موجّهاً لطالب بعينه (عبر `phone`) أو حراً لأول طالب يستخدمه.
+/// طلب استعادة كلمة مرور — بلا بريد صادر، فالإدارة تُصدر كلمة مرور مؤقتة
+model PasswordResetRequest {
+  id               String   @id @default(cuid())
+  userId           String
+  identifier       String
+  status           String   @default("pending") // pending | issued | dismissed
+  tempPasswordHint String?
+  createdAt        DateTime @default(now())
+  resolvedAt       DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
 model AccessCode {
   id          String    @id @default(cuid())
   /// ٦ خانات من أبجدية لا تُلتبس فيها الأرقام بالحروف

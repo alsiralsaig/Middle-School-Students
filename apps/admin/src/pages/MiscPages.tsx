@@ -1,4 +1,5 @@
 import React from 'react';
+import { CheckCircle2, KeyRound, Loader2, RefreshCw, ShieldAlert } from 'lucide-react';
 import { BarChart3, Database, RotateCcw, Server, Settings as SettingsIcon, Users } from 'lucide-react';
 import {
   getApiBase,
@@ -454,6 +455,191 @@ export const ServerUrlCard: React.FC = () => {
   );
 };
 
+/* ============================ أمن الحساب ============================ */
+
+const adminHeaders = { 'Content-Type': 'application/json', Accept: 'application/json', 'X-App': 'admin' } as const;
+
+/** تغيير كلمة مرور المدير الحالي */
+export const PasswordChangeCard: React.FC = () => {
+  const [current, setCurrent] = React.useState('');
+  const [next, setNext] = React.useState('');
+  const [confirm, setConfirm] = React.useState('');
+  const [busy, setBusy] = React.useState(false);
+  const [note, setNote] = React.useState('');
+  const [isError, setIsError] = React.useState(false);
+
+  const submit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (busy) return;
+    setNote(''); setIsError(false);
+    if (next.length < 8) { setIsError(true); setNote('كلمة المرور الجديدة ٨ أحرف على الأقل.'); return; }
+    if (next !== confirm) { setIsError(true); setNote('التأكيد لا يطابق كلمة المرور الجديدة.'); return; }
+    setBusy(true);
+    try {
+      const res = await fetch(`${getApiBase()}/api/auth/password`, {
+        method: 'POST', headers: adminHeaders, credentials: 'include',
+        body: JSON.stringify({ currentPassword: current, newPassword: next }),
+      });
+      const data = await res.json().catch(() => null) as { error?: string } | null;
+      if (!res.ok) throw new Error(data?.error || String(res.status));
+      setNote('تم تغيير كلمة المرور — استخدمها في الدخول القادم.');
+      setCurrent(''); setNext(''); setConfirm('');
+    } catch (e) {
+      setIsError(true);
+      setNote(e instanceof Error ? e.message : 'تعذّر تغيير كلمة المرور');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <form onSubmit={submit} className="bg-white border border-slate-200 rounded-2xl p-4 space-y-3">
+      <div className="flex items-center gap-2">
+        <KeyRound className="w-4 h-4 text-navy-800" />
+        <h2 className="text-sm font-black text-navy-800">تغيير كلمة المرور</h2>
+      </div>
+      <div className="grid gap-3 sm:grid-cols-3">
+        {[
+          ['كلمة المرور الحالية', current, setCurrent, 'current-password'],
+          ['الجديدة (٨ أحرف أو أكثر)', next, setNext, 'new-password'],
+          ['تأكيد الجديدة', confirm, setConfirm, 'new-password'],
+        ].map(([label, value, setter, auto]) => (
+          <label key={label as string} className="space-y-1 text-[11px] font-bold text-slate-700">
+            {label as string}
+            <input
+              type="password"
+              autoComplete={auto as string}
+              value={value as string}
+              onChange={(e) => (setter as (v: string) => void)(e.target.value)}
+              className="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm font-normal focus:border-navy-800 focus:outline-none"
+            />
+          </label>
+        ))}
+      </div>
+      {note && (
+        <p className={`text-[11px] rounded-xl px-3 py-2 border ${isError ? 'bg-rose-50 border-rose-200 text-rose-700' : 'bg-emerald-50 border-emerald-200 text-emerald-800'}`}>{note}</p>
+      )}
+      <button type="submit" disabled={busy || !current || !next} className="inline-flex items-center gap-2 rounded-xl bg-navy-800 px-4 py-2.5 text-xs font-bold text-white hover:bg-navy-700 disabled:opacity-50">
+        {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <KeyRound className="w-4 h-4" />} حفظ كلمة المرور
+      </button>
+    </form>
+  );
+};
+
+interface ResetRow {
+  id: string; identifier: string; status: string; createdAt: string;
+  userName: string; userPhone: string | null; userEmail: string | null; userRole: string;
+}
+
+/** طلبات «نسيت كلمة المرور» — المدير يُصدر كلمة مؤقتة ويبلّغها للطالب */
+export const PasswordRequestsCard: React.FC = () => {
+  const [rows, setRows] = React.useState<ResetRow[] | null>(null);
+  const [busy, setBusy] = React.useState('');
+  const [issued, setIssued] = React.useState<{ password: string; who: string } | null>(null);
+  const [error, setError] = React.useState('');
+
+  const load = React.useCallback(async () => {
+    try {
+      const res = await fetch(`${getApiBase()}/api/admin/password-requests`, { headers: adminHeaders, credentials: 'include' });
+      if (!res.ok) throw new Error(String(res.status));
+      const data = await res.json() as { requests: ResetRow[] };
+      setRows(data.requests);
+      setError('');
+    } catch {
+      setRows([]);
+      setError('تعذّر تحميل الطلبات — تحقّق من الاتصال بالخادم.');
+    }
+  }, []);
+
+  React.useEffect(() => { void load(); }, [load]);
+
+  const act = async (id: string, action: 'issue' | 'dismiss') => {
+    setBusy(id);
+    try {
+      const res = await fetch(`${getApiBase()}/api/admin/password-requests/${id}/${action}`, {
+        method: 'POST', headers: adminHeaders, credentials: 'include',
+      });
+      const data = await res.json().catch(() => null) as { tempPassword?: string; user?: { name: string } } | null;
+      if (!res.ok) throw new Error(String(res.status));
+      if (action === 'issue' && data?.tempPassword) {
+        setIssued({ password: data.tempPassword, who: data.user?.name || 'المستخدم' });
+      }
+      await load();
+    } catch {
+      setError('تعذّر تنفيذ العملية.');
+    } finally {
+      setBusy('');
+    }
+  };
+
+  const pending = (rows ?? []).filter((r) => r.status === 'pending');
+
+  return (
+    <div className="bg-white border border-slate-200 rounded-2xl p-4 space-y-3">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <ShieldAlert className="w-4 h-4 text-navy-800" />
+          <h2 className="text-sm font-black text-navy-800">طلبات استعادة كلمة المرور</h2>
+        </div>
+        <button type="button" onClick={() => void load()} className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-[11px] font-bold text-slate-600 hover:bg-slate-50">
+          <RefreshCw className="w-3.5 h-3.5" /> تحديث
+        </button>
+      </div>
+
+      <p className="text-[11px] text-slate-500 leading-relaxed">
+        الطالب يضغط «نسيت كلمة المرور» فيدخل طلبه هنا. أصدر له كلمة مؤقتة وأبلغه بها (واتساب)، ويغيّرها بعد الدخول.
+        {pending.length > 0 && <span className="font-bold text-amber-700"> — عندك {pending.length} طلب معلّق.</span>}
+      </p>
+
+      {issued && (
+        <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 space-y-1">
+          <p className="text-[11px] font-bold text-emerald-900">كلمة المرور المؤقتة لـ {issued.who}:</p>
+          <p className="nums text-lg font-black tracking-widest text-emerald-900">{issued.password}</p>
+          <p className="text-[10px] text-emerald-700">تُعرض مرة واحدة فقط — انسخها الآن وأرسلها للمستخدم.</p>
+        </div>
+      )}
+
+      {error && <p className="text-[11px] text-rose-700 bg-rose-50 border border-rose-200 rounded-xl px-3 py-2">{error}</p>}
+
+      {rows === null ? (
+        <p className="text-[11px] text-slate-500">جارٍ التحميل…</p>
+      ) : rows.length === 0 ? (
+        <EmptyState title="لا طلبات" description="لما يطلب أحد استعادة كلمة المرور بيظهر طلبه هنا." />
+      ) : (
+        <Table head={['المستخدم', 'المعرّف', 'الحالة', 'التاريخ', 'إجراء']}>
+          {rows.map((r) => (
+            <tr key={r.id} className="hover:bg-slate-50/70">
+              <td className="py-2.5 px-3">
+                <p className="font-bold text-navy-800">{r.userName}</p>
+                <p className="text-[10px] text-slate-400">{r.userRole === 'admin' ? 'إدارة' : 'طالب'}</p>
+              </td>
+              <td className="py-2.5 px-3 nums text-slate-600">{r.identifier}</td>
+              <td className="py-2.5 px-3">
+                {r.status === 'pending' ? <span className="text-[11px] font-bold text-amber-700">معلّق</span>
+                  : r.status === 'issued' ? <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700"><CheckCircle2 className="w-3.5 h-3.5" /> صدرت</span>
+                    : <span className="text-[11px] text-slate-500">مغلق</span>}
+              </td>
+              <td className="py-2.5 px-3 text-[11px] text-slate-500 whitespace-nowrap">{String(r.createdAt).slice(0, 10)}</td>
+              <td className="py-2.5 px-3">
+                {r.status === 'pending' ? (
+                  <div className="flex gap-1.5">
+                    <button type="button" disabled={busy === r.id} onClick={() => void act(r.id, 'issue')} className="rounded-lg bg-navy-800 px-2.5 py-1.5 text-[10px] font-bold text-white hover:bg-navy-700 disabled:opacity-50">
+                      {busy === r.id ? '…' : 'إصدار كلمة مؤقتة'}
+                    </button>
+                    <button type="button" disabled={busy === r.id} onClick={() => void act(r.id, 'dismiss')} className="rounded-lg border border-slate-200 px-2.5 py-1.5 text-[10px] font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-50">
+                      إغلاق
+                    </button>
+                  </div>
+                ) : <span className="text-[10px] text-slate-400">—</span>}
+              </td>
+            </tr>
+          ))}
+        </Table>
+      )}
+    </div>
+  );
+};
+
 export const SettingsPage: React.FC = () => {
   const rows = [
     ['اسم المنصة', 'منصة الطالب السوداني الذكية'],
@@ -474,6 +660,10 @@ export const SettingsPage: React.FC = () => {
           إعدادات العرض والهوية — القيم تُقرأ من الحزمة المشتركة shared/brand.ts.
         </p>
       </header>
+
+      <PasswordChangeCard />
+
+      <PasswordRequestsCard />
 
       <ServerUrlCard />
 

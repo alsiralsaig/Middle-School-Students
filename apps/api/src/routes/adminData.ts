@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { Router } from 'express';
 import { prisma } from '../lib/prisma.js';
-import { requireAdmin } from '../lib/auth.js';
+import { hashPassword, requireAdmin } from '../lib/auth.js';
 
 /**
  * بقية شاشات اللوحة — الإدارة فقط.
@@ -229,6 +229,87 @@ adminDataRouter.post('/library/import', requireAdmin, async (req, res) => {
   } catch (e) {
     console.error('admin library import error:', e);
     res.status(500).json({ error: 'تعذّر استيراد المكتبة' });
+  }
+});
+
+/* ============================ طلبات استعادة كلمة المرور ============================ */
+
+/** GET /api/admin/password-requests — الطلبات المعلّقة وآخر ما أُصدر */
+adminDataRouter.get('/password-requests', requireAdmin, async (_req, res) => {
+  try {
+    const rows = await prisma.passwordResetRequest.findMany({
+      orderBy: { createdAt: 'desc' },
+      take: 100,
+      include: { user: { select: { name: true, phone: true, email: true, role: true } } },
+    });
+    res.json({
+      requests: rows.map((r) => ({
+        id: r.id,
+        identifier: r.identifier,
+        status: r.status,
+        createdAt: r.createdAt,
+        resolvedAt: r.resolvedAt,
+        userName: r.user.name,
+        userPhone: r.user.phone,
+        userEmail: r.user.email,
+        userRole: r.user.role,
+      })),
+      pending: rows.filter((r) => r.status === 'pending').length,
+    });
+  } catch (e) {
+    console.error('password requests error:', e);
+    res.status(500).json({ error: 'تعذّر تحميل الطلبات' });
+  }
+});
+
+/** يحوّل كلمة مرور عشوائية سهلة القراءة والكتابة */
+function makeTempPassword(): string {
+  const letters = 'abcdefghjkmnpqrstuvwxyz';
+  const digits = '23456789';
+  let out = '';
+  for (let i = 0; i < 3; i++) out += letters[Math.floor(Math.random() * letters.length)];
+  for (let i = 0; i < 4; i++) out += digits[Math.floor(Math.random() * digits.length)];
+  return out;
+}
+
+/**
+ * POST /api/admin/password-requests/:id/issue — تصدر الإدارة كلمة مرور مؤقتة.
+ * تُعاد مرة واحدة في الرد ليبلغها المدير للطالب، ثم لا تُخزَّن نصّاً.
+ */
+adminDataRouter.post('/password-requests/:id/issue', requireAdmin, async (req, res) => {
+  try {
+    const row = await prisma.passwordResetRequest.findUnique({
+      where: { id: req.params.id },
+      include: { user: { select: { id: true, name: true, phone: true, email: true } } },
+    });
+    if (!row) {
+      res.status(404).json({ error: 'الطلب غير موجود' });
+      return;
+    }
+    const tempPassword = makeTempPassword();
+    await prisma.user.update({ where: { id: row.userId }, data: { passwordHash: await hashPassword(tempPassword) } });
+    await prisma.passwordResetRequest.update({
+      where: { id: row.id },
+      data: { status: 'issued', resolvedAt: new Date(), tempPasswordHint: 'أُصدرت كلمة مؤقتة' },
+    });
+    res.json({ ok: true, tempPassword, user: row.user, identifier: row.identifier });
+  } catch (e) {
+    console.error('issue temp password error:', e);
+    res.status(500).json({ error: 'تعذّر إصدار كلمة المرور' });
+  }
+});
+
+/** POST /api/admin/password-requests/:id/dismiss — إغلاق الطلب بلا تغيير كلمة المرور */
+adminDataRouter.post('/password-requests/:id/dismiss', requireAdmin, async (req, res) => {
+  try {
+    await prisma.passwordResetRequest.update({
+      where: { id: req.params.id },
+      data: { status: 'dismissed', resolvedAt: new Date() },
+    });
+    res.json({ ok: true });
+  } catch (e) {
+    console.error('dismiss password request error:', e);
+    res.status(500).json({ error: 'تعذّر إغلاق الطلب' });
   }
 });
 

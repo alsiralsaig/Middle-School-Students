@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { KeyRound, LogIn, ShieldCheck } from 'lucide-react';
+import { KeyRound, LogIn, MailQuestion, ShieldCheck } from 'lucide-react';
+import { getApiBase } from '../lib/serverUrl';
 
 /**
  * بوابة دخول لوحة الإدارة.
@@ -21,6 +22,9 @@ export const AdminLogin: React.FC<{
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
+  const [forgot, setForgot] = useState(false);
+  const [forgotNote, setForgotNote] = useState('');
+  const [forgotBusy, setForgotBusy] = useState(false);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -93,6 +97,49 @@ export const AdminLogin: React.FC<{
             <p className="text-[11px] text-rose-700 bg-rose-50 border border-rose-200 rounded-xl px-3 py-2 leading-relaxed">
               {shown}
             </p>
+          )}
+
+          <button
+            type="button"
+            onClick={() => { setForgot((v) => !v); setForgotNote(''); }}
+            className="text-[11px] font-bold text-navy-700 hover:underline cursor-pointer"
+          >
+            نسيت كلمة المرور؟
+          </button>
+
+          {forgot && (
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 space-y-2">
+              <p className="text-[10px] text-slate-600 leading-relaxed">
+                اكتب رقم الهاتف أو البريد، ويوصل طلبك للإدارة — هي اللي تُصدر كلمة مرور مؤقتة.
+              </p>
+              <button
+                type="button"
+                disabled={forgotBusy || !identifier.trim()}
+                onClick={async () => {
+                  setForgotBusy(true); setForgotNote('');
+                  try {
+                    const res = await fetch(`${getApiBase()}/api/auth/forgot`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json', 'X-App': 'admin' },
+                      body: JSON.stringify({ identifier: identifier.trim() }),
+                    });
+                    const data = await res.json().catch(() => null) as { message?: string; error?: string } | null;
+                    setForgotNote(data?.message || data?.error || 'تم إرسال الطلب.');
+                  } catch {
+                    setForgotNote('تعذّر الوصول إلى الخادم.');
+                  } finally {
+                    setForgotBusy(false);
+                  }
+                }}
+                className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-white border border-navy-800 px-3 py-2.5 text-[11px] font-bold text-navy-800 hover:bg-navy-50 disabled:opacity-50"
+              >
+                <MailQuestion className="w-3.5 h-3.5" />
+                {forgotBusy ? 'جارٍ الإرسال…' : 'أرسل طلب الاستعادة'}
+              </button>
+              {forgotNote && (
+                <p className="text-[10px] text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-lg px-2 py-1.5 leading-relaxed">{forgotNote}</p>
+              )}
+            </div>
           )}
 
           <button

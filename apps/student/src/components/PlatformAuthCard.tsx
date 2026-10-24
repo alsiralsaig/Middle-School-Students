@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { LogIn, LogOut, UserPlus, Wifi, WifiOff, Loader2, ShieldCheck } from 'lucide-react';
+import { LogIn, LogOut, UserPlus, Wifi, WifiOff, Loader2, ShieldCheck, KeyRound } from 'lucide-react';
+import { getApiBase } from '../utils/serverUrl';
 import { useSession } from '../hooks/useSession';
 import { login, logout, register } from '../utils/sessionStore';
 import { runSync } from '../utils/syncEngine';
@@ -18,6 +19,13 @@ export const PlatformAuthCard: React.FC = () => {
   const [name, setName] = useState('');
   const [accessCode, setAccessCode] = useState('');
   const [error, setError] = useState('');
+  const [forgotNote, setForgotNote] = useState('');
+  const [forgotBusy, setForgotBusy] = useState(false);
+  const [pwOpen, setPwOpen] = useState(false);
+  const [pwCurrent, setPwCurrent] = useState('');
+  const [pwNext, setPwNext] = useState('');
+  const [pwNote, setPwNote] = useState('');
+  const [pwBusy, setPwBusy] = useState(false);
   const [success, setSuccess] = useState('');
   const [busy, setBusy] = useState(false);
 
@@ -117,6 +125,64 @@ export const PlatformAuthCard: React.FC = () => {
             </span>
           )}
         </div>
+
+        {/* تغيير كلمة المرور — للحساب المسجّل على الخادم */}
+        <button
+          type="button"
+          onClick={() => { setPwOpen((v) => !v); setPwNote(''); }}
+          className="inline-flex items-center gap-1.5 text-[11px] font-bold text-slate-300 hover:text-white"
+        >
+          <KeyRound className="w-3.5 h-3.5" />
+          تغيير كلمة المرور
+        </button>
+
+        {pwOpen && (
+          <div className="space-y-2 rounded-lg border border-[#1B3658] bg-[#0B2039] p-2.5">
+            <input
+              type="password"
+              autoComplete="current-password"
+              value={pwCurrent}
+              onChange={(e) => setPwCurrent(e.target.value)}
+              placeholder="كلمة المرور الحالية"
+              className="w-full min-h-[40px] rounded-lg bg-[#0E2440] border border-[#1B3658] px-3 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-[#F1AC12]/60"
+            />
+            <input
+              type="password"
+              autoComplete="new-password"
+              value={pwNext}
+              onChange={(e) => setPwNext(e.target.value)}
+              placeholder="الجديدة (٨ أحرف أو أكثر)"
+              className="w-full min-h-[40px] rounded-lg bg-[#0E2440] border border-[#1B3658] px-3 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-[#F1AC12]/60"
+            />
+            <button
+              type="button"
+              disabled={pwBusy || !pwCurrent || pwNext.length < 8}
+              onClick={async () => {
+                setPwBusy(true); setPwNote('');
+                try {
+                  const res = await fetch(`${getApiBase()}/api/auth/password`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-App': 'student' },
+                    credentials: 'include',
+                    body: JSON.stringify({ currentPassword: pwCurrent, newPassword: pwNext }),
+                  });
+                  const data = await res.json().catch(() => null) as { error?: string } | null;
+                  if (!res.ok) throw new Error(data?.error || String(res.status));
+                  setPwNote('تم تغيير كلمة المرور بنجاح.');
+                  setPwCurrent(''); setPwNext('');
+                } catch (e) {
+                  setPwNote(e instanceof Error ? e.message : 'تعذّر تغيير كلمة المرور');
+                } finally {
+                  setPwBusy(false);
+                }
+              }}
+              className="w-full min-h-[40px] rounded-lg bg-[#F1AC12] text-[#0B1E36] text-xs font-black hover:bg-amber-300 disabled:opacity-50"
+            >
+              {pwBusy ? 'جارٍ الحفظ…' : 'حفظ كلمة المرور'}
+            </button>
+            {pwNote && <p className="text-[11px] text-slate-200 leading-relaxed">{pwNote}</p>}
+          </div>
+        )}
       </div>
     );
   }
@@ -193,6 +259,39 @@ export const PlatformAuthCard: React.FC = () => {
           placeholder="كلمة المرور (٦ أحرف على الأقل)"
           className="w-full min-h-[44px] rounded-lg bg-[#0E2440] border border-[#1B3658] px-3 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-[#F1AC12]/60"
         />
+
+        {mode === 'login' && (
+          <button
+            type="button"
+            disabled={forgotBusy || !identifier.trim()}
+            onClick={async () => {
+              setForgotBusy(true); setForgotNote('');
+              try {
+                const res = await fetch(`${getApiBase()}/api/auth/forgot`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json', 'X-App': 'student' },
+                  body: JSON.stringify({ identifier: identifier.trim() }),
+                });
+                const data = await res.json().catch(() => null) as { message?: string; error?: string } | null;
+                setForgotNote(data?.message || data?.error || 'تم إرسال الطلب للإدارة.');
+              } catch {
+                setForgotNote('تعذّر الوصول إلى الخادم.');
+              } finally {
+                setForgotBusy(false);
+              }
+            }}
+            className="w-full min-h-[40px] inline-flex items-center justify-center gap-1.5 rounded-lg border border-[#1B3658] text-[11px] font-bold text-slate-300 hover:border-[#F1AC12]/60 disabled:opacity-40"
+          >
+            <KeyRound className="w-3.5 h-3.5" />
+            {forgotBusy ? 'جارٍ الإرسال…' : 'نسيت كلمة المرور؟'}
+          </button>
+        )}
+
+        {forgotNote && (
+          <p className="text-[11px] text-emerald-200 bg-emerald-500/10 border border-emerald-500/25 rounded-lg px-3 py-2 leading-relaxed">
+            {forgotNote}
+          </p>
+        )}
 
         {error && (
           <p className="text-[11px] font-medium text-rose-300 bg-rose-500/10 border border-rose-500/25 rounded-lg px-3 py-2">

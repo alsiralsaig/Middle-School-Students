@@ -179,6 +179,81 @@ authRouter.post('/login', async (req, res) => {
   }
 });
 
+/* ============================ تغيير كلمة المرور ============================ */
+
+/** POST /api/auth/password — المستخدم يغيّر كلمته وهو داخل حسابه */
+authRouter.post('/password', requireAuth, async (req, res) => {
+  try {
+    const uid = currentUser(req).uid;
+    const currentPassword = typeof req.body?.currentPassword === 'string' ? req.body.currentPassword : '';
+    const newPassword = typeof req.body?.newPassword === 'string' ? req.body.newPassword : '';
+    if (newPassword.length < 8) {
+      res.status(400).json({ error: 'كلمة المرور الجديدة يجب أن تكون ٨ أحرف على الأقل' });
+      return;
+    }
+    const user = await prisma.user.findUnique({ where: { id: uid } });
+    if (!user) {
+      res.status(404).json({ error: 'الحساب غير موجود' });
+      return;
+    }
+    if (!(await verifyPassword(currentPassword, user.passwordHash))) {
+      res.status(401).json({ error: 'كلمة المرور الحالية غير صحيحة' });
+      return;
+    }
+    if (currentPassword === newPassword) {
+      res.status(400).json({ error: 'كلمة المرور الجديدة مطابقة للحالية' });
+      return;
+    }
+    await prisma.user.update({ where: { id: uid }, data: { passwordHash: await hashPassword(newPassword) } });
+    res.json({ ok: true });
+  } catch (e) {
+    console.error('change password error:', e);
+    res.status(500).json({ error: 'تعذّر تغيير كلمة المرور' });
+  }
+});
+
+/* ============================ نسيت كلمة المرور ============================ */
+
+/**
+ * POST /api/auth/forgot — ينشئ طلب استعادة يقرأه المدير.
+ *
+ * لماذا كذا: المنصة لا ترسل بريداً ولا رسائل SMS (لا مزوّد مربوط)، فالبديل
+ * الصادق أن يصل الطلب للإدارة وتُصدر كلمة مرور مؤقتة تُبلَّغ للطالب.
+ * الرد دائماً واحد حتى لا نكشف من له حساب ومن ليس له.
+ */
+authRouter.post('/forgot', async (req, res) => {
+  try {
+    const identifier = cleanText(req.body?.identifier, 120);
+    if (!identifier) {
+      res.status(400).json({ error: 'أدخل رقم الهاتف أو البريد' });
+      return;
+    }
+    const isMail = isEmail(identifier);
+    const user = await prisma.user.findFirst({
+      where: isMail ? { email: identifier.toLowerCase() } : { phone: identifier.replace(/[\s+]/g, '') },
+      select: { id: true },
+    });
+    if (user) {
+      const pending = await prisma.passwordResetRequest.findFirst({
+        where: { userId: user.id, status: 'pending' },
+        select: { id: true },
+      });
+      if (!pending) {
+        await prisma.passwordResetRequest.create({
+          data: { userId: user.id, identifier },
+        });
+      }
+    }
+    res.json({
+      ok: true,
+      message: 'تم إرسال طلبك للإدارة. راجع الإدارة (واتساب) لتصلك كلمة مرور مؤقتة، وبعدها غيّرها من حسابك.',
+    });
+  } catch (e) {
+    console.error('forgot password error:', e);
+    res.status(500).json({ error: 'تعذّر إرسال الطلب، حاول لاحقاً' });
+  }
+});
+
 /* ============================ الخروج ============================ */
 authRouter.post('/logout', (_req, res) => {
   clearAuthCookie(res);
