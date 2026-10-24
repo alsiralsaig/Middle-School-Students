@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowRight, BookOpen, Clock, MessageSquare, Send, Sparkles, Users } from 'lucide-react';
+import { ArrowRight, BookOpen, Clock, GraduationCap, MessageSquare, Send, Sparkles, Users } from 'lucide-react';
 import { useSession } from '../hooks/useSession';
 import { StudentAvatar } from '../components/StudentAvatar';
 import { getApiBase } from '../utils/serverUrl';
@@ -106,6 +106,9 @@ export const StudyRoomsView: React.FC<{ onBackToDashboard?: () => void }> = ({ o
   const [sending, setSending] = useState(false);
   const [text, setText] = useState('');
   const [error, setError] = useState('');
+  /** موجّه السؤال للمدرّس الذكي بدل زملاء الغرفة */
+  const [toTeacher, setToTeacher] = useState(false);
+  const [teacherBusy, setTeacherBusy] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const activeRoom = useMemo(() => ROOMS.find((r) => r.id === activeRoomId) || null, [activeRoomId]);
@@ -162,10 +165,56 @@ export const StudyRoomsView: React.FC<{ onBackToDashboard?: () => void }> = ({ o
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages.length, activeRoomId]);
 
+  /** سؤال للمدرّس الذكي — بيرد بالعامية السودانية مع سياق من المنهج */
+  const askTeacher = async (body: string) => {
+    if (!activeRoomId || teacherBusy) return;
+    setTeacherBusy(true);
+    setError('');
+    // تظهر رسالة الطالب فوراً كأنها أُرسلت (تُحفظ فعلياً في الخادم)
+    const pending: Message = {
+      id: `pending-${Date.now()}`,
+      userId: user?.id || 'me',
+      name: user?.name || 'أنت',
+      avatar: user?.avatar ?? null,
+      state: null,
+      body,
+      createdAt: new Date().toISOString(),
+    };
+    setMessages((prev) => [...prev, pending]);
+    setText('');
+    try {
+      const res = await fetch(`${getApiBase()}/api/study/rooms/${activeRoomId}/teacher`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json', 'X-App': 'student' },
+        body: JSON.stringify({ question: body }),
+      });
+      const data = (await res.json().catch(() => null)) as
+        | { messages?: [Message, Message]; error?: string }
+        | null;
+      if (!res.ok || !data?.messages) throw new Error(data?.error || 'الأستاذ ما ردّ — جرّب تاني');
+      // نستبدل الرسالة المؤقتة بالرسالتين المحفوظتين
+      setMessages((prev) => [...prev.filter((m) => m.id !== pending.id), ...(data.messages as Message[])]);
+      setToTeacher(false);
+      void loadStats();
+    } catch (err) {
+      setMessages((prev) => prev.filter((m) => m.id !== pending.id));
+      setText(body);
+      setError(err instanceof Error ? err.message : 'الأستاذ ما ردّ — جرّب تاني');
+    } finally {
+      setTeacherBusy(false);
+    }
+  };
+
   const send = async (e: React.FormEvent) => {
     e.preventDefault();
     const body = text.trim();
-    if (!body || !activeRoomId || sending) return;
+    if (!body || !activeRoomId || sending || teacherBusy) return;
+    // «يا أستاذ» أو «@» في أول الرسالة ⟹ يروح للمدرّس تلقائياً
+    if (toTeacher || /^(@|يا\s*أ?ستاذ)/.test(body)) {
+      await askTeacher(body.replace(/^(@|يا\s*أ?ستاذ)\s*/, ''));
+      return;
+    }
     setSending(true);
     setError('');
     try {
@@ -200,6 +249,13 @@ export const StudyRoomsView: React.FC<{ onBackToDashboard?: () => void }> = ({ o
             اختار غرفة واكتب سؤالك. رسالتك تظهر لكل الطلاب اللي فاتحين نفس الغرفة، وحد ما يرد عليك
             تلقائياً — الردود من زملائك الحقيقيين.
           </p>
+          <div className="mt-3 flex items-start gap-2 rounded-xl bg-[#F1AC12]/10 border border-[#F1AC12]/25 px-3 py-2">
+            <GraduationCap className="w-4 h-4 text-[#F1AC12] shrink-0 mt-0.5" />
+            <p className="text-[11px] text-amber-100 leading-relaxed">
+              في كل غرفة <strong>الأستاذ</strong> موجود: اكتب سؤالك واضغط «اسأل المدرس» — يرد عليك
+              بالعامية السودانية من المنهج نفسه.
+            </p>
+          </div>
           <div className="mt-4 flex items-center gap-3 text-[11px]">
             <span className="inline-flex items-center gap-1.5 text-emerald-400 font-bold">
               <span className={`w-2 h-2 rounded-full ${totalOnline > 0 ? 'bg-emerald-400 animate-pulse' : 'bg-slate-500'}`} />
@@ -285,8 +341,8 @@ export const StudyRoomsView: React.FC<{ onBackToDashboard?: () => void }> = ({ o
               </p>
             </div>
           </div>
-          <span className="text-[10px] font-bold text-emerald-300 bg-emerald-500/10 border border-emerald-500/25 rounded-full px-2 py-1 shrink-0">
-            مباشر
+          <span className="text-[10px] font-bold text-[#F1AC12] bg-[#F1AC12]/10 border border-[#F1AC12]/30 rounded-full px-2 py-1 shrink-0 inline-flex items-center gap-1">
+            <GraduationCap className="w-3 h-3" /> الأستاذ موجود
           </span>
         </div>
 
@@ -307,7 +363,27 @@ export const StudyRoomsView: React.FC<{ onBackToDashboard?: () => void }> = ({ o
             </div>
           )}
           {messages.map((m) => {
-            const mine = m.userId === user?.id;
+            const isTeacher = m.userId === 'teacher';
+            const mine = !isTeacher && m.userId === user?.id;
+            if (isTeacher) {
+              return (
+                <div key={m.id} className="flex items-start gap-2">
+                  <span className="w-8 h-8 rounded-full bg-gradient-to-br from-[#F1AC12] to-[#c98d0b] flex items-center justify-center shrink-0">
+                    <GraduationCap className="w-4 h-4 text-[#071322]" />
+                  </span>
+                  <div className="max-w-[88%] space-y-1 text-right">
+                    <div className="flex items-center gap-1.5 text-[10px] px-1">
+                      <span className="font-black text-[#F1AC12]">الأستاذ</span>
+                      <span className="text-slate-500">•</span>
+                      <span className="text-slate-400">{timeAgo(m.createdAt)}</span>
+                    </div>
+                    <div className="px-3.5 py-2.5 rounded-2xl rounded-tr-sm text-[12.5px] leading-relaxed whitespace-pre-line bg-[#12233B] border border-[#F1AC12]/35 text-amber-50">
+                      {m.body}
+                    </div>
+                  </div>
+                </div>
+              );
+            }
             return (
               <div key={m.id} className={`flex items-start gap-2 ${mine ? 'flex-row-reverse' : ''}`}>
                 <StudentAvatar avatar={m.avatar} name={m.name} className="w-8 h-8" textClassName="text-[12px]" />
@@ -331,12 +407,34 @@ export const StudyRoomsView: React.FC<{ onBackToDashboard?: () => void }> = ({ o
               </div>
             );
           })}
+          {teacherBusy && (
+            <div className="flex items-center gap-2 text-[11px] text-[#F1AC12] px-1">
+              <span className="w-6 h-6 rounded-full bg-[#F1AC12]/20 flex items-center justify-center">
+                <GraduationCap className="w-3.5 h-3.5" />
+              </span>
+              الأستاذ بيكتب…
+            </div>
+          )}
           <div ref={bottomRef} />
         </div>
 
         {/* الإدخال */}
         <form onSubmit={send} className="p-2.5 border-t border-[#1C3659] bg-[#0B1E36] shrink-0">
           {error && <p className="text-[10.5px] text-red-300 mb-1.5 px-1">{error}</p>}
+          {toTeacher && (
+            <div className="mb-1.5 px-1 flex items-center justify-between gap-2">
+              <span className="text-[10.5px] text-[#F1AC12] font-bold inline-flex items-center gap-1">
+                <GraduationCap className="w-3.5 h-3.5" /> سؤالك رايح للأستاذ
+              </span>
+              <button
+                type="button"
+                onClick={() => setToTeacher(false)}
+                className="text-[10px] text-slate-400 hover:text-white"
+              >
+                إلغاء
+              </button>
+            </div>
+          )}
           <div className="flex items-center gap-2">
             <input
               value={text}
@@ -345,10 +443,27 @@ export const StudyRoomsView: React.FC<{ onBackToDashboard?: () => void }> = ({ o
               className="flex-1 min-h-[44px] rounded-xl bg-[#0E2440] border border-[#1B3658] px-3.5 text-[13px] text-white placeholder:text-slate-500 focus:outline-none focus:border-[#F1AC12]/70"
             />
             <button
+              type="button"
+              onClick={() => {
+                if (text.trim()) void askTeacher(text.trim());
+                else setToTeacher(true);
+              }}
+              disabled={teacherBusy || sending}
+              title="اسأل المدرس"
+              aria-label="اسأل المدرس"
+              className={`h-11 px-3 rounded-xl text-[11px] font-black flex items-center gap-1.5 shrink-0 disabled:opacity-50 ${
+                toTeacher || text.trim()
+                  ? 'bg-[#F1AC12] text-[#071322]'
+                  : 'bg-[#0E2440] border border-[#F1AC12]/40 text-[#F1AC12]'
+              }`}
+            >
+              <GraduationCap className="w-4 h-4" /> المدرس
+            </button>
+            <button
               type="submit"
               disabled={sending || !text.trim()}
               aria-label="إرسال"
-              className="w-11 h-11 rounded-xl bg-[#F1AC12] text-[#071322] flex items-center justify-center disabled:opacity-50 shrink-0"
+              className="w-11 h-11 rounded-xl bg-[#122B4A] border border-[#27446C] text-slate-200 flex items-center justify-center disabled:opacity-50 shrink-0"
             >
               <Send className="w-4.5 h-4.5" />
             </button>
