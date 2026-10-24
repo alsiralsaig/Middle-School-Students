@@ -188,6 +188,13 @@ model Resource {
   previewSummary       String  @default("[]")
   filePath             String? // مسار الملف بعد ربط التخزين
   status               String  @default("sample")
+  body                 String? // النص الكامل للمذكرة/الملخص — يُقرأ داخل التطبيق بلا تنزيل
+  externalUrl          String? // للاختبارات التفاعلية: رابط يُفتح في المتصفح
+  sourceUrl            String? // صفحة المصدر الأصلية على المنصة
+  grade                String  @default("third-middle")
+  sortOrder            Int     @default(0)
+  isPublished          Boolean @default(true) // الإدارة تُقرّر ما يظهر في تطبيق الطالب
+  publishedAt          DateTime?
 
   subject Subject? @relation(fields: [subjectId], references: [id], onDelete: SetNull)
 }

@@ -36,7 +36,7 @@ export interface LessonExplanationSection {
     solution: string;
   };
 }
-export type ResourceCategory = 'all' | 'notes' | 'textbook' | 'worksheets' | 'past_exams';
+export type ResourceCategory = 'all' | 'notes' | 'textbook' | 'worksheets' | 'past_exams' | 'interactive_exams';
 
 export interface Lesson {
   id: string;
@@ -184,6 +184,12 @@ export interface ResourceItem {
   downloadCount: number;
   description: string;
   previewSummary: string[];
+  /** رابط اختبار تفاعلي يُفتح في المتصفح */
+  externalUrl?: string | null;
+  /** عدد أحرف النص المحفوظ — يغيب عن عناصر الملفات */
+  bodyChars?: number;
+  /** هل النص الكامل محفوظ ليُقرأ داخل التطبيق */
+  hasBody?: boolean;
 }
 export interface QuizQuestion {
   id: number;

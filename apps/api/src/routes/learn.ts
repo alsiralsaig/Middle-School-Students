@@ -313,11 +313,37 @@ learnRouter.delete('/planner/group/:groupId', requireAuth, async (req, res) => {
 /* ============================ المكتبة ============================ */
 
 learnRouter.get('/resources', async (_req, res) => {
-  const resources = await prisma.resource.findMany({ where: { category: { not: 'exam-attachment' } }, orderBy: { id: 'asc' } });
+  // الطالب يرى ما اعتمدته الإدارة فقط (`isPublished`) — والباقي يبقى في اللوحة
+  const resources = await prisma.resource.findMany({
+    where: { category: { not: 'exam-attachment' }, isPublished: true },
+    orderBy: [{ sortOrder: 'asc' }, { title: 'asc' }],
+    select: {
+      id: true, subjectId: true, title: true, category: true, fileType: true,
+      fileSize: true, pageCount: true, author: true, publishYear: true,
+      isVerifiedCurriculum: true, downloadCount: true, description: true,
+      previewSummary: true, filePath: true, externalUrl: true, body: true,
+    },
+  });
   res.json({
-    resources: resources.map((r) => ({
+    resources: resources.map(({ body, ...r }) => ({
       ...r,
       previewSummary: JSON.parse(r.previewSummary || '[]'),
+      hasBody: Boolean(body),
+      bodyChars: body ? body.length : 0,
     })),
   });
+});
+
+/** GET /api/learn/resources/:id — النص الكامل لعنصر مكتبة منشور (يُقرأ داخل التطبيق) */
+learnRouter.get('/resources/:id', async (req, res) => {
+  const item = await prisma.resource.findFirst({
+    where: { id: req.params.id, isPublished: true, category: { not: 'exam-attachment' } },
+    select: { id: true, title: true, subjectId: true, category: true, description: true,
+      body: true, externalUrl: true, filePath: true, sourceUrl: true },
+  }).catch(() => null);
+  if (!item) {
+    res.status(404).json({ error: 'العنصر غير متاح' });
+    return;
+  }
+  res.json({ resource: { ...item, bodyChars: item.body ? item.body.length : 0 } });
 });

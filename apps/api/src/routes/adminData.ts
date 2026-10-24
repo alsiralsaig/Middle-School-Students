@@ -1,3 +1,4 @@
+import { readFile } from 'node:fs/promises';
 import { Router } from 'express';
 import { prisma } from '../lib/prisma.js';
 import { requireAdmin } from '../lib/auth.js';
@@ -55,16 +56,179 @@ adminDataRouter.get('/library', requireAdmin, async (_req, res) => {
         subjectId: r.subjectId,
         subjectName: r.subject?.name ?? '—',
         filePath: r.filePath,
+        externalUrl: r.externalUrl,
+        sourceUrl: r.sourceUrl,
+        hasBody: Boolean(r.body),
+        bodyChars: r.body ? r.body.length : 0,
+        isPublished: r.isPublished,
+        publishedAt: r.publishedAt,
+        grade: r.grade,
       })),
       summary: {
         total: resources.length,
         verified: resources.filter((r) => r.isVerifiedCurriculum).length,
         downloads: resources.reduce((a, r) => a + r.downloadCount, 0),
+        published: resources.filter((r) => r.isPublished).length,
+        hidden: resources.filter((r) => !r.isPublished).length,
+        interactive: resources.filter((r) => r.category === 'interactive_exams').length,
       },
     });
   } catch (e) {
     console.error('admin library error:', e);
     res.status(500).json({ error: 'تعذّر تحميل المكتبة' });
+  }
+});
+
+/** GET /api/admin/library/:id — النص الكامل لعنصر واحد (معاينة الإدارة) */
+adminDataRouter.get('/library/:id', requireAdmin, async (req, res) => {
+  try {
+    const item = await prisma.resource.findUnique({
+      where: { id: req.params.id },
+      select: { id: true, title: true, category: true, description: true, body: true,
+        externalUrl: true, sourceUrl: true, filePath: true, isPublished: true },
+    });
+    if (!item) {
+      res.status(404).json({ error: 'العنصر غير موجود' });
+      return;
+    }
+    res.json({ resource: item });
+  } catch (e) {
+    console.error('admin library item error:', e);
+    res.status(500).json({ error: 'تعذّر تحميل العنصر' });
+  }
+});
+
+/**
+ * PATCH /api/admin/library/:id — قرار الإدارة: نشر للطلاب أو سحب، وتعديل حقول أساسية.
+ * `isPublished=false` يُخفي العنصر من تطبيق الطالب فوراً دون حذف المحتوى.
+ */
+adminDataRouter.patch('/library/:id', requireAdmin, async (req, res) => {
+  try {
+    const body = req.body as { isPublished?: unknown; title?: unknown; description?: unknown; sortOrder?: unknown };
+    const data: { isPublished?: boolean; publishedAt?: Date | null; title?: string; description?: string; sortOrder?: number } = {};
+    if (typeof body.isPublished === 'boolean') {
+      data.isPublished = body.isPublished;
+      data.publishedAt = body.isPublished ? new Date() : null;
+    }
+    if (typeof body.title === 'string' && body.title.trim()) data.title = body.title.trim().slice(0, 200);
+    if (typeof body.description === 'string') data.description = body.description.slice(0, 600);
+    if (typeof body.sortOrder === 'number' && Number.isFinite(body.sortOrder)) data.sortOrder = body.sortOrder;
+    if (!Object.keys(data).length) {
+      res.status(400).json({ error: 'لا حقول قابلة للتعديل في الطلب' });
+      return;
+    }
+    const updated = await prisma.resource.update({ where: { id: req.params.id }, data });
+    res.json({ ok: true, resource: { id: updated.id, isPublished: updated.isPublished } });
+  } catch (e) {
+    console.error('admin library patch error:', e);
+    res.status(500).json({ error: 'تعذّر تحديث العنصر' });
+  }
+});
+
+/** PATCH /api/admin/library — نشر أو سحب دفعة كاملة: { ids:[...], isPublished:boolean } */
+adminDataRouter.patch('/library', requireAdmin, async (req, res) => {
+  try {
+    const body = req.body as { ids?: unknown; isPublished?: unknown };
+    const ids = Array.isArray(body.ids) ? body.ids.filter((x): x is string => typeof x === 'string') : [];
+    if (!ids.length || typeof body.isPublished !== 'boolean') {
+      res.status(400).json({ error: 'حدّد عناصر وقرار النشر' });
+      return;
+    }
+    const result = await prisma.resource.updateMany({
+      where: { id: { in: ids.slice(0, 2000) } },
+      data: { isPublished: body.isPublished, publishedAt: body.isPublished ? new Date() : null },
+    });
+    res.json({ ok: true, updated: result.count });
+  } catch (e) {
+    console.error('admin library bulk error:', e);
+    res.status(500).json({ error: 'تعذّر تحديث العناصر' });
+  }
+});
+
+interface LibrarySeedItem {
+  id: string;
+  title: string;
+  category: string;
+  subject?: string;
+  description?: string;
+  body?: string;
+  externalUrl?: string;
+  sourceUrl?: string;
+  fileSize?: string;
+  pageCount?: number;
+  sortOrder?: number;
+  isPublished?: boolean;
+}
+
+/**
+ * POST /api/admin/library/import — استيراد المكتبة النصية.
+ * يقبل `{ source: 'bundled' }` لقراءة الملف المرفق مع الخادم، أو `{ items: [...] }`.
+ * العناصر تُنشأ **غير منشورة** افتراضياً: الإدارة تراجعها ثم تنشرها للطلاب.
+ */
+adminDataRouter.post('/library/import', requireAdmin, async (req, res) => {
+  try {
+    const body = req.body as { source?: string; items?: unknown; publish?: unknown };
+    let items: LibrarySeedItem[] = [];
+    if (body.source === 'bundled') {
+      const file = new URL('../../prisma/data/library.json', import.meta.url);
+      const raw = await readFile(file, 'utf8');
+      const parsed = JSON.parse(raw) as { items?: LibrarySeedItem[] };
+      items = Array.isArray(parsed.items) ? parsed.items : [];
+    } else if (Array.isArray(body.items)) {
+      items = body.items as LibrarySeedItem[];
+    }
+    if (!items.length) {
+      res.status(400).json({ error: 'لا عناصر للاستيراد' });
+      return;
+    }
+    const publish = body.publish === true;
+    const subjects = await prisma.subject.findMany({ select: { id: true, name: true } });
+    const subjectIdFor = (name?: string): string | null => {
+      if (!name) return null;
+      const norm = (v: string) => v.replace(/[إأآ]/g, 'ا').replace(/\s+/g, ' ').trim();
+      const target = norm(name);
+      const exact = subjects.find((s) => norm(s.name) === target);
+      if (exact) return exact.id;
+      const loose = subjects.find((s) => norm(s.name).includes(target) || target.includes(norm(s.name)));
+      return loose ? loose.id : null;
+    };
+
+    let created = 0;
+    let updated = 0;
+    for (const item of items.slice(0, 1000)) {
+      if (!item?.id || !item?.title) continue;
+      const data = {
+        title: item.title.slice(0, 200),
+        category: item.category || 'notes',
+        description: (item.description || '').slice(0, 600),
+        subjectId: subjectIdFor(item.subject),
+        body: item.body ?? null,
+        externalUrl: item.externalUrl ?? null,
+        sourceUrl: item.sourceUrl ?? null,
+        fileType: item.externalUrl ? 'LINK' : 'TXT',
+        fileSize: item.fileSize || (item.body ? `${Math.round(item.body.length / 1024)} ك.ب` : '—'),
+        pageCount: item.pageCount ?? 0,
+        sortOrder: item.sortOrder ?? 0,
+        isPublished: item.isPublished ?? publish,
+        publishedAt: (item.isPublished ?? publish) ? new Date() : null,
+        status: 'imported',
+      };
+      const exists = await prisma.resource.findUnique({ where: { id: item.id }, select: { id: true } });
+      if (exists) {
+        // إعادة الاستيراد لا تلمس قرار النشر: المنشور يبقى منشوراً، والمسحوب يبقى مسحوباً
+        const { isPublished: _ignored, publishedAt: _ignoredAt, ...rest } = data;
+        void _ignored; void _ignoredAt;
+        await prisma.resource.update({ where: { id: item.id }, data: rest });
+        updated += 1;
+      } else {
+        await prisma.resource.create({ data: { id: item.id, ...data } });
+        created += 1;
+      }
+    }
+    res.json({ ok: true, created, updated, total: created + updated, published: publish });
+  } catch (e) {
+    console.error('admin library import error:', e);
+    res.status(500).json({ error: 'تعذّر استيراد المكتبة' });
   }
 });
 

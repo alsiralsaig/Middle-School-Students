@@ -42,6 +42,8 @@ app.use(
     credentials: true,
   }),
 );
+/* استيراد المكتبة يرسل مئات العناصر في طلب واحد — سقف أعلى لهذا المسار وحده */
+app.use('/api/admin/library/import', express.json({ limit: '16mb' }));
 app.use(express.json({ limit: '1mb' }));
 app.use(cookieParser());
 app.use(attachUser);

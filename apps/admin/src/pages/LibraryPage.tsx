@@ -29,6 +29,11 @@ interface LibraryRow {
   subjectId: string | null;
   subjectName: string;
   filePath?: string;
+  externalUrl?: string | null;
+  hasBody?: boolean;
+  bodyChars?: number;
+  isPublished: boolean;
+  publishedAt?: string | null;
 }
 interface SubjectOption { id: string; name: string }
 
@@ -38,8 +43,9 @@ const CATEGORY_LABEL: Record<ResourceCategory, string> = {
   textbook: 'كتاب مقرر',
   worksheets: 'أوراق عمل',
   past_exams: 'امتحانات سابقة',
+  interactive_exams: 'اختبارات تفاعلية',
 };
-const CATEGORIES: ResourceCategory[] = ['all', 'notes', 'textbook', 'worksheets', 'past_exams'];
+const CATEGORIES: ResourceCategory[] = ['all', 'notes', 'textbook', 'worksheets', 'past_exams', 'interactive_exams'];
 const UPLOAD_CATEGORIES = CATEGORIES.filter((category) => category !== 'all');
 const ACCEPTED_FILES = '.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.jpg,.jpeg,.png,.webp';
 const MAX_SIZE = 20 * 1024 * 1024;
@@ -54,10 +60,13 @@ const MIME_BY_EXTENSION: Record<string, string> = {
 
 export const LibraryPage: React.FC = () => {
   const [items, setItems] = useState<LibraryRow[] | null>(null);
-  const [summary, setSummary] = useState<{ total: number; verified: number; downloads: number } | null>(null);
+  const [summary, setSummary] = useState<{ total: number; verified: number; downloads: number; published?: number; hidden?: number; interactive?: number } | null>(null);
   const [subjects, setSubjects] = useState<SubjectOption[]>([]);
   const [offline, setOffline] = useState(false);
   const [category, setCategory] = useState<ResourceCategory>('all');
+  const [busyId, setBusyId] = useState('');
+  const [importing, setImporting] = useState(false);
+  const [importNote, setImportNote] = useState('');
   const [showUpload, setShowUpload] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -79,7 +88,7 @@ export const LibraryPage: React.FC = () => {
       if (!res.ok) throw new Error(String(res.status));
       const data = await res.json() as {
         resources: LibraryRow[];
-        summary: { total: number; verified: number; downloads: number };
+        summary: { total: number; verified: number; downloads: number; published?: number; hidden?: number; interactive?: number };
       };
       setItems(data.resources);
       setSummary(data.summary);
@@ -112,6 +121,71 @@ export const LibraryPage: React.FC = () => {
     () => (items ?? []).filter((r) => category === 'all' || r.category === category),
     [items, category],
   );
+
+  /** قرار الإدارة على عنصر واحد: يظهر في تطبيق الطالب أو يُسحب */
+  const togglePublish = async (row: LibraryRow) => {
+    if (busyId) return;
+    setBusyId(row.id);
+    try {
+      const res = await fetch(`${getApiBase()}/api/admin/library/${row.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-App': 'admin' },
+        credentials: 'include',
+        body: JSON.stringify({ isPublished: !row.isPublished }),
+      });
+      if (!res.ok) throw new Error(String(res.status));
+      await refreshLibrary();
+    } catch {
+      setImportNote('تعذّر تغيير حالة النشر — تحقّق من الاتصال بالخادم.');
+    } finally {
+      setBusyId('');
+    }
+  };
+
+  /** نشر أو سحب كل ما يظهر في التصنيف الحالي */
+  const publishVisible = async (isPublished: boolean) => {
+    const ids = filtered.filter((row) => row.isPublished !== isPublished).map((row) => row.id);
+    if (!ids.length) { setImportNote('كل العناصر المعروضة في الحالة المطلوبة أصلاً.'); return; }
+    setBusyId('bulk');
+    try {
+      const res = await fetch(`${getApiBase()}/api/admin/library`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-App': 'admin' },
+        credentials: 'include',
+        body: JSON.stringify({ ids, isPublished }),
+      });
+      if (!res.ok) throw new Error(String(res.status));
+      setImportNote(isPublished ? `نُشر ${ids.length} عنصراً للطلاب.` : `سُحب ${ids.length} عنصراً من تطبيق الطالب.`);
+      await refreshLibrary();
+    } catch {
+      setImportNote('تعذّر تحديث الدفعة — تحقّق من الاتصال بالخادم.');
+    } finally {
+      setBusyId('');
+    }
+  };
+
+  /** استيراد المكتبة النصية المرفقة مع الخادم — تُنشأ غير منشورة حتى تراجعها الإدارة */
+  const importBundledLibrary = async () => {
+    if (importing) return;
+    setImporting(true);
+    setImportNote('');
+    try {
+      const res = await fetch(`${getApiBase()}/api/admin/library/import`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-App': 'admin' },
+        credentials: 'include',
+        body: JSON.stringify({ source: 'bundled' }),
+      });
+      const data = await res.json().catch(() => null) as { created?: number; updated?: number; error?: string } | null;
+      if (!res.ok) throw new Error(data?.error || String(res.status));
+      setImportNote(`تم الاستيراد: ${data?.created ?? 0} جديد، ${data?.updated ?? 0} محدَّث. كلها غير منشورة حتى تعتمدها.`);
+      await refreshLibrary();
+    } catch {
+      setImportNote('تعذّر الاستيراد — تأكّد أن الخادم محدَّث وأن ملف المكتبة موجود.');
+    } finally {
+      setImporting(false);
+    }
+  };
 
   const resetUploadForm = () => {
     setFile(null); setTitle(''); setUploadCategory('textbook'); setSubjectId('');
@@ -160,20 +234,27 @@ export const LibraryPage: React.FC = () => {
         <div>
           <h1 className="text-xl font-black text-navy-800">المكتبة</h1>
           <p className="text-xs text-slate-500 mt-1">
-            تُرفع الكتب والملفات مباشرة إلى التخزين، ويُحفظ سجلها في المكتبة بعد تأكيد الخادم.
+            كل عنصر هنا تحت سيطرة الإدارة: ما تُنشره يظهر في تطبيق الطالب، وما تسحبه يختفي فوراً دون حذف المحتوى.
           </p>
         </div>
-        <button type="button" onClick={() => { setUploadError(''); setShowUpload(true); }} className="inline-flex items-center gap-2 rounded-xl bg-navy-800 px-4 py-2.5 text-xs font-bold text-white hover:bg-navy-700">
-          <Upload className="w-4 h-4" /> رفع كتاب أو ملف
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <button type="button" onClick={() => void importBundledLibrary()} disabled={importing} className="inline-flex items-center gap-2 rounded-xl border border-navy-800 px-4 py-2.5 text-xs font-bold text-navy-800 hover:bg-navy-50 disabled:opacity-50">
+            {importing ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />} استيراد المكتبة النصية
+          </button>
+          <button type="button" onClick={() => { setUploadError(''); setShowUpload(true); }} className="inline-flex items-center gap-2 rounded-xl bg-navy-800 px-4 py-2.5 text-xs font-bold text-white hover:bg-navy-700">
+            <Upload className="w-4 h-4" /> رفع كتاب أو ملف
+          </button>
+        </div>
       </header>
       <MediaManager ownerType="library" ownerId="shared-library" title="ملفات وروابط المكتبة عبر النظام المشترك" />
 
       {summary && (
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
           {[
             ['إجمالي العناصر', summary.total],
-            ['موثَّقة', summary.verified],
+            ['منشور للطلاب', summary.published ?? '—'],
+            ['غير منشور', summary.hidden ?? '—'],
+            ['اختبارات تفاعلية', summary.interactive ?? '—'],
             ['مرّات التحميل', summary.downloads],
           ].map(([label, value]) => (
             <div key={label as string} className="bg-white border border-slate-200 rounded-2xl p-3">
@@ -208,6 +289,16 @@ export const LibraryPage: React.FC = () => {
           ))}
         </div>
 
+        <div className="flex flex-wrap items-center gap-2 mb-4 rounded-xl bg-slate-50 border border-slate-200 p-3">
+          <span className="text-[11px] font-bold text-slate-600">قرار النشر على المعروض ({filtered.length}):</span>
+          <button type="button" onClick={() => void publishVisible(true)} disabled={busyId !== ''} className="rounded-lg bg-emerald-600 px-3 py-2 text-[11px] font-bold text-white hover:bg-emerald-700 disabled:opacity-50">انشر للطلاب</button>
+          <button type="button" onClick={() => void publishVisible(false)} disabled={busyId !== ''} className="rounded-lg bg-slate-600 px-3 py-2 text-[11px] font-bold text-white hover:bg-slate-700 disabled:opacity-50">اسحب من التطبيق</button>
+        </div>
+
+        {importNote && (
+          <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] font-bold text-amber-900">{importNote}</div>
+        )}
+
         {loading ? (
           <LoadingState label="جارٍ تحميل عناصر المكتبة…" />
         ) : filtered.length === 0 ? (
@@ -216,7 +307,7 @@ export const LibraryPage: React.FC = () => {
             description="لم تُضف أي عناصر بعد. استخدم زر رفع كتاب أو ملف لإضافة أول عنصر."
           />
         ) : (
-          <Table head={['العنوان', 'المادة', 'النوع', 'الصفحات', 'الحجم', 'التوفر', 'الحالة']}>
+          <Table head={['العنوان', 'المادة', 'النوع', 'المحتوى', 'الحجم', 'في تطبيق الطالب', 'الحالة']}>
             {filtered.map((r) => (
               <tr key={r.id} className="hover:bg-slate-50/70">
                 <td className="py-2.5 px-3">
@@ -230,9 +321,25 @@ export const LibraryPage: React.FC = () => {
                 </td>
                 <td className="py-2.5 px-3 text-slate-600">{r.subjectName}</td>
                 <td className="py-2.5 px-3"><Badge tone="navy">{r.fileType}</Badge></td>
-                <td className="py-2.5 px-3 nums text-slate-500">{r.pageCount}</td>
+                <td className="py-2.5 px-3 text-slate-500 whitespace-nowrap">
+                  {r.externalUrl ? 'اختبار تفاعلي' : r.hasBody ? `${Math.round((r.bodyChars ?? 0) / 1000)} ألف حرف` : `${r.pageCount} صفحة`}
+                </td>
                 <td className="py-2.5 px-3 text-slate-500 whitespace-nowrap">{r.fileSize}</td>
-                <td className="py-2.5 px-3 nums text-slate-500">{r.downloadCount} تحميل</td>
+                <td className="py-2.5 px-3">
+                  <button
+                    type="button"
+                    onClick={() => void togglePublish(r)}
+                    disabled={busyId !== ''}
+                    className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-bold border transition-colors disabled:opacity-50 ${
+                      r.isPublished
+                        ? 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100'
+                        : 'bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200'
+                    }`}
+                  >
+                    {busyId === r.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
+                    {r.isPublished ? 'ظاهر للطلاب' : 'مسحوب'}
+                  </button>
+                </td>
                 <td className="py-2.5 px-3">
                   {r.isVerifiedCurriculum ? <Badge tone="green">موثَّق</Badge> : <Badge tone="slate">{r.status === 'sample' ? 'تجريبي' : r.status}</Badge>}
                 </td>
