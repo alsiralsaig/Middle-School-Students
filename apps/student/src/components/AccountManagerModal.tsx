@@ -3,6 +3,7 @@ import { useAccount } from '../context/AccountContext';
 import { useLanguage } from '../context/LanguageContext';
 import { X, UserPlus, Check, User, School, MapPin, Sparkles, Award } from 'lucide-react';
 import { PlatformAuthCard } from './PlatformAuthCard';
+import { register as registerOnServer } from '../utils/sessionStore';
 
 const SUDANESE_STATES = [
   'الخرطوم',
@@ -44,37 +45,72 @@ export const AccountManagerModal: React.FC = () => {
 
   const [mode, setMode] = useState<'list' | 'create'>('list');
   const [newName, setNewName] = useState('');
-  const [newGrade, setNewGrade] = useState(GRADE_TRACKS[0]);
+  const [newGrade, setNewGrade] = useState('الصف الثالث متوسط');
   const [newState, setNewState] = useState(SUDANESE_STATES[0]);
   const [newSchool, setNewSchool] = useState('');
   const [selectedAvatar, setSelectedAvatar] = useState(AVATAR_OPTIONS[0]);
   const [formError, setFormError] = useState('');
+  // إنشاء الحساب لا يمرّ إلا برمز من الإدارة — نفس شرط بوابة الدخول
+  const [accessCode, setAccessCode] = useState('');
+  const [newPhone, setNewPhone] = useState('');
+  const [newPin, setNewPin] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   if (!isAccountModalOpen) return null;
 
-  const handleCreate = (e: React.FormEvent) => {
+  const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newName.trim()) {
-      setFormError('الرجاء إدخال اسم الطالب');
-      return;
-    }
-    if (!newSchool.trim()) {
-      setFormError('الرجاء إدخال اسم المدرسة');
-      return;
-    }
-
-    createAccount({
-      name: newName.trim(),
-      grade: newGrade,
-      state: newState,
-      school: newSchool.trim(),
-      avatar: selectedAvatar,
-    });
-
-    setNewName('');
-    setNewSchool('');
+    if (submitting) return;
     setFormError('');
-    setMode('list');
+    if (!newName.trim() || newName.trim().length < 3) {
+      setFormError('الرجاء إدخال اسم الطالب (٣ أحرف على الأقل)');
+      return;
+    }
+    if (!accessCode.trim()) {
+      setFormError('رمز الدخول من الإدارة مطلوب — الحساب لا يُنشأ بدونه');
+      return;
+    }
+    if (!/^[0-9]{9,15}$/.test(newPhone.replace(/[\s+]/g, ''))) {
+      setFormError('رقم الهاتف ٩ أرقام على الأقل');
+      return;
+    }
+    if (!/^[0-9]{4,6}$/.test(newPin)) {
+      setFormError('الرقم السري ٤ إلى ٦ أرقام فقط');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      // التسجيل على الخادم أولاً — لا ملف محلي بلا حساب مُفعَّل برمز
+      await registerOnServer({
+        name: newName.trim(),
+        phone: newPhone.trim(),
+        password: newPin,
+        accessCode: accessCode.trim().toUpperCase(),
+        grade: newGrade,
+        school: newSchool.trim() || undefined,
+      });
+      createAccount({
+        name: newName.trim(),
+        grade: newGrade,
+        state: newState,
+        school: newSchool.trim() || '—',
+        avatar: selectedAvatar,
+      });
+      setNewName('');
+      setNewSchool('');
+      setNewPhone('');
+      setNewPin('');
+      setAccessCode('');
+      setMode('list');
+    } catch (err) {
+      const e2 = err as { status?: number; message?: string };
+      if (e2.status === 0) setFormError('تعذّر الوصول للخادم — يلزم إنترنت لإنشاء الحساب');
+      else if (e2.status === 409) setFormError('يوجد حساب بنفس الرقم — سجّل الدخول بدلاً من ذلك');
+      else setFormError(e2.message || 'تعذّر إنشاء الحساب، تأكد من رمز الإدارة');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -199,6 +235,53 @@ export const AccountManagerModal: React.FC = () => {
                 </div>
               )}
 
+              {/* رمز الدخول من الإدارة */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                  رمز الدخول من الإدارة <span className="text-rose-400">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={accessCode}
+                  onChange={e => setAccessCode(e.target.value.toUpperCase())}
+                  placeholder="مثال: A1B2C3"
+                  maxLength={8}
+                  className="w-full bg-[#08172B] border border-[#1B3658] focus:border-emerald-500 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-slate-500 outline-hidden transition-colors tracking-[0.25em] font-mono"
+                />
+                <p className="text-[11px] text-slate-400 mt-1">يُستخدم مرة واحدة — بدونه لا يُنشأ الحساب.</p>
+              </div>
+
+              {/* الهاتف والرقم السري */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                    رقم الهاتف <span className="text-rose-400">*</span>
+                  </label>
+                  <input
+                    type="tel"
+                    inputMode="numeric"
+                    value={newPhone}
+                    onChange={e => setNewPhone(e.target.value.replace(/[^0-9]/g, ''))}
+                    placeholder="0912345678"
+                    className="w-full bg-[#08172B] border border-[#1B3658] focus:border-emerald-500 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-slate-500 outline-hidden transition-colors"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                    الرقم السري <span className="text-rose-400">*</span>
+                  </label>
+                  <input
+                    type="password"
+                    inputMode="numeric"
+                    maxLength={6}
+                    value={newPin}
+                    onChange={e => setNewPin(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))}
+                    placeholder="٤–٦ أرقام"
+                    className="w-full bg-[#08172B] border border-[#1B3658] focus:border-emerald-500 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-slate-500 outline-hidden transition-colors tracking-[0.3em]"
+                  />
+                </div>
+              </div>
+
               {/* Avatar Selector */}
               <div>
                 <label className="block text-xs font-semibold text-slate-300 mb-2">
@@ -298,10 +381,11 @@ export const AccountManagerModal: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-500 transition-colors shadow-lg shadow-emerald-900/40 flex items-center gap-1.5 cursor-pointer"
+                  disabled={submitting}
+                  className="px-5 py-2 rounded-xl text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-500 disabled:opacity-60 transition-colors shadow-lg shadow-emerald-900/40 flex items-center gap-1.5 cursor-pointer"
                 >
                   <UserPlus className="w-3.5 h-3.5" />
-                  <span>{t('createStudentProfile')}</span>
+                  <span>{submitting ? 'جارٍ التحقق…' : t('createStudentProfile')}</span>
                 </button>
               </div>
             </form>

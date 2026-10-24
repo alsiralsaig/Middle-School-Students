@@ -472,3 +472,86 @@ adminDataRouter.get('/activity', requireAdmin, async (_req, res) => {
     res.status(500).json({ error: 'تعذّر تحميل الأنشطة' });
   }
 });
+
+/* ============================ إشعارات الإدارة ============================ */
+
+/**
+ * GET /api/admin/notifications — ما يستحق انتباه المدير.
+ *
+ * لماذا: تسجيل طالب جديد أو طلب استعادة رقم سري كانا يمرّان بصمت؛ المدير
+ * لا يعرف إلا لو فتح الصفحة. هنا نُجمّع الأحداث من البيانات نفسها (بلا جدول
+ * جديد): طلاب جدد، وطلبات كلمة مرور معلّقة، ورموز دخول أوشكت على الانتهاء.
+ */
+adminDataRouter.get('/notifications', requireAdmin, async (_req, res) => {
+  try {
+    const since = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
+
+    const [newStudents, pendingRequests, codes] = await Promise.all([
+      prisma.user.findMany({
+        where: { role: 'student', createdAt: { gte: since } },
+        orderBy: { createdAt: 'desc' },
+        take: 20,
+        select: { id: true, name: true, phone: true, grade: true, createdAt: true },
+      }),
+      prisma.passwordResetRequest.findMany({
+        where: { status: 'pending' },
+        orderBy: { createdAt: 'desc' },
+        take: 20,
+        include: { user: { select: { name: true, phone: true } } },
+      }),
+      prisma.accessCode.findMany({
+        where: { status: 'active', expiresAt: { gte: new Date() } },
+        orderBy: { expiresAt: 'asc' },
+        take: 20,
+        select: { id: true, code: true, studentName: true, expiresAt: true },
+      }),
+    ]);
+
+    type Item = {
+      id: string;
+      kind: 'student' | 'password' | 'code';
+      title: string;
+      detail: string;
+      at: string;
+    };
+
+    const items: Item[] = [
+      ...newStudents.map((u) => ({
+        id: `student-${u.id}`,
+        kind: 'student' as const,
+        title: `طالب جديد: ${u.name}`,
+        detail: [u.phone, u.grade].filter(Boolean).join(' · ') || 'بلا بيانات إضافية',
+        at: u.createdAt.toISOString(),
+      })),
+      ...pendingRequests.map((r) => ({
+        id: `password-${r.id}`,
+        kind: 'password' as const,
+        title: `طلب استعادة رقم سري: ${r.user.name}`,
+        detail: r.user.phone || r.identifier,
+        at: r.createdAt.toISOString(),
+      })),
+      ...codes.map((c) => {
+        const expiry = c.expiresAt as Date;
+        return {
+          id: `code-${c.id}`,
+          kind: 'code' as const,
+          title: `رمز لم يُستخدم: ${c.code}`,
+          detail: `${c.studentName || 'لأي طالب'} · ينتهي ${expiry.toISOString().slice(0, 10)}`,
+          at: expiry.toISOString(),
+        };
+      }),
+    ].sort((a, b) => (a.at < b.at ? 1 : -1));
+
+    res.json({
+      items: items.slice(0, 40),
+      counts: {
+        students: newStudents.length,
+        passwordRequests: pendingRequests.length,
+        codes: codes.length,
+      },
+    });
+  } catch (e) {
+    console.error('admin notifications error:', e);
+    res.status(500).json({ error: 'تعذّر تحميل الإشعارات' });
+  }
+});

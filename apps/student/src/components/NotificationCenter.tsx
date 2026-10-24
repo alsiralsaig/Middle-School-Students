@@ -121,9 +121,9 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ onNaviga
       {/* Notification Dropdown Panel */}
       {isOpen && (
         <div
-          className={`absolute ${
-            isRtl ? 'left-0 sm:left-auto sm:right-0' : 'right-0 sm:right-auto sm:left-0'
-          } mt-2 w-80 sm:w-96 bg-[#0B1E36] border border-[#1E3A60] rounded-2xl shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-150`}
+          className={`fixed inset-x-2 top-[4.5rem] max-h-[75vh] overflow-y-auto sm:absolute sm:inset-x-auto sm:top-full sm:mt-2 sm:max-h-none sm:overflow-hidden sm:w-96 ${
+            isRtl ? 'sm:left-auto sm:right-0' : 'sm:right-auto sm:left-0'
+          } bg-[#0B1E36] border border-[#1E3A60] rounded-2xl shadow-2xl z-[70] animate-in fade-in zoom-in-95 duration-150`}
           dir={isRtl ? 'rtl' : 'ltr'}
         >
           {/* Header */}
@@ -174,7 +174,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ onNaviga
           </div>
 
           {/* Notifications List */}
-          <div className="max-h-80 overflow-y-auto divide-y divide-[#152B47]">
+          <div className="max-h-[45vh] sm:max-h-80 overflow-y-auto divide-y divide-[#152B47]">
             {filteredNotifications.length === 0 ? (
               <div className="p-8 text-center text-slate-400 text-xs">
                 <Bell className="w-8 h-8 text-slate-600 mx-auto mb-2 opacity-50" />

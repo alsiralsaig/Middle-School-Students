@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { LogOut } from 'lucide-react';
+import { NotificationsBell } from '../components/NotificationsBell';
 import { LoadingState } from '../components/ui';
 import AdminLogin from '../components/AdminLogin';
 import { useAdminSession } from '../lib/adminApi';
@@ -97,6 +98,9 @@ export const AdminLayout: React.FC = () => {
             <p className="text-white font-black text-sm leading-tight">منصة الطالب السوداني</p>
             <p className="text-white/60 text-[10px]">لوحة الإدارة</p>
           </div>
+          <div className="mr-auto">
+            <NotificationsBell />
+          </div>
         </div>
       </div>
 
@@ -174,13 +178,16 @@ export const AdminLayout: React.FC = () => {
           <img src="/brand/logo.png" alt="" className="w-8 h-8 rounded-lg bg-white object-contain" />
           <span className="font-black text-sm">لوحة الإدارة</span>
         </div>
-        <button
-          onClick={() => setOpen(true)}
-          aria-label="فتح القائمة"
-          className="p-2 rounded-lg bg-white/10"
-        >
-          <Menu className="w-5 h-5" />
-        </button>
+        <div className="flex items-center gap-2">
+          <NotificationsBell />
+          <button
+            onClick={() => setOpen(true)}
+            aria-label="فتح القائمة"
+            className="p-2 rounded-lg bg-white/10"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
+        </div>
       </div>
 
       {/* درج الجوال */}
