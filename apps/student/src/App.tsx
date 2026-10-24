@@ -60,6 +60,7 @@ const ViewLoader = () => (
   </div>
 );
 import { AuthGate } from './components/AuthGate';
+import { WelcomeBanner } from './components/WelcomeBanner';
 import { AIAssistantFab } from './components/AIAssistantFab';
 import { useSession } from './hooks/useSession';
 import { ServerSetupDialog } from './components/ServerSetupDialog';
@@ -203,7 +204,14 @@ function AppContent() {
 
   /* بوابة الدخول: التطبيق لا يُفتح إلا بحساب مُفعَّل برمز من الإدارة */
   const { user: gateUser } = useSession();
-  if (!gateUser) return <AuthGate />;
+  if (!gateUser) {
+    return (
+      <>
+        <WelcomeBanner />
+        <AuthGate />
+      </>
+    );
+  }
 
   /**
    * أول زيارة (لا نسخة محفوظة) — المنهج يصل من الخادم بعد لحظة.
@@ -211,6 +219,8 @@ function AppContent() {
    */
   if (SUBJECTS_DATA.length === 0) {
     return (
+      <>
+      <WelcomeBanner />
       <div
         dir={isRtl ? 'rtl' : 'ltr'}
         className="min-h-screen bg-[#071322] text-white flex flex-col items-center justify-center gap-3 px-6"
@@ -219,6 +229,7 @@ function AppContent() {
         <p className="text-sm font-bold text-amber-300">جارٍ تحميل المنهج…</p>
         <p className="text-[11px] text-slate-400">أول مرة فقط — بعدها يعمل التطبيق دون اتصال</p>
       </div>
+      </>
     );
   }
 
@@ -231,6 +242,7 @@ function AppContent() {
       }`}
       dir={isRtl ? 'rtl' : 'ltr'}
     >
+      <WelcomeBanner />
       {/* Platform Header */}
       <Header
         currentView={currentView}
