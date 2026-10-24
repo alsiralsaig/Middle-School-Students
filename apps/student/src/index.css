@@ -15,6 +15,10 @@
 
   body {
     font-family: var(--font-arabic);
+    /* خط Cairo الافتراضي ٤٠٠ يطلع ناعم وضعيف على شاشات الجوال — ٥٠٠ أوضح للقراءة */
+    font-weight: 500;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
   }
 }
 

@@ -6,6 +6,8 @@ import { StudyReminderWidget } from '../components/StudyReminderWidget';
 import { WeeklyExamPlanner } from '../components/WeeklyExamPlanner';
 import { StudyInsights } from '../components/StudyInsights';
 import { useAccount } from '../context/AccountContext';
+import { StudentAvatar } from '../components/StudentAvatar';
+import { Camera } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { 
   User, 
@@ -138,9 +140,22 @@ export const StudentDashboardView: React.FC<StudentDashboardViewProps> = ({
       <div className="bg-[#0B1E36] text-white rounded-3xl p-6 sm:p-8 border border-[#193557] shadow-lg">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="flex items-center gap-4 text-right">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#122846] to-[#0A1A2E] border-2 border-amber-400/60 text-slate-950 flex items-center justify-center text-3xl shrink-0 shadow-lg">
-              {student.avatar}
-            </div>
+            <button
+              type="button"
+              onClick={() => setIsAccountModalOpen(true)}
+              title="اضغط لتضيف أو تغيّر صورتك"
+              className="relative w-16 h-16 shrink-0 rounded-2xl overflow-hidden border-2 border-amber-400/60 shadow-lg cursor-pointer"
+            >
+              <StudentAvatar
+                avatar={student.avatar}
+                name={student.name}
+                className="w-full h-full rounded-none border-0"
+                textClassName="text-xl"
+              />
+              <span className="absolute inset-x-0 bottom-0 h-6 bg-black/60 flex items-center justify-center gap-1 text-[9px] font-bold text-white">
+                <Camera className="w-3 h-3" /> صورة
+              </span>
+            </button>
             <div className="space-y-1">
               <div className="flex items-center gap-2">
                 <h1 className="text-xl sm:text-2xl font-extrabold text-white">
@@ -168,6 +183,15 @@ export const StudentDashboardView: React.FC<StudentDashboardViewProps> = ({
             >
               <User className="w-4 h-4 text-emerald-400" />
               <span className="font-semibold">حسابي</span>
+            </button>
+
+            <button
+              onClick={() => setIsAccountModalOpen(true)}
+              className="bg-amber-400 hover:bg-amber-300 text-[#071322] px-3.5 py-2.5 rounded-2xl flex items-center gap-2 text-xs font-black transition-all cursor-pointer shadow-sm"
+              title="أضف صورتك الشخصية من معرض جوالك"
+            >
+              <Camera className="w-4 h-4" />
+              <span>{student.avatar && student.avatar.length > 10 ? 'غيّر صورتك' : 'أضف صورتك'}</span>
             </button>
 
             <div className="bg-[#122846] border border-[#21416E] p-2.5 rounded-2xl flex items-center gap-2.5 text-xs">

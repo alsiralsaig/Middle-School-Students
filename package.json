@@ -25,5 +25,8 @@
   },
   "overrides": {
     "deepmerge-ts": "8.0.2"
+  },
+  "devDependencies": {
+    "playwright": "^1.47.0"
   }
 }

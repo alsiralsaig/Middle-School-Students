@@ -440,7 +440,7 @@ export const AIAssistantView: React.FC = () => {
             <button
               key={p.id}
               onClick={() => handleSend(p.prompt)}
-              className="text-xs py-2 px-3 rounded-xl bg-slate-50 dark:bg-[#122844] hover:bg-amber-50 dark:hover:bg-[#18365D] hover:border-amber-200 dark:hover:border-amber-400/40 border border-slate-200 dark:border-[#1E3A60] text-slate-700 dark:text-slate-200 hover:text-amber-900 dark:hover:text-amber-200 text-right transition-colors cursor-pointer"
+              className="text-[12.5px] font-semibold py-2 px-3 rounded-xl bg-slate-50 dark:bg-[#122844] hover:bg-amber-50 dark:hover:bg-[#18365D] hover:border-amber-200 dark:hover:border-amber-400/40 border border-slate-300 dark:border-[#2A4A72] text-slate-900 dark:text-slate-100 hover:text-amber-900 dark:hover:text-amber-200 text-right transition-colors cursor-pointer"
             >
               {p.prompt}
             </button>
@@ -472,10 +472,10 @@ export const AIAssistantView: React.FC = () => {
 
                 {/* Message Bubble */}
                 <div
-                  className={`max-w-[85%] sm:max-w-[75%] p-4 rounded-2xl text-xs sm:text-sm leading-relaxed whitespace-pre-wrap ${
+                  className={`max-w-[87%] sm:max-w-[75%] p-4 rounded-2xl text-[13px] sm:text-[15px] font-semibold leading-[1.9] whitespace-pre-wrap ${
                     isUser
                       ? 'bg-blue-900 dark:bg-[#16365F] text-white rounded-tr-none'
-                      : 'bg-slate-50 dark:bg-[#122844] border border-slate-200 dark:border-[#1E3A60] text-slate-800 dark:text-slate-100 rounded-tl-none'
+                      : 'bg-slate-50 dark:bg-[#122844] border border-slate-300 dark:border-[#2A4A72] text-slate-900 dark:text-slate-50 rounded-tl-none'
                   }`}
                 >
                   {msg.text.replace(/\*\*/g, '').replace(/^[ \t]*[-*]\s+/gm, '• ')}

@@ -3,6 +3,7 @@ import { ViewMode } from '../types';
 import { useLanguage } from '../context/LanguageContext';
 import { useAccount } from '../context/AccountContext';
 import { StudentAvatar } from './StudentAvatar';
+import { Camera } from 'lucide-react';
 import { NotificationCenter } from './NotificationCenter';
 import { 
   BookOpen, 
@@ -170,7 +171,12 @@ export const Header: React.FC<HeaderProps> = ({
             className="flex items-center gap-2 px-3 py-2 text-xs font-semibold rounded-xl transition-all cursor-pointer border border-[#27446C] bg-[#162D4A] hover:bg-[#1E3A60] text-white shadow-sm"
             title="حسابي — بياناتي وصورتي"
           >
-            <StudentAvatar avatar={activeAccount.avatar} name={activeAccount.name} className="w-7 h-7" textClassName="text-[12px]" />
+            <span className="relative">
+              <StudentAvatar avatar={activeAccount.avatar} name={activeAccount.name} className="w-7 h-7" textClassName="text-[12px]" />
+              <span className="absolute -bottom-1 -left-1 w-4 h-4 rounded-full bg-[#F1AC12] border-2 border-[#162D4A] flex items-center justify-center">
+                <Camera className="w-2 h-2 text-[#071322]" />
+              </span>
+            </span>
             <span className="hidden sm:inline font-bold truncate max-w-[90px]">
               {activeAccount.name.split(' ')[0]}
             </span>
