@@ -1,5 +1,5 @@
 import React from 'react';
-import { AtSign, CheckCircle2, KeyRound, Loader2, RefreshCw, ShieldAlert } from 'lucide-react';
+import { AtSign, CheckCircle2, Copy, KeyRound, Loader2, RefreshCw, ShieldAlert } from 'lucide-react';
 import { BarChart3, Database, RotateCcw, Server, Settings as SettingsIcon, Users } from 'lucide-react';
 import {
   getApiBase,
@@ -10,6 +10,8 @@ import {
 } from '../lib/serverUrl';
 import { EmptyState, NotConnectedNote, Table } from '../components/ui';
 import { PasswordInput } from '../components/PasswordInput';
+
+const adminHeaders = { 'Content-Type': 'application/json', Accept: 'application/json', 'X-App': 'admin' } as const;
 
 /* ============================ الطلاب ============================ */
 
@@ -42,6 +44,37 @@ export const StudentsPage: React.FC = () => {
   const [rows, setRows] = React.useState<StudentRow[] | null>(null);
   const [summary, setSummary] = React.useState<StudentsSummary | null>(null);
   const [offline, setOffline] = React.useState(false);
+  // تصفير الرقم السري لطالب
+  const [resetTarget, setResetTarget] = React.useState<StudentRow | null>(null);
+  const [pinDraft, setPinDraft] = React.useState('');
+  const [pinBusy, setPinBusy] = React.useState(false);
+  const [pinResult, setPinResult] = React.useState<{ pin: string; name: string; phone: string | null } | null>(null);
+  const [pinError, setPinError] = React.useState('');
+  const [copied, setCopied] = React.useState(false);
+
+  const openReset = (student: StudentRow) => {
+    setResetTarget(student); setPinDraft(''); setPinResult(null); setPinError(''); setCopied(false);
+  };
+
+  const submitReset = async () => {
+    if (!resetTarget || pinBusy) return;
+    setPinBusy(true); setPinError('');
+    try {
+      const res = await fetch(`${getApiBase()}/api/admin/students/${resetTarget.id}/pin`, {
+        method: 'POST', headers: adminHeaders, credentials: 'include',
+        body: JSON.stringify({ pin: pinDraft.trim() }),
+      });
+      const data = (await res.json().catch(() => null)) as
+        | { error?: string; pin?: string; user?: { name: string; phone: string | null } }
+        | null;
+      if (!res.ok || !data?.pin) throw new Error(data?.error || String(res.status));
+      setPinResult({ pin: data.pin, name: data.user?.name || resetTarget.name, phone: data.user?.phone ?? resetTarget.phone });
+    } catch (e) {
+      setPinError(e instanceof Error ? e.message : 'تعذّر تصفير الرقم السري');
+    } finally {
+      setPinBusy(false);
+    }
+  };
 
   React.useEffect(() => {
     let alive = true;
@@ -132,18 +165,21 @@ export const StudentsPage: React.FC = () => {
             head={[
               '#',
               'الاسم',
+              'الهاتف',
               'الصف',
               'الدروس',
               'وقت الدراسة',
               'آخر نشاط',
               'الإكمال',
               'الحالة',
+              'إجراء',
             ]}
           >
             {rows.map((s) => (
               <tr key={s.id} className="hover:bg-slate-50/70">
                 <td className="py-2.5 px-3 nums text-slate-500">{s.code}</td>
                 <td className="py-2.5 px-3 font-bold text-navy-800">{s.name}</td>
+                <td className="py-2.5 px-3 nums text-slate-600" dir="ltr">{s.phone || '—'}</td>
                 <td className="py-2.5 px-3 text-slate-600">{s.grade}</td>
                 <td className="py-2.5 px-3 nums text-slate-500">
                   {s.completedLessons}/{s.totalLessons}
@@ -176,6 +212,15 @@ export const StudentsPage: React.FC = () => {
                     {s.status === 'active' ? 'نشط' : 'خامل'}
                   </span>
                 </td>
+                <td className="py-2.5 px-3">
+                  <button
+                    type="button"
+                    onClick={() => openReset(s)}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-2.5 py-1.5 text-[11px] font-bold text-navy-800 hover:border-navy-800 hover:bg-slate-50 whitespace-nowrap"
+                  >
+                    <KeyRound className="w-3.5 h-3.5" /> تصفير الرقم السري
+                  </button>
+                </td>
               </tr>
             ))}
           </Table>
@@ -188,6 +233,93 @@ export const StudentsPage: React.FC = () => {
           <span>
             كل رقم في هذا الجدول محسوب من قاعدة البيانات — لا قيم تجريبية.
           </span>
+        </div>
+      )}
+
+      {resetTarget && (
+        <div className="fixed inset-0 z-50 bg-black/40 grid place-items-center px-4" onClick={() => { if (!pinBusy) setResetTarget(null); }}>
+          <div className="w-full max-w-sm bg-white rounded-2xl p-5 space-y-3 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-2">
+              <KeyRound className="w-4 h-4 text-navy-800" />
+              <h2 className="text-sm font-black text-navy-800">تصفير الرقم السري</h2>
+            </div>
+            <p className="text-[11px] text-slate-600 leading-relaxed">
+              الطالب: <strong>{resetTarget.name}</strong>
+              {resetTarget.phone ? <> — <span dir="ltr" className="nums">{resetTarget.phone}</span></> : null}
+            </p>
+
+            {!pinResult ? (
+              <>
+                <label className="block space-y-1 text-[11px] font-bold text-slate-700">
+                  الرقم الجديد (٤–٦ أرقام) — أو اتركه فاضي وأنا أولّد ٦ أرقام
+                  <input
+                    value={pinDraft}
+                    onChange={(e) => setPinDraft(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))}
+                    inputMode="numeric"
+                    maxLength={6}
+                    placeholder="مثال: 4321"
+                    className="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm font-normal tracking-[0.3em] focus:border-navy-800 focus:outline-none"
+                  />
+                </label>
+                {pinError && (
+                  <p className="text-[11px] rounded-xl px-3 py-2 border bg-rose-50 border-rose-200 text-rose-700">{pinError}</p>
+                )}
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={submitReset}
+                    disabled={pinBusy}
+                    className="inline-flex items-center gap-2 rounded-xl bg-navy-800 px-4 py-2.5 text-xs font-bold text-white hover:bg-navy-700 disabled:opacity-50"
+                  >
+                    {pinBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <KeyRound className="w-4 h-4" />} حفظ الرقم
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setResetTarget(null)}
+                    disabled={pinBusy}
+                    className="rounded-xl border border-slate-300 px-3 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+                  >
+                    إلغاء
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="rounded-xl bg-emerald-50 border border-emerald-200 px-3 py-2.5 space-y-1">
+                  <p className="text-[11px] font-bold text-emerald-900">
+                    الرقم السري الجديد لـ {pinResult.name} (يُعرض مرة واحدة):
+                  </p>
+                  <p className="text-2xl font-black text-emerald-900 tracking-[0.35em] nums" dir="ltr">{pinResult.pin}</p>
+                  <p className="text-[10px] text-emerald-800">بلّغه للطالب الآن — ما نقدر نعرضه مرة ثانية.</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        await navigator.clipboard.writeText(pinResult.pin);
+                        setCopied(true);
+                        setTimeout(() => setCopied(false), 1800);
+                      } catch {
+                        setCopied(false);
+                      }
+                    }}
+                    className="inline-flex items-center gap-2 rounded-xl border border-slate-300 px-3 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50"
+                  >
+                    {copied ? <CheckCircle2 className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
+                    {copied ? 'انتسخ' : 'انسخ الرقم'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setResetTarget(null)}
+                    className="rounded-xl bg-navy-800 px-4 py-2.5 text-xs font-bold text-white hover:bg-navy-700"
+                  >
+                    تم
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       )}
     </div>
@@ -457,8 +589,6 @@ export const ServerUrlCard: React.FC = () => {
 };
 
 /* ============================ أمن الحساب ============================ */
-
-const adminHeaders = { 'Content-Type': 'application/json', Accept: 'application/json', 'X-App': 'admin' } as const;
 
 /** بيانات الدخول: البريد والهاتف — كلاهما يصلح للدخول */
 export const LoginContactCard: React.FC = () => {

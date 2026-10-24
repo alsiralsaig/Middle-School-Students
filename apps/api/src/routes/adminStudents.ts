@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { prisma } from '../lib/prisma.js';
-import { requireAdmin } from '../lib/auth.js';
+import { hashPassword, isPin, requireAdmin } from '../lib/auth.js';
 
 /**
  * إدارة الطلاب — الإدارة فقط.
@@ -124,5 +124,54 @@ adminStudentsRouter.get('/students', requireAdmin, async (_req, res) => {
   } catch (e) {
     console.error('admin students error:', e);
     res.status(500).json({ error: 'تعذّر تحميل الطلاب' });
+  }
+});
+
+/* ============================ تصفير الرقم السري ============================ */
+
+/** رقم سري عشوائي من ٦ أرقام — يكتبه الطالب بسهولة */
+function randomPin(): string {
+  let out = '';
+  for (let i = 0; i < 6; i++) out += String(Math.floor(Math.random() * 10));
+  return out;
+}
+
+/**
+ * POST /api/admin/students/:id/pin — المدير يصفّر رقم الطالب فوراً.
+ *
+ * لماذا: الطالب صغير وبينسى رقمو، وكان لازم هو يضغط «نسيت الرقم السري»
+ * وننتظر الطلب. الآن المدير يكتب رقماً جديداً (أو يخلي الخانة فاضية
+ * فيُولَّد ٦ أرقام) ويبلّغه للطالب في اللحظة.
+ * الرقم يُعاد مرة واحدة في الرد ولا يُخزَّن نصّاً.
+ */
+adminStudentsRouter.post('/students/:id/pin', requireAdmin, async (req, res) => {
+  try {
+    const raw = typeof req.body?.pin === 'string' ? req.body.pin.trim() : '';
+    const pin = raw || randomPin();
+    if (!isPin(pin)) {
+      res.status(400).json({ error: 'الرقم السري ٤ إلى ٦ أرقام فقط' });
+      return;
+    }
+    const student = await prisma.user.findFirst({
+      where: { id: req.params.id, role: 'student' },
+      select: { id: true, name: true, phone: true },
+    });
+    if (!student) {
+      res.status(404).json({ error: 'الطالب غير موجود' });
+      return;
+    }
+    await prisma.user.update({
+      where: { id: student.id },
+      data: { passwordHash: await hashPassword(pin) },
+    });
+    // أي طلب «نسيت الرقم السري» معلّق لهذا الطالب يُغلق تلقائياً
+    await prisma.passwordResetRequest.updateMany({
+      where: { userId: student.id, status: 'pending' },
+      data: { status: 'issued', resolvedAt: new Date(), tempPasswordHint: 'صفّرها المدير من صفحة الطلاب' },
+    });
+    res.json({ ok: true, pin, user: student });
+  } catch (e) {
+    console.error('reset student pin error:', e);
+    res.status(500).json({ error: 'تعذّر تصفير الرقم السري' });
   }
 });
