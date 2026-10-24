@@ -253,7 +253,8 @@ export const StudyRoomsView: React.FC<{ onBackToDashboard?: () => void }> = ({ o
             <GraduationCap className="w-4 h-4 text-[#F1AC12] shrink-0 mt-0.5" />
             <p className="text-[11px] text-amber-100 leading-relaxed">
               في كل غرفة <strong>الأستاذ</strong> موجود: اكتب سؤالك واضغط «اسأل المدرس» — يرد عليك
-              بالعامية السودانية من المنهج نفسه.
+              بالعامية السودانية من المنهج نفسه. ده <strong>مساعدة إضافية</strong>، وأستاذك في
+              المدرسة هو المرجع في التصحيح والدرجات.
             </p>
           </div>
           <div className="mt-4 flex items-center gap-3 text-[11px]">
@@ -424,7 +425,7 @@ export const StudyRoomsView: React.FC<{ onBackToDashboard?: () => void }> = ({ o
           {toTeacher && (
             <div className="mb-1.5 px-1 flex items-center justify-between gap-2">
               <span className="text-[10.5px] text-[#F1AC12] font-bold inline-flex items-center gap-1">
-                <GraduationCap className="w-3.5 h-3.5" /> سؤالك رايح للأستاذ
+                <GraduationCap className="w-3.5 h-3.5" /> سؤالك رايح للأستاذ — مساعدة، مش بديل عن معلمك
               </span>
               <button
                 type="button"
