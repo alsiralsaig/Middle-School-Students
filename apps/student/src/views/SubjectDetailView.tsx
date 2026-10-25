@@ -154,6 +154,8 @@ export const SubjectDetailView: React.FC<SubjectDetailViewProps> = ({
   const libraryExams = useMemo(
     () =>
       libraryItems
+        // لازم يكون في رابط فعلي — المذكرات النصية (body) تُعرض في قسم المذكرات
+        .filter((r) => !!r.url)
         .filter((r) => /exam|past_exams|interactive_exams|اختبار|امتحان/i.test(r.category + ' ' + r.title))
         .map<ViewerFile>((r) => ({
           title: r.title,
@@ -310,9 +312,11 @@ export const SubjectDetailView: React.FC<SubjectDetailViewProps> = ({
         </div>
       );
     }
+    const usable = files.filter((f) => !!f.url);
+    if (usable.length === 0) return hideWhenEmpty ? null : null;
     return (
       <div className="space-y-2.5">
-        {files.map((f, i) => {
+        {usable.map((f, i) => {
           const absolute = resolveFileUrl(f.url);
           const mime = guessMime(absolute, f.mimeType);
           return (
