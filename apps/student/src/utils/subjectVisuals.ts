@@ -25,10 +25,18 @@ const BY_ID: Record<string, SubjectVisual> = {
   ict: { emoji: '💻', accent: '#06b6d4', accentSoft: 'rgba(6,182,212,0.16)' },
   technical: { emoji: '🛠️', accent: '#eab308', accentSoft: 'rgba(234,179,8,0.16)' },
   civics: { emoji: '🏛️', accent: '#f43f5e', accentSoft: 'rgba(244,63,94,0.16)' },
+  /* فُصلت التاريخ والجغرافيا عن «الدراسات الاجتماعية»، والأدب الإنجليزي عن اللغة الإنجليزية */
+  history: { emoji: '🏺', accent: '#b45309', accentSoft: 'rgba(180,83,9,0.16)' },
+  geography: { emoji: '🗺️', accent: '#0ea5e9', accentSoft: 'rgba(14,165,233,0.16)' },
+  'english-literature': { emoji: '🎭', accent: '#a855f7', accentSoft: 'rgba(168,85,247,0.16)' },
 };
 
 /** احتياط بالاسم — لو جاءت مادة بمعرّف غير معروف */
 const BY_NAME: Array<[string, SubjectVisual]> = [
+  /* «أدب» قبل «إنجليزية» حتى لا يلتقط الأدب الإنجليزي هوية اللغة الإنجليزية */
+  ['أدب', BY_ID['english-literature']],
+  ['تاريخ', BY_ID.history],
+  ['جغرافيا', BY_ID.geography],
   ['عربية', BY_ID.arabic],
   ['إسلامية', BY_ID.islamic],
   ['رياضيات', BY_ID.math],
