@@ -124,7 +124,12 @@ export const SubjectDetailView: React.FC<SubjectDetailViewProps> = ({
           .map((r) => ({
             id: String(r.id),
             title: String(r.title || 'ملف'),
-            url: typeof r.filePath === 'string' && /^https?:/i.test(r.filePath) ? r.filePath : '',
+            url:
+              typeof r.filePath === 'string' && /^https?:/i.test(r.filePath)
+                ? r.filePath
+                : typeof r.externalUrl === 'string' && /^https?:/i.test(r.externalUrl)
+                ? r.externalUrl
+                : '',
             category: String(r.category || ''),
             fileType: String(r.fileType || ''),
             hasBody: r.hasBody === true,
@@ -173,6 +178,15 @@ export const SubjectDetailView: React.FC<SubjectDetailViewProps> = ({
       ...libraryExams,
     ],
     [mediaFiles, libraryExams],
+  );
+
+  /** امتحانات محفوظة كنص (بلا ملف) — تُقرأ داخل التطبيق */
+  const examNoteItems = useMemo(
+    () =>
+      libraryItems.filter(
+        (r) => r.hasBody && !r.url && /exam|past_exams|اختبار|امتحان|مراجعة/i.test(r.category + ' ' + r.title),
+      ),
+    [libraryItems],
   );
 
   const bookFiles = useMemo(() => {
@@ -446,7 +460,29 @@ export const SubjectDetailView: React.FC<SubjectDetailViewProps> = ({
       {tab === 'exams' && (
         <section className="space-y-2.5">
           <h2 className="px-1 text-[13px] font-black text-slate-900 dark:text-white">نماذج امتحانات {subject.name}</h2>
-          {renderFiles(examFiles, 'ما في نماذج امتحانات مرفوعة للمادة دي حالياً.')}
+          {renderFiles(examFiles, 'ما في نماذج امتحانات مرفوعة للمادة دي حالياً.', examNoteItems.length > 0)}
+
+          {examNoteItems.length > 0 && (
+            <div className="space-y-2.5">
+              {examNoteItems.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => void openNote(item)}
+                  disabled={noteLoadingId === item.id}
+                  className="flex w-full items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-3.5 text-right active:scale-[0.99] disabled:opacity-60 dark:border-[#1C3A62] dark:bg-[#0D1F35]"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-[13px] font-bold text-slate-900 dark:text-white">{item.title}</p>
+                    <p className="mt-0.5 text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                      {noteLoadingId === item.id ? 'بنجهّز النموذج…' : 'نموذج امتحان تُقرأ أسئلته داخل التطبيق'}
+                    </p>
+                  </div>
+                  <FileText className="h-5 w-5 shrink-0 text-blue-700 dark:text-amber-400" />
+                </button>
+              ))}
+            </div>
+          )}
 
           {onOpenExams && (
             <button
