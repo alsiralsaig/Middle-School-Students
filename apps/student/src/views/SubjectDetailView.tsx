@@ -155,11 +155,21 @@ export const SubjectDetailView: React.FC<SubjectDetailViewProps> = ({
 
   const offlineUrls = useMemo(() => new Set(offline.map((f) => f.url)), [offline]);
 
-  /** ملفات المادة المرفوعة من الإدارة */
-  const mediaFiles = useMemo(
-    () => (subject.mediaAssets || []).filter((a) => !!a.url),
-    [subject.mediaAssets],
-  );
+  /**
+   * ملفات المادة المرفوعة من الإدارة **+ مرفقات الوحدات**.
+   *
+   * ليه: روابط «الاختبار التفاعلي» ومرفقات الكتب كانت تُحفظ أحياناً على الوحدة
+   * (ownerType = unit) فتبقى مخزّنة في قاعدة البيانات ولا يراها الطالب إطلاقاً،
+   * فيظن المعلم أن الحفظ ضاع. الآن تظهر داخل تبويبي «الكتب» و«الامتحانات».
+   */
+  const mediaFiles = useMemo(() => {
+    const own = (subject.mediaAssets || []).filter((a) => !!a.url);
+    const seen = new Set(own.map((a) => a.id));
+    const fromUnits = (subject.units || []).flatMap((u) =>
+      (u.mediaAssets || []).filter((a) => !!a.url && !seen.has(a.id)),
+    );
+    return [...own, ...fromUnits];
+  }, [subject.mediaAssets, subject.units]);
 
   const libraryExams = useMemo(
     () =>

@@ -1,6 +1,6 @@
 import React from 'react';
 import { FileText, Link2, Loader2, Tag, Trash2, Upload } from 'lucide-react';
-import { addMediaLink, deleteMediaAsset, listMediaAssets, MediaAsset, MediaCategory, MediaOwnerType, updateMediaCategory, uploadMediaAsset } from '../lib/mediaUpload';
+import { addMediaLink, deleteMediaAsset, formatFileSize, listMediaAssets, MediaAsset, MediaCategory, MediaOwnerType, updateMediaCategory, uploadMediaAsset, validateFile } from '../lib/mediaUpload';
 
 const ACCEPT = '.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.jpg,.jpeg,.png,.webp,.gif,.mp3,.m4a,.aac,.wav,.ogg,.opus,.flac,.mp4,.webm,.mov';
 
@@ -33,6 +33,10 @@ export const MediaManager: React.FC<{
   const [loading, setLoading] = React.useState(true);
   const [progress, setProgress] = React.useState(0);
   const [error, setError] = React.useState('');
+  /** رسالة نجاح صريحة بعد الرفع — «تم» وحدها ما كانت كافية، المستخدم يحتاج يعرف أي ملف وحجمه */
+  const [notice, setNotice] = React.useState('');
+  /** ما اختاره المستخدم قبل الرفع: الاسم والحجم الحقيقي — يبان حتى لو رُفض */
+  const [picked, setPicked] = React.useState('');
   const [linkMode, setLinkMode] = React.useState(false);
   const [linkTitle, setLinkTitle] = React.useState('');
   const [linkUrl, setLinkUrl] = React.useState('');
@@ -55,7 +59,17 @@ export const MediaManager: React.FC<{
     const file = e.currentTarget.files?.[0];
     e.currentTarget.value = '';
     if (!file || busy) return;
-    setBusy(true); setProgress(0); setError('');
+    setBusy(true); setProgress(0); setError(''); setNotice(''); setPicked('');
+    const facts = `${file.name} · ${formatFileSize(file.size)} · ${file.type || 'نوع غير معلوم من الجهاز'}`;
+    setPicked(facts);
+    /* فحص مبكر: لو الملف فارغ أو صيغته غير مدعومة نوقف قبل أي اتصال بالخادم
+       ونقول السبب بحجمه الفعلي بدل رسالة «تجاوز ٢٠ ميغابايت» المضلّلة. */
+    const pre = validateFile(file);
+    if (!pre.ok) {
+      setError(pre.reason);
+      setBusy(false);
+      return;
+    }
     try {
       const old = new Set(assets.map((x) => x.id));
       await uploadMediaAsset({ ownerType, ownerId, file, metadata: { ...(metadata || {}), category }, onProgress: setProgress });
@@ -66,10 +80,14 @@ export const MediaManager: React.FC<{
         setAssets(rows);
         if (rows.some((a) => !old.has(a.id) && a.originalName === file.name)) { found = true; break; }
       }
-      if (!found) setError('اكتمل الرفع لكن التسجيل لم يظهر بعد؛ لا تعاود الرفع قبل التحقق.');
-      else onChanged?.();
+      if (!found) {
+        setError(`اكتمل الرفع لكن التسجيل لم يظهر بعد (${facts}). لا تعاود الرفع قبل التحقق.`);
+      } else {
+        setNotice(`تم حفظ «${file.name}» (${formatFileSize(file.size)}) — ظاهر الآن في القائمة أدناه وفي تطبيق الطالب.`);
+        onChanged?.();
+      }
     } catch (e2) {
-      setError(e2 instanceof Error ? e2.message : 'تعذّر رفع الملف');
+      setError(`${e2 instanceof Error ? e2.message : 'تعذّر رفع الملف'} (الملف: ${facts})`);
     } finally {
       setBusy(false); setProgress(0);
     }
@@ -79,8 +97,10 @@ export const MediaManager: React.FC<{
     e.preventDefault();
     setBusy(true); setError('');
     try {
-      await addMediaLink(ownerType, ownerId, linkTitle, linkUrl, category);
-      setLinkMode(false); setLinkTitle(''); setLinkUrl('');
+      const saved = await addMediaLink(ownerType, ownerId, linkTitle, linkUrl, category);
+      setLinkMode(false); setPicked('');
+      setNotice(`تم حفظ الرابط «${saved.title}» — ظاهر الآن في قائمة الوسائط أدناه${ownerType === 'lesson' ? ' وفي تبويب المرفقات داخل الدرس' : ownerType === 'subject' ? ' وفي تبويب الكتب للمادة' : ownerType === 'library' ? ' وفي المكتبة' : ''}.`);
+      setLinkTitle(''); setLinkUrl('');
       await refresh(); onChanged?.();
     } catch (e2) {
       setError(e2 instanceof Error ? e2.message : 'تعذّر حفظ الرابط');
@@ -110,6 +130,22 @@ export const MediaManager: React.FC<{
       setAssets((rows) => rows.map((r) => (r.id === a.id ? { ...r, category: prev } : r)));
       setError(e instanceof Error ? e.message : 'تعذّر تغيير التصنيف');
     }
+  };
+
+  /* «آخر ما أُضيف»: الترتيب الافتراضي تصاعدي (ما يغيّر ترتيب الأقدم)،
+     فنعرض شريطاً مستقلاً بأحدث عنصرين حتى لا يسأل المستخدم «وين راح الرابط؟» */
+  const newest = React.useMemo(
+    () =>
+      [...assets]
+        .sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')))
+        .slice(0, 2),
+    [assets],
+  );
+  const when = (iso?: string | null) => {
+    if (!iso) return '';
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return '';
+    return `${d.toLocaleDateString('ar-EG', { day: '2-digit', month: '2-digit' })} ${d.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })}`;
   };
 
   return (
@@ -149,6 +185,16 @@ export const MediaManager: React.FC<{
         </div>
       </div>
 
+      <p className="text-[10px] leading-relaxed text-slate-500">
+        الحد الأقصى: مستند أو صورة <b>٢٠ ميغابايت</b> · صوت ٥٠ · فيديو ١٠٠. الملفات الكبيرة تُرفع على دفعات تلقائياً.
+      </p>
+
+      {picked && (
+        <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] font-bold text-slate-700">
+          الملف المختار: {picked}
+        </p>
+      )}
+
       {linkMode && (
         <form onSubmit={(e) => void link(e)} className="grid gap-2 sm:grid-cols-[1fr_2fr_auto]">
           <input required value={linkTitle} onChange={(e) => setLinkTitle(e.target.value)} placeholder="عنوان الرابط" className="rounded-lg border px-3 py-2 text-xs" />
@@ -157,7 +203,21 @@ export const MediaManager: React.FC<{
         </form>
       )}
 
-      {error && <p role="alert" className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700">{error}</p>}
+      {notice && <p role="status" className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-800">{notice}</p>}
+      {error && <p role="alert" className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs leading-relaxed text-rose-700">{error}</p>}
+
+      {newest.length > 0 && (
+        <div className="rounded-lg border border-sky-200 bg-sky-50 px-3 py-2">
+          <p className="text-[10px] font-black text-sky-900">آخر ما أُضيف ({assets.length} عنصراً في هذا القسم)</p>
+          <ul className="mt-1 space-y-0.5">
+            {newest.map((a) => (
+              <li key={a.id} className="truncate text-[11px] text-sky-900">
+                • {a.kind === 'link' ? 'رابط' : 'ملف'} — {a.title} {when(a.createdAt) && `(${when(a.createdAt)})`}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {loading ? (
         <p className="text-xs text-slate-400">جارٍ التحميل…</p>
@@ -183,7 +243,11 @@ export const MediaManager: React.FC<{
                       <option key={c.value || 'auto'} value={c.value}>{c.label}</option>
                     ))}
                   </select>
-                  <span>{a.kind} · {a.mimeType || ''}</span>
+                  <span>
+                    {a.kind === 'link' ? 'رابط خارجي' : a.kind}
+                    {a.sizeBytes ? ` · ${formatFileSize(a.sizeBytes)}` : ''}
+                    {a.createdAt ? ` · ${when(a.createdAt)}` : ''}
+                  </span>
                 </div>
                 {a.kind === 'audio' && <audio controls src={a.url} className="mt-2 w-full" />}
                 {a.kind === 'video' && <video controls src={a.url} className="mt-2 max-h-48 w-full rounded-lg" />}
