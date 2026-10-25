@@ -15,8 +15,6 @@ import {
   Menu, 
   X,
   GraduationCap,
-  Sun,
-  Moon,
   Bookmark,
   Languages,
   Trophy,
@@ -38,8 +36,8 @@ export const Header: React.FC<HeaderProps> = ({
   onNavigate, 
   completedCount,
   bookmarkedCount = 0,
-  isDarkMode,
-  onToggleDarkMode
+  isDarkMode: _isDarkMode,
+  onToggleDarkMode: _onToggleDarkMode
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { language, toggleLanguage, t, isRtl } = useLanguage();
@@ -139,16 +137,6 @@ export const Header: React.FC<HeaderProps> = ({
         <div className="flex items-center gap-2 shrink-0">
           {/* Notification Center Bell */}
           <NotificationCenter onNavigate={handleNavClick} />
-
-          {/* Dark / Light Mode Toggle Button */}
-          <button
-            onClick={onToggleDarkMode}
-            className="p-2 rounded-xl bg-[#162D4A] hover:bg-[#1E3A60] text-amber-300 hover:text-amber-200 border border-[#27446C] transition-all cursor-pointer min-h-[40px] min-w-[40px] flex items-center justify-center shadow-sm"
-            title={isDarkMode ? 'التبديل إلى الوضع النهاري' : 'التبديل إلى الوضع الليلي'}
-            aria-label="تبديل السمة"
-          >
-            {isDarkMode ? <Sun className="w-4 h-4 text-amber-300" /> : <Moon className="w-4 h-4 text-amber-300" />}
-          </button>
 
           {/* Quick Bookmarks Button */}
           <button

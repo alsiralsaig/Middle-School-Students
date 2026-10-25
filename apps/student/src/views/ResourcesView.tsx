@@ -55,7 +55,19 @@ export const ResourcesView: React.FC<ResourcesViewProps> = ({
     { key: 'interactive_exams', label: 'اختبارات تفاعلية' },
   ];
 
-  const allResources=[...resources,...serverResources.filter(item=>!resources.some(existing=>existing.id===item.id))];
+  /**
+ * نوصل بس للموارد اللي الطالب **يقدر يفتحها فعلاً**.
+ *
+ * ٤٥ عنصراً في القاعدة (مفاتيح إجابة) بلا ملف ولا رابط ولا نص داخلي — كانت
+ * تظهر كأنها جاهزة، ولما يضغطها الطالب ما يلقى حاجة. نخفيها بدل ما نكسر ثقته.
+ */
+  const isOpenable = (item: ResourceItem) =>
+    !!item.filePath || !!item.externalUrl || item.hasBody === true;
+
+  const allResources=[
+    ...resources,
+    ...serverResources.filter(item=>!resources.some(existing=>existing.id===item.id)),
+  ].filter(isOpenable);
   const filteredResources = allResources.filter((item) => {
     const matchesCategory =
       selectedCategory === 'all' || item.category === selectedCategory;

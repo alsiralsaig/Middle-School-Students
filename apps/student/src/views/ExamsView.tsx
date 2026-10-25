@@ -41,8 +41,16 @@ export const ExamsView: React.FC = () => {
       subjectId?: string;
       questionsCount: number;
       durationMinutes?: number;
+      status?: string;
       attachments: MediaAssetView[];
     }>
+  >([]);
+  /**
+   * امتحانات سابقة حقيقية من المكتبة (كانت القائمة قبل كده أسماء ولايات
+   * وأحجام ملفات مُلفّقة، والزر ما يحمّل أي حاجة).
+   */
+  const [paperResources, setPaperResources] = useState<
+    Array<{ id: string; title: string; subjectName: string; url: string; category: string; kind: 'file' | 'link' }>
   >([]);
   const [openExam, setOpenExam] = useState<{ id: string; title: string; subjectName: string } | null>(null);
   useEffect(() => {
@@ -53,6 +61,8 @@ export const ExamsView: React.FC = () => {
         if (!alive) return;
         setServerExams(
           exams
+            // تدريبات الدروس تُفتح من داخل الدرس نفسه — ما نغرق بيها بنك الأسئلة
+            .filter((e) => e.status !== 'lesson-quiz')
             .map((e) => ({
               id: e.id,
               title: e.title,
@@ -60,13 +70,40 @@ export const ExamsView: React.FC = () => {
               subjectId: e.subjectId,
               questionsCount: Number(e.questionsCount) || 0,
               durationMinutes: e.durationMinutes,
+              status: e.status,
               attachments: e.attachments || [],
             }))
-            .filter((e) => e.questionsCount > 0)
+            // اختباران في القاعدة محتواهما مجرد كلمة («انجليزي») — نستثنيهما
+            .filter((e) => e.questionsCount >= 3)
             .sort((a, b) => b.questionsCount - a.questionsCount),
         );
       })
       .catch(() => undefined);
+
+    api
+      .resources()
+      .then(({ resources }) => {
+        if (!alive) return;
+        const isPaper = (c: string) => /past_exams|interactive_exams|exam-attachment|امتحان/i.test(c);
+        const rows = (resources || [])
+          .filter((r) => isPaper(String(r.category || '')) || /امتحان|اختبار/.test(String(r.title || '')))
+          .map((r) => {
+            const filePath = typeof r.filePath === 'string' && /^https?:/i.test(r.filePath) ? r.filePath : '';
+            const externalUrl = typeof r.externalUrl === 'string' && /^https?:/i.test(r.externalUrl) ? r.externalUrl : '';
+            return {
+              id: String(r.id),
+              title: String(r.title || 'امتحان'),
+              subjectName: String(r.subjectId || ''),
+              url: filePath || externalUrl,
+              category: String(r.category || ''),
+              kind: (filePath ? 'file' : 'link') as 'file' | 'link',
+            };
+          })
+          .filter((r) => !!r.url);
+        setPaperResources(rows);
+      })
+      .catch(() => undefined);
+
     return () => {
       alive = false;
     };
@@ -78,7 +115,6 @@ export const ExamsView: React.FC = () => {
   const [hasAnswered, setHasAnswered] = useState(false);
   const [score, setScore] = useState(0);
   const [quizCompleted, setQuizCompleted] = useState(false);
-  const [downloadMsg, setDownloadMsg] = useState<string | null>(null);
 
   const currentQ = SAMPLE_QUIZ_QUESTIONS[currentIndex];
 
@@ -111,44 +147,6 @@ export const ExamsView: React.FC = () => {
     setHasAnswered(false);
     setScore(0);
     setQuizCompleted(false);
-  };
-
-  const pastPapersList = [
-    {
-      state: 'ولاية الخرطوم',
-      year: '2024',
-      subjects: ['الرياضيات', 'العلوم', 'اللغة العربية', 'التربية الإسلامية'],
-      size: '6.4 ميغابايت',
-      type: 'PDF مدمج مع نموذج الإجابة'
-    },
-    {
-      state: 'ولاية الجزيرة',
-      year: '2024',
-      subjects: ['الرياضيات', 'الدراسات الاجتماعية', 'اللغة الإنجليزية', 'العلوم'],
-      size: '5.8 ميغابايت',
-      type: 'PDF شامل سلم التوزيع والدرجات'
-    },
-    {
-      state: 'ولاية البحر الأحمر',
-      year: '2023',
-      subjects: ['كافة المواد المقررة - الدور الأول'],
-      size: '7.1 ميغابايت',
-      type: 'PDF كراسة الأسئلة والأجوبة النموذجية'
-    },
-    {
-      state: 'ولاية نهر النيل',
-      year: '2023',
-      subjects: ['الرياضيات والعلوم واللغة العربية'],
-      size: '4.9 ميغابايت',
-      type: 'PDF امتحانات نهاية المرحلة المتوسطة'
-    }
-  ];
-
-  const handleDownloadPaper = (state: string) => {
-    setDownloadMsg(`جاري إعداد حزمة امتحانات ${state} للتحميل...`);
-    setTimeout(() => {
-      setDownloadMsg(null);
-    }, 4000);
   };
 
   /**
@@ -257,21 +255,10 @@ export const ExamsView: React.FC = () => {
                 : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
-            أوراق امتحانات الولايات السابقة
+            امتحانات وأوراق سابقة
           </button>
         </div>
       </div>
-
-      {/* Download toast */}
-      {downloadMsg && (
-        <div className="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-700/60 text-emerald-900 dark:text-emerald-200 text-xs flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-            <span>{downloadMsg}</span>
-          </div>
-          <span className="text-[11px] text-emerald-700 dark:text-emerald-300 font-bold">(محاكاة تنزيل الحزمة)</span>
-        </div>
-      )}
 
       {/* Mode 0: بنك الأسئلة — الاختبارات الجاهزة من قاعدة البيانات */}
       {activeTab === 'exam-bank' && (
@@ -501,38 +488,42 @@ export const ExamsView: React.FC = () => {
       {activeTab === 'past-papers' && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {serverExams.map(exam=><article key={exam.id} className="bg-white dark:bg-[#0D1F35] rounded-2xl border border-slate-200 dark:border-[#1C3A62] p-6 shadow-sm text-right"><h3 className="text-base font-bold text-slate-900 dark:text-white">{exam.title}</h3><p className="text-xs text-slate-500 mt-1">{exam.subjectName} · مرفقات تعليمية</p><div className="mt-4"><LessonAttachments attachments={exam.attachments.map(a=>({id:a.id,title:a.title,url:a.url,kind:a.kind,mimeType:a.mimeType,originalName:a.originalName}))} subjectId={exam.subjectName} subjectName={exam.subjectName} /></div></article>)}
-          {pastPapersList.map((paper, idx) => (
+          {paperResources.length === 0 && (
+            <div className="md:col-span-2 p-8 rounded-2xl bg-white dark:bg-[#0D1F35] border border-slate-200 dark:border-[#1C3A62] text-center space-y-2">
+              <p className="text-sm font-bold text-slate-800 dark:text-white">ما في امتحانات سابقة مرفوعة الآن</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                بنضيفها أول بأول — وفي انتظارها جرّب «بنك الأسئلة» فوق، فيه {serverExams.length} اختباراً جاهزاً.
+              </p>
+            </div>
+          )}
+          {paperResources.map((paper) => (
             <div
-              key={idx}
+              key={paper.id}
               className="bg-white dark:bg-[#0D1F35] rounded-2xl border border-slate-200 dark:border-[#1C3A62] p-6 shadow-sm flex flex-col justify-between text-right space-y-4"
             >
               <div>
                 <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 mb-2 font-medium">
-                  <span className="font-bold text-blue-900 dark:text-amber-400">{paper.state}</span>
-                  <span className="bg-slate-100 dark:bg-[#142A46] text-slate-700 dark:text-slate-300 px-2 py-0.5 rounded">عام {paper.year}</span>
+                  <span className="font-bold text-blue-900 dark:text-amber-400">
+                    {paper.kind === 'link' ? 'اختبار تفاعلي' : 'ملف امتحان'}
+                  </span>
+                  {paper.subjectName && (
+                    <span className="bg-slate-100 dark:bg-[#142A46] text-slate-700 dark:text-slate-300 px-2 py-0.5 rounded">
+                      {paper.subjectName}
+                    </span>
+                  )}
                 </div>
-
-                <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                  كراسة امتحانات الشهادة المتوسطة - {paper.state}
-                </h3>
-
-                <p className="text-xs text-slate-600 dark:text-slate-300 mt-2">
-                  تشمل اختبارات: {paper.subjects.join('، ')}.
-                </p>
-
-                <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 text-[11px] text-slate-500 dark:text-slate-400 flex items-center justify-between">
-                  <span>{paper.type}</span>
-                  <span>{paper.size}</span>
-                </div>
+                <h3 className="text-base font-bold text-slate-900 dark:text-white leading-snug">{paper.title}</h3>
               </div>
 
-              <button
-                onClick={() => handleDownloadPaper(paper.state)}
+              <a
+                href={paper.url}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="w-full py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-[#193A64] dark:hover:bg-[#204573] text-white text-xs font-bold flex items-center justify-center gap-2 transition-colors cursor-pointer min-h-[44px]"
               >
                 <Download className="w-4 h-4 text-amber-400" />
-                <span>تحميل نماذج امتحانات {paper.state}</span>
-              </button>
+                <span>{paper.kind === 'link' ? 'افتح الاختبار' : 'افتح الملف'}</span>
+              </a>
             </div>
           ))}
         </div>
