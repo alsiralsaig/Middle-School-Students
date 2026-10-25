@@ -48,7 +48,7 @@ export const LessonChatWidget: React.FC<LessonChatWidgetProps> = ({
     {
       id: 'initial-greeting',
       sender: 'assistant',
-      text: `مرحباً بك يا بطل! 🇸🇩✨\nأنا معلمك الذكي المدعوم بنموذج **Gemini 3.8 Flash** الخاص بدرس «**${lesson.title}**» في مادة **${subject.name}**.\n\nتفضل بطرح أي سؤال أو نقطة غير واضحة في هذا الدرس، أو اختر أحد الأسئلة المقترحة أدناه للبدء فوراً!`,
+      text: `مرحباً بك يا بطل! 🇸🇩✨\nأنا معلمك الذكي لدرس «**${lesson.title}**» في مادة **${subject.name}**.\n\nتفضل بطرح أي سؤال أو نقطة غير واضحة في هذا الدرس، أو اختر أحد الأسئلة المقترحة أدناه للبدء فوراً!`,
       timestamp: 'الآن',
     },
   ]);
@@ -59,7 +59,7 @@ export const LessonChatWidget: React.FC<LessonChatWidgetProps> = ({
       {
         id: `greeting-${lesson.id}`,
         sender: 'assistant',
-        text: `مرحباً بك مجدداً يا بطل! 🇸🇩✨\nأنا جاهز لمساعدتك في درس «**${lesson.title}**» (${subject.name}). اسألني عن أي قانون، مفهوم، أو مسألة في هذا الدرس وسأجيبك مباشرة عبر Gemini API!`,
+        text: `مرحباً بك مجدداً يا بطل! 🇸🇩✨\nأنا جاهز لمساعدتك في درس «**${lesson.title}**» (${subject.name}). اسألني عن أي قانون أو مفهوم أو مسألة في هذا الدرس وأنا أجاوبك خطوة بخطوة.`,
         timestamp: 'الآن',
       },
     ]);
@@ -162,7 +162,7 @@ ${examTipsText}
       const errorMessage: ChatMessage = {
         id: `err-${Date.now()}`,
         sender: 'assistant',
-        text: `عذراً يا بطل! تعذر الاتصال بخدمة Gemini API في هذه اللحظة (${err.message || 'خطأ في الشبكة'}). يرجى إعادة المحاولة أو التحقق من الاتصال بالإنترنت.`,
+        text: `عذراً يا بطل! المساعد مش متاح حالياً. جرّب تاني بعد شوية وتأكد من الإنترنت.`,
         timestamp: new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }),
         isError: true,
       };
@@ -197,7 +197,7 @@ ${examTipsText}
           <button
             type="button"
             onClick={() => setIsOpen(true)}
-            className="group relative flex items-center gap-3 px-4 sm:px-5 py-3 sm:py-3.5 rounded-full bg-gradient-to-r from-blue-700 via-indigo-700 to-sky-600 hover:from-blue-800 hover:to-indigo-800 text-white font-bold text-xs sm:text-sm shadow-xl hover:shadow-2xl hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer border border-white/20 backdrop-blur-md"
+            className="group relative flex items-center gap-2 sm:gap-3 px-0 sm:px-5 py-0 sm:py-3.5 w-14 h-14 sm:w-auto sm:h-auto justify-center rounded-full bg-gradient-to-r from-blue-700 via-indigo-700 to-sky-600 hover:from-blue-800 hover:to-indigo-800 text-white font-bold text-xs sm:text-sm shadow-xl hover:shadow-2xl hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer border border-white/20 backdrop-blur-md"
             aria-label="افتح مساعد الدرس الذكي"
           >
             {/* Animated Ping Glow */}
@@ -210,12 +210,9 @@ ${examTipsText}
               <Sparkles className="w-4 h-4 text-amber-300 animate-pulse" />
             </div>
 
-            <div className="text-right">
+            <div className="hidden text-right sm:block">
               <div className="flex items-center gap-1.5 leading-tight">
                 <span>اسأل عن هذا الدرس</span>
-                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-400/30 text-amber-200 font-mono font-semibold">
-                  Gemini API
-                </span>
               </div>
               <p className="text-[10px] text-blue-100 font-normal hidden sm:block truncate max-w-[150px]">
                 {lesson.title}
@@ -246,7 +243,7 @@ ${examTipsText}
                   <div className="flex items-center gap-2">
                     <h3 className="font-bold text-sm text-white truncate">معلم الدرس الذكي</h3>
                     <span className="text-[9px] px-2 py-0.5 rounded-full bg-emerald-500/30 text-emerald-300 border border-emerald-400/30 font-medium">
-                      Gemini 3.8 Flash
+                      متصل
                     </span>
                   </div>
                   <p className="text-[11px] text-slate-300 truncate max-w-[200px] sm:max-w-[240px]">
@@ -429,9 +426,9 @@ ${examTipsText}
               {/* Informational Subtext */}
               <div className="mt-1.5 flex items-center justify-between text-[10px] text-slate-400 px-1">
                 <span>إجابات فورية مخصصة للمنهج السوداني</span>
-                <span className="font-mono text-amber-500 dark:text-amber-400 font-semibold flex items-center gap-1">
+                <span className="text-amber-500 dark:text-amber-400 font-semibold flex items-center gap-1">
                   <Sparkles className="w-2.5 h-2.5" />
-                  Gemini API
+                  جاهز للمساعدة
                 </span>
               </div>
             </div>

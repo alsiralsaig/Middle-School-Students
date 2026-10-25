@@ -37,8 +37,16 @@ export function resolveFileUrl(url: string): string {
   return `${getApiBase()}${url.startsWith('/') ? '' : '/'}${url}`;
 }
 
+/** هل الرابط صفحة/اختبار خارجي وليس ملفاً قابلاً للعرض؟ */
+export function isExternalPage(file: { url: string; kind?: string | null }): boolean {
+  if (file.kind === 'link') return true;
+  if (!/^https?:/i.test(file.url)) return false;
+  return !/\.(pdf|png|jpe?g|webp|gif|mp3|wav|m4a|mp4|docx?|xlsx?|pptx?)(\?|#|$)/i.test(file.url);
+}
+
 export const InAppFileViewer: React.FC<Props> = ({ file, onClose }) => {
   const mime = guessMime(file.url, file.mimeType);
+  const externalPage = isExternalPage(file);
   const [src, setSrc] = useState<string>(() => resolveFileUrl(file.url));
   const [usingOfflineCopy, setUsingOfflineCopy] = useState(false);
   const [error, setError] = useState('');
@@ -51,7 +59,7 @@ export const InAppFileViewer: React.FC<Props> = ({ file, onClose }) => {
   const [zoom, setZoom] = useState(1);
   const [pdfLoading, setPdfLoading] = useState(mime === 'application/pdf');
 
-  const isPdf = mime === 'application/pdf';
+  const isPdf = mime === 'application/pdf' && !externalPage;
   const isImage = mime.startsWith('image/');
   const isAudio = mime.startsWith('audio/');
   const isVideo = mime.startsWith('video/');
@@ -109,7 +117,7 @@ export const InAppFileViewer: React.FC<Props> = ({ file, onClose }) => {
         console.error('[viewer] pdf load failed', e);
         if (!cancelled) {
           setPdfLoading(false);
-          setError('تعذّر عرض الملف داخل التطبيق. تقدر تنزّله وتفتحه من ملفات الهاتف.');
+          setError('الملف ده ما بينعرض جوه التطبيق — تقدر تفتحه في المتصفح أو تنزّله.');
         }
       }
     })();
@@ -213,12 +221,22 @@ export const InAppFileViewer: React.FC<Props> = ({ file, onClose }) => {
             {!pdfLoading && error && (
               <div className="flex h-full flex-col items-center justify-center gap-4 px-6 text-center">
                 <p className="text-sm font-bold text-rose-300">{error}</p>
-                <button
-                  onClick={download}
-                  className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white"
-                >
-                  <Download className="h-4 w-4" /> تنزيل الملف
-                </button>
+                <div className="flex flex-wrap justify-center gap-2">
+                  <a
+                    href={src}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-2 rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-bold text-white"
+                  >
+                    <ExternalLink className="h-4 w-4" /> افتح في المتصفح
+                  </a>
+                  <button
+                    onClick={download}
+                    className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white"
+                  >
+                    <Download className="h-4 w-4" /> تنزيل الملف
+                  </button>
+                </div>
               </div>
             )}
             <div className={pdfLoading || error ? 'hidden' : 'flex justify-center p-3'}>
@@ -246,7 +264,25 @@ export const InAppFileViewer: React.FC<Props> = ({ file, onClose }) => {
           </div>
         )}
 
-        {!isPdf && !isImage && !isAudio && !isVideo && (
+        {externalPage && (
+          <div className="flex h-full flex-col items-center justify-center gap-4 px-6 text-center">
+            <div className="text-5xl">🌐</div>
+            <p className="text-sm font-bold text-slate-100">هذا اختبار تفاعلي على موقع خارجي.</p>
+            <p className="max-w-sm text-xs text-slate-400">
+              بيتفتح في المتصفح — رجّع للتطبيق بأول ما تخلص منه.
+            </p>
+            <a
+              href={src}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-bold text-white"
+            >
+              <ExternalLink className="h-4 w-4" /> افتح الاختبار
+            </a>
+          </div>
+        )}
+
+        {!externalPage && !isPdf && !isImage && !isAudio && !isVideo && (
           <div className="flex h-full flex-col items-center justify-center gap-4 px-6 text-center">
             <div className="text-5xl">📄</div>
             <p className="text-sm font-bold">هذا النوع لا يُعرض داخل التطبيق.</p>

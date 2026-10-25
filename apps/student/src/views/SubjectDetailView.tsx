@@ -158,8 +158,9 @@ export const SubjectDetailView: React.FC<SubjectDetailViewProps> = ({
         .map<ViewerFile>((r) => ({
           title: r.title,
           url: r.url,
-          mimeType: 'application/pdf',
-          kind: 'document',
+          // الروابط الخارجية (اختبارات تفاعلية) ما تنفع عارض PDF — نعلّمها «link»
+          mimeType: /^https?:\/\//i.test(r.url) ? null : 'application/pdf',
+          kind: /^https?:\/\//i.test(r.url) ? 'link' : 'document',
         })),
     [libraryItems],
   );
@@ -206,9 +207,9 @@ export const SubjectDetailView: React.FC<SubjectDetailViewProps> = ({
       books.push({
         title,
         url: r.url,
-        mimeType: 'application/pdf',
-        kind: 'document',
-        sizeLabel: r.category === 'textbook' ? 'كتاب' : undefined,
+        mimeType: /^https?:\/\//i.test(r.url) ? null : 'application/pdf',
+        kind: /^https?:\/\//i.test(r.url) ? 'link' : 'document',
+        sizeLabel: /^https?:\/\//i.test(r.url) ? 'رابط خارجي' : r.category === 'textbook' ? 'كتاب' : undefined,
       });
     }
 
@@ -299,8 +300,10 @@ export const SubjectDetailView: React.FC<SubjectDetailViewProps> = ({
     }
   };
 
-  const renderFiles = (files: ViewerFile[], emptyText: string) => {
+  const renderFiles = (files: ViewerFile[], emptyText: string, hideWhenEmpty = false) => {
     if (files.length === 0) {
+      // لو المادة عندها مذكرات نصية، ما نعرض صندوق «ما في كتاب» أصلاً
+      if (hideWhenEmpty) return null;
       return (
         <div className="rounded-2xl border border-dashed border-slate-300 bg-white/60 p-7 text-center text-[12px] font-semibold text-slate-500 dark:border-[#25476F] dark:bg-[#0D1F35]/60 dark:text-slate-400">
           {emptyText}
@@ -322,7 +325,11 @@ export const SubjectDetailView: React.FC<SubjectDetailViewProps> = ({
               offline={offlineUrls.has(absolute)}
               downloading={progress[absolute] !== undefined}
               progress={progress[absolute] || 0}
-              onOpen={() => setViewing(f)}
+              onOpen={() =>
+                f.kind === 'link'
+                  ? window.open(resolveFileUrl(f.url), '_blank', 'noopener,noreferrer')
+                  : setViewing(f)
+              }
               onDownload={() => void handleDownload(f)}
             />
           );
@@ -425,9 +432,8 @@ export const SubjectDetailView: React.FC<SubjectDetailViewProps> = ({
 
           {renderFiles(
             bookFiles,
-            noteItems.length > 0
-              ? 'ما في كتاب مدرسي مرفوع للمادة دي — بس المذكرات فوق جاهزة للقراءة.'
-              : 'ما في كتب مرفوعة للمادة دي حالياً. تقدر تذاكر من الدروس المشروحة والتدريبات.',
+            'ما في كتب مرفوعة للمادة دي حالياً. تقدر تذاكر من الدروس المشروحة والتدريبات.',
+            noteItems.length > 0,
           )}
         </section>
       )}

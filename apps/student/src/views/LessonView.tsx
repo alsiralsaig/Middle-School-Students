@@ -350,7 +350,7 @@ export const LessonView: React.FC<LessonViewProps> = ({
   };
 
   return (
-    <div className="space-y-8 relative">
+    <div className="space-y-8 relative pb-28 sm:pb-10">
       {/* Floating Encouragement Toast Notification */}
       {toast && (
         <div 
@@ -493,7 +493,7 @@ export const LessonView: React.FC<LessonViewProps> = ({
             <button
               onClick={() => setIsChatOpen(true)}
               className="flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-black transition-all cursor-pointer shadow-sm bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-500 hover:to-amber-700 text-slate-950 border border-amber-300 dark:border-amber-500/40 min-h-[44px] shadow-amber-500/20 hover:scale-[1.02] active:scale-[0.98]"
-              title="اسأل المعلم الذكي عن هذا الدرس (Gemini API)"
+              title="اسأل المعلم الذكي عن هذا الدرس"
               aria-label="اسأل المعلم الذكي"
             >
               <Sparkles className="w-4 h-4 text-slate-950 animate-pulse" />
