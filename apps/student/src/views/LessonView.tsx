@@ -971,10 +971,10 @@ export const LessonView: React.FC<LessonViewProps> = ({
           <div className="bg-gradient-to-br from-[#0B1E36] to-[#162D4A] text-white rounded-2xl p-6 sm:p-8 space-y-4 text-right shadow-sm">
             <div className="flex items-center gap-2 font-bold text-base text-amber-300">
               <Sparkles className="w-5 h-5 text-amber-400" />
-              <h3>توجيهات مصححي الشهادة المتوسطة</h3>
+              <h3>نصائح تكسب بيها درجات في الامتحان</h3>
             </div>
             <p className="text-xs text-slate-300">
-              ملاحظات يوصي بها موجهو المواد لتجنب خصم درجات الامتحان النهائي:
+              أخطاء شائعة بتنقص درجة الطالب — تجنّبها وانت بتحل:
             </p>
             <ul className="space-y-2.5 text-xs text-slate-200">
               {lesson.examTips.map((tip, idx) => (

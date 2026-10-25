@@ -114,7 +114,67 @@ export const api = {
    */
   subjects: () => request<{ subjects: Subject[] }>('/api/subjects'),
   resources: () => request<{ resources: Array<Record<string, unknown>> }>('/api/resources'),
-  exams: () => request<{ exams: Array<{id:string;title:string;subjectName:string;attachments:Array<{id:string;title:string;url:string;kind?:string;mimeType?:string|null;originalName?:string|null;description?:string|null;sizeBytes?:number|null}>}> }>('/api/exams'),
+  exams: () => request<{
+    exams: Array<{
+      id: string;
+      title: string;
+      subjectId?: string;
+      subjectName: string;
+      durationMinutes?: number;
+      questionsCount?: number;
+      status?: string;
+      attachments: Array<{
+        id: string;
+        title: string;
+        url: string;
+        kind?: string;
+        mimeType?: string | null;
+        originalName?: string | null;
+        description?: string | null;
+        sizeBytes?: number | null;
+      }>;
+    }>;
+  }>('/api/exams'),
+  /** أسئلة اختبار جاهز من بنك الأسئلة (بلا الإجابات الصحيحة). */
+  examQuestions: (id: string) =>
+    request<{
+      exam: {
+        id: string;
+        title: string;
+        durationMinutes?: number;
+        questions: Array<{ id: string; question: string; options: string[] }>;
+      };
+    }>(`/api/exams/${encodeURIComponent(id)}/questions`),
+  /** تسليم إجابات الاختبار — يحسب الدرجة ويعرض التفسير لكل سؤال. */
+  submitExam: (id: string, answers: Array<{ questionId: string; chosenIndex: number }>) =>
+    request<{
+      result: {
+        attemptId: string;
+        score: number;
+        total: number;
+        percent: number;
+        graded: Array<{ questionId: string; chosenIndex: number; correct: boolean; explanation: string | null }>;
+      };
+    }>(`/api/exams/${encodeURIComponent(id)}/submit`, { method: 'POST', body: JSON.stringify({ answers }) }),
+  /**
+   * أسئلة الدرس من الخادم — تُولَّد من محتوى الدرس نفسه وتُحفظ.
+   * `renew` يطلب مجموعة جديدة (زر «أسئلة جديدة»).
+   */
+  lessonQuiz: (lessonId: string, renew = false) =>
+    request<{
+      examId: string;
+      cached?: boolean;
+      questions: Array<{ id: string; question: string; options: string[] }>;
+    }>(`/api/lessons/${encodeURIComponent(lessonId)}/quiz`, {
+      method: 'POST',
+      body: JSON.stringify({ renew }),
+    }),
+  /** تصحيح سؤال واحد داخل تدريب الدرس */
+  checkQuizAnswer: (examId: string, questionId: string, chosenIndex: number) =>
+    request<{ correct: boolean; correctIndex: number; explanation: string | null }>('/api/quiz/check', {
+      method: 'POST',
+      body: JSON.stringify({ examId, questionId, chosenIndex }),
+    }),
   /** الفهرس فقط (بلا شرح) — خفيف وسريع، والدرس يُطلب عند فتحه. */
   subjectsIndex: () => request<{ subjects: Subject[] }>('/api/subjects?view=index'),
   /** درس كامل واحد — يُدمج في المخزن عند فتحه. */

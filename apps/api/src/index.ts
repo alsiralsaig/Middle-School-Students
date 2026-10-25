@@ -8,6 +8,7 @@ import { UPLOAD_DIR, ensureUploadDir } from './lib/paths.js';
 import { authRouter } from './routes/auth.js';
 import { learnRouter } from './routes/learn.js';
 import { examsRouter } from './routes/exams.js';
+import { lessonQuizRouter } from './routes/lessonQuiz.js';
 import { aiRouter } from './routes/ai.js';
 import { uploadsRouter } from './routes/uploads.js';
 import { mediaRouter } from './routes/media.js';
@@ -89,6 +90,7 @@ app.get('/api/health', (_req, res) => {
 app.use('/api/auth', authRouter);
 app.use('/api', learnRouter);
 app.use('/api', examsRouter);
+app.use('/api', lessonQuizRouter);
 app.use('/api', aiRouter);
 app.use('/api', uploadsRouter);
 app.use('/api', mediaRouter);

@@ -19,14 +19,58 @@ import {
   Timer
 } from 'lucide-react';
 import { ExamSimulator } from '../components/ExamSimulator';
+import { ServerExamRunner } from '../components/ServerExamRunner';
 import { api } from '../utils/apiClient';
 import { MediaAssetViewer, type MediaAssetView } from '../components/MediaAssetViewer';
 import { LessonAttachments } from '../components/LessonAttachments';
 
 export const ExamsView: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'simulator' | 'practice-quiz' | 'past-papers'>('simulator');
-  const [serverExams,setServerExams]=useState<Array<{id:string;title:string;subjectName:string;attachments:MediaAssetView[]}>>([]);
-  useEffect(()=>{let alive=true;api.exams().then(({exams})=>{if(alive)setServerExams(exams.filter(e=>e.attachments?.length));}).catch(()=>undefined);return()=>{alive=false;};},[]);
+  const [activeTab, setActiveTab] = useState<'exam-bank' | 'simulator' | 'practice-quiz' | 'past-papers'>('exam-bank');
+  /**
+   * بنك الأسئلة من الخادم.
+   *
+   * كان الفلتر `e.attachments?.length` — أي «اعرض الاختبار فقط لو عنده ملف PDF
+   * مرفق». والمرفقات صفر في القاعدة، فالقائمة كانت تظهر فاضية رغم وجود ٤٨
+   * اختباراً و٢٣٢ سؤالاً. الآن نعرض كل اختبار فيه أسئلة، والمرفقات اختيارية.
+   */
+  const [serverExams, setServerExams] = useState<
+    Array<{
+      id: string;
+      title: string;
+      subjectName: string;
+      subjectId?: string;
+      questionsCount: number;
+      durationMinutes?: number;
+      attachments: MediaAssetView[];
+    }>
+  >([]);
+  const [openExam, setOpenExam] = useState<{ id: string; title: string; subjectName: string } | null>(null);
+  useEffect(() => {
+    let alive = true;
+    api
+      .exams()
+      .then(({ exams }) => {
+        if (!alive) return;
+        setServerExams(
+          exams
+            .map((e) => ({
+              id: e.id,
+              title: e.title,
+              subjectName: e.subjectName,
+              subjectId: e.subjectId,
+              questionsCount: Number(e.questionsCount) || 0,
+              durationMinutes: e.durationMinutes,
+              attachments: e.attachments || [],
+            }))
+            .filter((e) => e.questionsCount > 0)
+            .sort((a, b) => b.questionsCount - a.questionsCount),
+        );
+      })
+      .catch(() => undefined);
+    return () => {
+      alive = false;
+    };
+  }, []);
   
   // Interactive Quiz state
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -107,6 +151,23 @@ export const ExamsView: React.FC = () => {
     }, 4000);
   };
 
+  /**
+   * اختبار مفتوح من بنك الأسئلة ⟹ شاشة الاختبار وحدها.
+   * (كل الـhooks فوق، فالخروج المبكر آمن هنا.)
+   */
+  if (openExam) {
+    return (
+      <div className="max-w-4xl mx-auto space-y-4">
+        <ServerExamRunner
+          examId={openExam.id}
+          examTitle={openExam.title}
+          subjectName={openExam.subjectName}
+          onExit={() => setOpenExam(null)}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8">
       {/* Header Banner */}
@@ -140,15 +201,27 @@ export const ExamsView: React.FC = () => {
         <div className="mt-6 p-4 rounded-2xl bg-amber-50/80 dark:bg-[#152B4A] border border-amber-200 dark:border-amber-400/30 flex items-start gap-3 text-right">
           <AlertCircle className="w-5 h-5 text-amber-700 dark:text-amber-400 shrink-0 mt-0.5" />
           <div className="text-xs text-amber-900 dark:text-amber-200 space-y-1">
-            <span className="font-bold">تنويه هندسي حول نظام الاختبارات:</span>
+            <span className="font-bold">كيف تستفيد من الاختبارات؟</span>
             <p className="text-amber-800 dark:text-slate-300 leading-relaxed">
-              هذا النموذج التفاعلي هو نموذج واجهة استرشادية مبني على المنهج السوداني. في المرحلة القادمة سيتم ربط بنك الأسئلة المركزي لتوليد اختبارات مخصصة بمدة زمنية وتصحيح آلي رسمي متصل بسجلات الطلاب.
+              ابدأ باختبار قصير من «بنك الأسئلة» عشان تعرف نقاط ضعفك، بعدها ارجع لدرس المادة واقرأ القواعد، وبعدها أعد الاختبار. التصحيح فوري، ومع كل سؤال بيظهر ليك التفسير.
             </p>
           </div>
         </div>
 
         {/* Tab switch */}
         <div className="mt-6 flex flex-wrap items-center gap-2 p-1.5 bg-slate-100 dark:bg-[#142A46] rounded-2xl w-full sm:w-fit">
+          <button
+            type="button"
+            onClick={() => setActiveTab('exam-bank')}
+            className={`flex-1 sm:flex-initial px-5 py-2.5 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center justify-center gap-2 ${
+              activeTab === 'exam-bank'
+                ? 'bg-gradient-to-r from-emerald-700 to-teal-700 text-white shadow-md'
+                : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
+            }`}
+          >
+            <BookOpen className="w-4 h-4" />
+            <span>بنك الأسئلة ({serverExams.length})</span>
+          </button>
           <button
             type="button"
             onClick={() => setActiveTab('simulator')}
@@ -197,6 +270,45 @@ export const ExamsView: React.FC = () => {
             <span>{downloadMsg}</span>
           </div>
           <span className="text-[11px] text-emerald-700 dark:text-emerald-300 font-bold">(محاكاة تنزيل الحزمة)</span>
+        </div>
+      )}
+
+      {/* Mode 0: بنك الأسئلة — الاختبارات الجاهزة من قاعدة البيانات */}
+      {activeTab === 'exam-bank' && (
+        <div className="space-y-4">
+          {serverExams.length === 0 ? (
+            <div className="p-8 rounded-2xl bg-white dark:bg-[#0D1F35] border border-slate-200 dark:border-[#1C3A62] text-center space-y-2">
+              <p className="text-sm font-bold text-slate-800 dark:text-white">ما في اختبارات متاحة الآن</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                الاختبارات تُضاف من الإدارة. جرّب «تدريبات سريعة» من نفس الدرس في هذه الأثناء.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {serverExams.map((exam) => (
+                <button
+                  key={exam.id}
+                  onClick={() => setOpenExam({ id: exam.id, title: exam.title, subjectName: exam.subjectName })}
+                  className="text-right bg-white dark:bg-[#0D1F35] rounded-2xl border border-slate-200 dark:border-[#1C3A62] p-5 hover:border-emerald-400 dark:hover:border-emerald-500 transition-colors space-y-2"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <h3 className="text-sm font-black text-slate-900 dark:text-white leading-snug">{exam.title}</h3>
+                    <span className="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                      {exam.questionsCount} سؤال
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                    {exam.subjectName}
+                    {exam.durationMinutes ? ` · ${exam.durationMinutes} دقيقة` : ''}
+                  </p>
+                  <span className="inline-flex items-center gap-1 text-[11px] font-bold text-blue-800 dark:text-amber-300">
+                    ابدأ الاختبار
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       )}
 

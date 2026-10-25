@@ -92,12 +92,46 @@ export const SubjectDetailView: React.FC<SubjectDetailViewProps> = ({
   const [notice, setNotice] = useState('');
   /** الدرس المفتوح للأسئلة التفاعلية (يُطلب كاملاً عند الحاجة) */
   const [quizLesson, setQuizLesson] = useState<Lesson | null>(null);
+  /**
+   * كتب ومذكرات المادة من **مكتبة الموارد** في قاعدة البيانات.
+   *
+   * ليه: تبويب «الكتب» كان يقرأ `mediaAssets` فقط (ملفات مرفوعة من الإدارة)
+   * وهي صفر، فكان يقول «ما في كتب أو مذكرات مرفوعة» بينما المكتبة فيها ١٣٩
+   * عنصراً (كتب، مذكرات، امتحانات سابقة) موزّعة على المواد.
+   */
+  const [libraryItems, setLibraryItems] = useState<
+    Array<{ id: string; title: string; url: string; category: string; fileType: string }>
+  >([]);
   const [quizLoadingId, setQuizLoadingId] = useState('');
 
   const refreshOffline = useCallback(async () => {
     const rows = await listOfflineFiles();
     setOffline(rows);
   }, []);
+
+  useEffect(() => {
+    let alive = true;
+    api
+      .resources()
+      .then(({ resources }) => {
+        if (!alive) return;
+        const rows = (resources || [])
+          .filter((r) => String(r.subjectId || '') === subject.id)
+          .filter((r) => typeof r.filePath === 'string' && /^https?:/i.test(String(r.filePath)))
+          .map((r) => ({
+            id: String(r.id),
+            title: String(r.title || 'ملف'),
+            url: String(r.filePath),
+            category: String(r.category || ''),
+            fileType: String(r.fileType || ''),
+          }));
+        setLibraryItems(rows);
+      })
+      .catch(() => undefined);
+    return () => {
+      alive = false;
+    };
+  }, [subject.id]);
 
   useEffect(() => {
     void refreshOffline();
@@ -113,7 +147,26 @@ export const SubjectDetailView: React.FC<SubjectDetailViewProps> = ({
     [subject.mediaAssets],
   );
 
-  const examFiles = useMemo(() => mediaFiles.filter((a) => isExamAsset(a)), [mediaFiles]);
+  const libraryExams = useMemo(
+    () =>
+      libraryItems
+        .filter((r) => /exam|past_exams|interactive_exams|اختبار|امتحان/i.test(r.category + ' ' + r.title))
+        .map<ViewerFile>((r) => ({
+          title: r.title,
+          url: r.url,
+          mimeType: 'application/pdf',
+          kind: 'document',
+        })),
+    [libraryItems],
+  );
+
+  const examFiles = useMemo(
+    () => [
+      ...mediaFiles.filter((a) => isExamAsset(a)),
+      ...libraryExams,
+    ],
+    [mediaFiles, libraryExams],
+  );
 
   const bookFiles = useMemo(() => {
     const books = mediaFiles
@@ -139,8 +192,23 @@ export const SubjectDetailView: React.FC<SubjectDetailViewProps> = ({
         sizeLabel: subject.official.pages ? `${subject.official.pages} صفحة` : undefined,
       });
     }
+    // مكتبة المذكرات والكتب المرفوعة من الإدارة (ندمج بلا تكرار بالعنوان)
+    const seen = new Set(books.map((b) => b.title.trim()));
+    for (const r of libraryItems) {
+      const title = r.title.trim();
+      if (seen.has(title)) continue;
+      seen.add(title);
+      books.push({
+        title,
+        url: r.url,
+        mimeType: 'application/pdf',
+        kind: 'document',
+        sizeLabel: r.category === 'textbook' ? 'كتاب' : undefined,
+      });
+    }
+
     return books;
-  }, [mediaFiles, subject.official]);
+  }, [mediaFiles, subject.official, libraryItems]);
 
   const subjectOffline = useMemo(
     () => offline.filter((f) => !f.subjectId || f.subjectId === subject.id),

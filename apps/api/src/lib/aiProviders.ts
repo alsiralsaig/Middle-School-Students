@@ -561,3 +561,81 @@ export async function answerStream(
   }
   return { provider: null, text: '' };
 }
+
+/**
+ * نداء «خام» ببرومبت نظام مخصّص — للمخرجات المنظّمة (JSON).
+ *
+ * ليه ما نستخدم `answer()`: ذاك يضيف SYSTEM_PROMPT الخاص بالمساعد ويمرّر
+ * الرد على `stripMarkdown`، وكلاهما يفسد JSON أسئلة الدرس.
+ * هنا نكلّم المزوّد مباشرة بنفس ترتيب الأولوية، ومع مهل أقصر.
+ */
+export async function completeRaw(
+  systemPrompt: string,
+  userPrompt: string,
+  opts: { json?: boolean; maxTokens?: number } = {},
+): Promise<{ text: string | null; provider: ProviderName | null }> {
+  const cfg = getProviderConfig();
+  for (const name of availableProviders()) {
+    const c = cfg[name];
+    try {
+      if (name === 'gemini') {
+        const { GoogleGenAI } = await import('@google/genai');
+        const ai = new GoogleGenAI({ apiKey: c.apiKey });
+        for (const model of Array.from(new Set([c.model, 'gemini-flash-lite-latest', 'gemini-flash-latest']))) {
+          try {
+            const res = await ai.models.generateContent({
+              model,
+              contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
+              config: {
+                systemInstruction: systemPrompt,
+                maxOutputTokens: opts.maxTokens ?? 1600,
+                ...(opts.json ? { responseMimeType: 'application/json' } : {}),
+              },
+            });
+            const text = (res as { text?: string }).text;
+            if (text) return { text, provider: 'gemini' };
+          } catch (e) {
+            console.warn(`[ai:raw] gemini/${model} فشل:`, (e as Error).message);
+          }
+        }
+        continue;
+      }
+
+      const url =
+        name === 'groq'
+          ? 'https://api.groq.com/openai/v1/chat/completions'
+          : 'https://api.openai.com/v1/chat/completions';
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 25_000);
+      try {
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${c.apiKey}` },
+          body: JSON.stringify({
+            model: c.model,
+            temperature: 0.7,
+            max_tokens: opts.maxTokens ?? 1600,
+            ...(opts.json ? { response_format: { type: 'json_object' } } : {}),
+            messages: [
+              { role: 'system', content: systemPrompt },
+              { role: 'user', content: userPrompt },
+            ],
+          }),
+          signal: ctrl.signal,
+        });
+        if (!res.ok) {
+          console.warn(`[ai:raw] ${name} HTTP ${res.status}`);
+          continue;
+        }
+        const data = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
+        const text = data.choices?.[0]?.message?.content?.trim();
+        if (text) return { text, provider: name };
+      } finally {
+        clearTimeout(timer);
+      }
+    } catch (e) {
+      console.warn(`[ai:raw] ${name} فشل:`, (e as Error).message);
+    }
+  }
+  return { text: null, provider: null };
+}

@@ -262,9 +262,9 @@ export const SubjectsView: React.FC<SubjectsViewProps> = ({
       <div className="bg-amber-50/70 dark:bg-[#152B4A] border border-amber-200/80 dark:border-amber-400/30 rounded-2xl p-4 flex items-start gap-3 text-right">
         <Info className="w-5 h-5 text-amber-700 dark:text-amber-400 shrink-0 mt-0.5" />
         <div className="text-xs text-amber-900 dark:text-amber-200 space-y-1">
-          <span className="font-bold">إشعار تصنيف المحتوى:</span>
+          <span className="font-bold">منهجك الدراسي:</span>
           <p className="text-amber-800 dark:text-slate-300 leading-relaxed">
-            كافة العناوين وتفريعات الدروس مبنية على أساس الخطة الدراسية لمرحلة التعليم المتوسط بالمنهج السوداني. تم إدراج شروحات نموذجية مفصلة في الوحدات المتاحة، مع إمكانية التوسع لتغطية كافة المقررات تباعاً.
+            كل المواد والوحدات والدروس مرتّبة حسب منهج الشهادة المتوسطة السودانية. افتح المادة اللي عايز تذاكرها، وابدأ بالدرس ثم حل أسئلته.
           </p>
         </div>
       </div>

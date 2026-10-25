@@ -78,14 +78,14 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
 
           {/* Column 3: Transparency Note & Phase 1 Scope */}
           <div className="space-y-3">
-            <h4 className="text-sm font-bold text-white tracking-wide">حالة الإصدار (المرحلة الأولى)</h4>
+            <h4 className="text-sm font-bold text-white tracking-wide">كيف تذاكر معنا؟</h4>
             <div className="bg-[#0B1E36] p-3.5 rounded-xl border border-[#1A3353] text-xs text-slate-300 space-y-2">
               <div className="flex items-center gap-1.5 text-amber-400 font-semibold">
                 <ShieldAlert className="w-4 h-4" />
-                <span>إشعار الشفافية الفنية</span>
+                <span>خطة مذاكرة في ٣ خطوات</span>
               </div>
               <p className="text-slate-400 leading-normal">
-                هذا الإصدار يمثل الهيكل الكامل للواجهة الأمامية للمنصة (Frontend). المساعد الذكي، رفع الملفات، وتصحيح الاختبارات تم تقديمها بواجهات تفاعلية نموذجية لربطها بالخوادم وقواعد البيانات في المرحلة التالية.
+                اقرأ شرح الدرس وملخصه ← حل أسئلة الدرس والاختبارات ← حمّل المذكرات والملفات على جهازك عشان تفتحها بدون إنترنت وقت الامتحان.
               </p>
             </div>
           </div>
