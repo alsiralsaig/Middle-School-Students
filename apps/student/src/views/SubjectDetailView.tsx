@@ -120,7 +120,12 @@ export const SubjectDetailView: React.FC<SubjectDetailViewProps> = ({
         if (!alive) return;
         const rows = (resources || [])
           .filter((r) => String(r.subjectId || '') === subject.id)
-          .filter((r) => r.hasBody === true || (typeof r.filePath === 'string' && /^https?:/i.test(String(r.filePath))))
+          .filter(
+            (r) =>
+              r.hasBody === true ||
+              (typeof r.filePath === 'string' && /^https?:/i.test(r.filePath)) ||
+              (typeof r.externalUrl === 'string' && /^https?:/i.test(r.externalUrl)),
+          )
           .map((r) => ({
             id: String(r.id),
             title: String(r.title || 'ملف'),
