@@ -73,6 +73,36 @@ export function mediaAssetDto(asset: {
   return { ...safe, url: asset.access === 'private' ? `/api/media/${asset.id}/content` : asset.externalUrl || asset.url };
 }
 
+
+/**
+ * معرّف المادة لصاحب الوسيط — لأن عناصر المكتبة تحتاج `subjectId` لتظهر
+ * في تبويب المادة عند الطالب وليس في المكتبة العامة فقط.
+ */
+async function subjectIdForOwner(ownerType: string, ownerId: string, fallback?: string | null): Promise<string | null> {
+  if (ownerType === 'subject') return ownerId;
+  if (ownerType === 'unit') {
+    const unit = await prisma.unit.findUnique({ where: { id: ownerId }, select: { subjectId: true } });
+    return unit?.subjectId ?? fallback ?? null;
+  }
+  if (ownerType === 'lesson') {
+    const lesson = await prisma.lesson.findUnique({ where: { id: ownerId }, select: { subjectId: true } });
+    return lesson?.subjectId ?? fallback ?? null;
+  }
+  if (ownerType === 'exam') {
+    const exam = await prisma.exam.findUnique({ where: { id: ownerId }, select: { subjectId: true } });
+    return exam?.subjectId ?? fallback ?? null;
+  }
+  return fallback ?? null;
+}
+
+/** تصنيف المكتبة المقابل لتصنيف الوسائط */
+function libraryCategory(category?: string | null): string {
+  if (category === 'textbook') return 'textbook';
+  if (category === 'exam' || category === 'past-exams') return 'past_exams';
+  if (category === 'worksheets') return 'worksheets';
+  return 'notes';
+}
+
 mediaRouter.post('/media/upload', async (req, res) => {
   try {
     const body = req.body as HandleUploadBody;
@@ -170,16 +200,25 @@ mediaRouter.post('/media/upload', async (req, res) => {
             originalName: cleanText(data.originalName, 180) || null, mimeType: mime, sizeBytes: actual.size,
             pathname: blob.pathname, url: access === 'public' ? blob.url : null }, update: {},
         });
-        if (access === 'public' && ownerType === 'library') {
+        /*
+         * كل ملف عام يُرفع من الإدارة (مكتبة أو مادة أو وحدة أو درس) يُسجَّل
+         * أيضاً كعنصر في المكتبة بـ`subjectId` صحيح.
+         *
+         * ليه: المعلم كان يرفع كتاباً على مادة «اللغة العربية» فيراه في نموذج
+         * الرفع فقط، ولا يجده الطالب في تبويب «المذكرات والملخصات» ولا في
+         * المكتبة — لأن `Resource` كان يُنشأ لعقدة `library` وحدها.
+         */
+        if (access === 'public' && ADMIN_OWNERS.has(ownerType as Owner)) {
+          const subjectId = await subjectIdForOwner(ownerType, ownerId, asset.subjectId);
           await prisma.resource.upsert({
             where: { id: asset.id },
-            create: { id: asset.id, subjectId: asset.subjectId, title: asset.title, category: asset.category || 'notes',
+            create: { id: asset.id, subjectId, title: asset.title, category: libraryCategory(asset.category),
               fileType: path.extname(blob.pathname).slice(1).toUpperCase() || 'FILE',
               fileSize: `${(actual.size / MB).toFixed(1)} MB`, pageCount: Number(data.pageCount) || 0,
               author: cleanText(data.author, 100) || null, publishYear: cleanText(data.publishYear, 9) || null,
               isVerifiedCurriculum: false, downloadCount: 0, description: asset.description || '', previewSummary: '[]',
-              filePath: asset.url, status: 'sample' },
-            update: { filePath: asset.url },
+              filePath: asset.url, status: 'sample', isPublished: true, publishedAt: new Date() },
+            update: { filePath: asset.url, subjectId, isPublished: true },
           });
         }
       },
@@ -207,11 +246,17 @@ mediaRouter.post('/media/links', requireAdmin, async (req, res) => {
       title, externalUrl: url.toString(), category: cleanText(req.body?.category, 40) || null,
       subjectId: cleanText(req.body?.subjectId, 80) || null, description: cleanText(req.body?.description, 1000) || null,
     } });
-    if (ownerType === 'library') await prisma.resource.create({ data: {
-      id: asset.id, subjectId: asset.subjectId, title, category: asset.category || 'notes', fileType: 'LINK',
-      fileSize: 'رابط خارجي', pageCount: 0, isVerifiedCurriculum: false, downloadCount: 0,
-      description: asset.description || '', previewSummary: '[]', filePath: url.toString(), status: 'sample',
-    } });
+    /* الروابط الخارجية أيضاً تدخل المكتبة بغضّ النظر عن القسم — رابط يحفظه
+       المعلم على وحدة أو درس لازم يظهر للطالب في تبويب «المذكرات» كذلك. */
+    if (ADMIN_OWNERS.has(ownerType)) {
+      const subjectId = await subjectIdForOwner(ownerType, ownerId, asset.subjectId);
+      await prisma.resource.create({ data: {
+        id: asset.id, subjectId, title, category: libraryCategory(asset.category), fileType: 'LINK',
+        fileSize: 'رابط خارجي', pageCount: 0, isVerifiedCurriculum: false, downloadCount: 0,
+        description: asset.description || '', previewSummary: '[]', filePath: url.toString(), status: 'sample',
+        isPublished: true, publishedAt: new Date(),
+      } });
+    }
     res.status(201).json({ asset: mediaAssetDto(asset) });
   } catch (error) { res.status(400).json({ error: error instanceof Error ? error.message : 'تعذّر حفظ الرابط' }); }
 });

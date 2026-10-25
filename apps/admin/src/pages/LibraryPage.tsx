@@ -484,17 +484,30 @@ export const LibraryPage: React.FC = () => {
             <div className="space-y-2 rounded-xl border border-dashed border-slate-300 p-3">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="text-xs font-bold text-slate-700">ملف من الجهاز</span>
-                <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-navy-800 px-4 py-2.5 text-xs font-bold text-white active:scale-95">
-                  <Upload className="h-4 w-4" />
-                  {file ? 'تغيير الملف' : 'اختيار ملف'}
-                  <input
-                    type="file"
-                    accept={ACCEPTED_FILES}
-                    disabled={uploading}
-                    onChange={(event) => setFile(event.target.files?.[0] ?? null)}
-                    className="hidden"
-                  />
-                </label>
+                <div className="flex flex-wrap items-center gap-2">
+                  <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-navy-800 px-4 py-2.5 text-xs font-bold text-white active:scale-95">
+                    <Upload className="h-4 w-4" />
+                    {file ? 'تغيير الملف' : 'اختيار ملف'}
+                    <input
+                      type="file"
+                      accept={ACCEPTED_FILES}
+                      disabled={uploading}
+                      onChange={(event) => setFile(event.target.files?.[0] ?? null)}
+                      className="hidden"
+                    />
+                  </label>
+                  {/* مدخل مستقل للصوت والفيديو — منتقي أندرويد لا يعرضهما داخل قائمة المستندات */}
+                  <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-slate-300 px-3 py-2.5 text-xs font-bold text-slate-700">
+                    صوت
+                    <input type="file" accept="audio/*,.mp3,.m4a,.wav,.ogg,.opus,.aac,.flac" disabled={uploading}
+                      onChange={(event) => setFile(event.target.files?.[0] ?? null)} className="hidden" />
+                  </label>
+                  <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-slate-300 px-3 py-2.5 text-xs font-bold text-slate-700">
+                    فيديو
+                    <input type="file" accept="video/*,.mp4,.webm,.mov" disabled={uploading}
+                      onChange={(event) => setFile(event.target.files?.[0] ?? null)} className="hidden" />
+                  </label>
+                </div>
               </div>
               <p className="text-[10px] font-normal text-slate-500">
                 {file

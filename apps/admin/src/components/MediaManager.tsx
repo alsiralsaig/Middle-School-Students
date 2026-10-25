@@ -1,8 +1,18 @@
 import React from 'react';
-import { FileText, Link2, Loader2, Tag, Trash2, Upload } from 'lucide-react';
+import { FileText, Headphones, Link2, Loader2, Tag, Trash2, Upload, Video } from 'lucide-react';
 import { addMediaLink, deleteMediaAsset, formatFileSize, listMediaAssets, MediaAsset, MediaCategory, MediaOwnerType, updateMediaCategory, uploadMediaAsset, validateFile } from '../lib/mediaUpload';
 
-const ACCEPT = '.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.jpg,.jpeg,.png,.webp,.gif,.mp3,.m4a,.aac,.wav,.ogg,.opus,.flac,.mp4,.webm,.mov';
+/*
+ * ثلاثة مداخل منفصلة للرفع.
+ *
+ * ليه: منتقي ملفات أندرويد يعتمد على قائمة الأنواع في `accept`، وكانت كل
+ * الأنواع في حقل واحد فكان يعرض «مستندات/صور» فقط ولا يُظهر الصوتيات
+ * والفيديوهات إطلاقاً (شكوى المستخدم: «مافيه خيار فيديوهات وصوتيات»).
+ * الآن كل زر يعلن نوعه صراحة فيظهر قسم الصوت أو الفيديو في المنتقي.
+ */
+const ACCEPT_DOC = '.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.jpg,.jpeg,.png,.webp,.gif,application/pdf,image/*';
+const ACCEPT_AUDIO = 'audio/*,.mp3,.m4a,.aac,.wav,.ogg,.opus,.flac';
+const ACCEPT_VIDEO = 'video/*,.mp4,.webm,.mov';
 
 /**
  * أنواع الملفات كما يراها الطالب في التطبيق:
@@ -175,10 +185,20 @@ export const MediaManager: React.FC<{
           </label>
 
           {allowFiles && (
-            <label className="inline-flex cursor-pointer items-center gap-1 rounded-lg bg-slate-900 px-3 py-2 text-[11px] font-bold text-white">
-              {busy ? <><Loader2 className="h-3.5 w-3.5 animate-spin" />{Math.round(progress)}٪</> : <><Upload className="h-3.5 w-3.5" />رفع ملف</>}
-              <input className="sr-only" type="file" accept={ACCEPT} disabled={busy} onChange={(e) => void upload(e)} />
-            </label>
+            <>
+              <label className="inline-flex cursor-pointer items-center gap-1 rounded-lg bg-slate-900 px-3 py-2 text-[11px] font-bold text-white">
+                {busy ? <><Loader2 className="h-3.5 w-3.5 animate-spin" />{Math.round(progress)}٪</> : <><Upload className="h-3.5 w-3.5" />رفع ملف</>}
+                <input className="sr-only" type="file" accept={ACCEPT_DOC} disabled={busy} onChange={(e) => void upload(e)} />
+              </label>
+              <label className="inline-flex cursor-pointer items-center gap-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-[11px] font-bold text-slate-700">
+                <Headphones className="h-3.5 w-3.5" /> صوت
+                <input className="sr-only" type="file" accept={ACCEPT_AUDIO} disabled={busy} onChange={(e) => void upload(e)} />
+              </label>
+              <label className="inline-flex cursor-pointer items-center gap-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-[11px] font-bold text-slate-700">
+                <Video className="h-3.5 w-3.5" /> فيديو
+                <input className="sr-only" type="file" accept={ACCEPT_VIDEO} disabled={busy} onChange={(e) => void upload(e)} />
+              </label>
+            </>
           )}
 
           <button
