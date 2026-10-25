@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { FileText, Loader2, Paperclip, Upload, X } from 'lucide-react';
+import { FileText, Loader2, Paperclip, Trash2, Upload, X } from 'lucide-react';
 import {
   Badge,
   Card,
@@ -156,6 +156,33 @@ export const LibraryPage: React.FC = () => {
       await refreshLibrary();
     } catch {
       setImportNote('تعذّر تغيير حالة النشر — تحقّق من الاتصال بالخادم.');
+    } finally {
+      setBusyId('');
+    }
+  };
+
+  /**
+   * حذف عنصر من المكتبة نهائياً (السجل + الملف من التخزين).
+   *
+   * ليه: لم يكن في المكتبة أي زر حذف، فالعناصر المكرّرة أو الخاطئة كانت تبقى
+   * للأبد ولا سبيل لإزالتها إلا من قاعدة البيانات.
+   */
+  const removeItem = async (row: LibraryRow) => {
+    if (busyId) return;
+    if (!confirm(`حذف «${row.title}» نهائياً؟\nسيُحذف السجل والملف من التخزين ولا يمكن الرجوع.`)) return;
+    setBusyId(row.id);
+    try {
+      const res = await fetch(`${getApiBase()}/api/media/${encodeURIComponent(row.id)}`, {
+        method: 'DELETE',
+        headers: { Accept: 'application/json', 'X-App': 'admin' },
+        credentials: 'include',
+      });
+      if (!res.ok) throw new Error(String(res.status));
+      setImportNote(`تم حذف «${row.title}».`);
+      await refreshLibrary();
+      setMediaVersion((v) => v + 1);
+    } catch {
+      setImportNote('تعذّر الحذف — العنصر قد يكون محفوظاً بصيغة قديمة؛ أعد المحاولة أو أبلغنا.');
     } finally {
       setBusyId('');
     }
@@ -442,7 +469,18 @@ export const LibraryPage: React.FC = () => {
                   </button>
                 </td>
                 <td className="py-2.5 px-3">
-                  {r.isVerifiedCurriculum ? <Badge tone="green">موثَّق</Badge> : <Badge tone="slate">{r.status === 'sample' ? 'تجريبي' : r.status}</Badge>}
+                  <div className="flex items-center gap-1.5">
+                    {r.isVerifiedCurriculum ? <Badge tone="green">موثَّق</Badge> : <Badge tone="slate">{r.status === 'sample' ? 'تجريبي' : r.status}</Badge>}
+                    <button
+                      type="button"
+                      onClick={() => void removeItem(r)}
+                      disabled={busyId !== ''}
+                      title="حذف العنصر نهائياً"
+                      className="rounded-lg border border-rose-200 p-1.5 text-rose-600 hover:bg-rose-50 disabled:opacity-40"
+                    >
+                      {busyId === r.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}

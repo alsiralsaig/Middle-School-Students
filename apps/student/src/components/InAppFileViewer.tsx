@@ -136,7 +136,9 @@ export const InAppFileViewer: React.FC<Props> = ({ file, onClose }) => {
     try {
       const pdfPage = await doc.getPage(page);
       const base = pdfPage.getViewport({ scale: 1 });
-      const available = Math.min(window.innerWidth - 24, 900);
+      /* الصفحة تملأ عرض الشاشة بالكامل: كان فيها هامش ٢٤ بكسل وسقف ٩٠٠ بكسل
+         حتى على الجوال، فكان النص صغيراً. الآن العرض = عرض الجهاز. */
+      const available = zoom === 1 ? window.innerWidth : Math.min(window.innerWidth, 900);
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
       const scale = ((available / base.width) * zoom * dpr) as number;
       const viewport = pdfPage.getViewport({ scale });
@@ -239,8 +241,8 @@ export const InAppFileViewer: React.FC<Props> = ({ file, onClose }) => {
                 </div>
               </div>
             )}
-            <div className={pdfLoading || error ? 'hidden' : 'flex justify-center p-3'}>
-              <canvas ref={canvasRef} className="rounded-lg bg-white shadow-2xl" />
+            <div className={pdfLoading || error ? 'hidden' : `flex justify-center ${zoom === 1 ? 'p-0' : 'p-3'}`}>
+              <canvas ref={canvasRef} className={`bg-white ${zoom === 1 ? '' : 'rounded-lg shadow-2xl'}`} />
             </div>
           </>
         )}

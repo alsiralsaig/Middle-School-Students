@@ -361,7 +361,8 @@ mediaRouter.delete('/media/:id', requireAuth, async (req, res) => {
   if (!allowed) { res.status(403).json({ error: 'غير مخوّل' }); return; }
   try {
     if (asset.pathname) await del(asset.pathname, { token: blobToken(asset.access as Access) });
-    if (asset.ownerType === 'library') await prisma.resource.deleteMany({ where: { id: asset.id } });
+    /* العنصر قد يكون في المكتبة وفي مادة أخرى في الوقت نفسه — نحذف سجل المكتبة دائماً */
+    await prisma.resource.deleteMany({ where: { id: asset.id } });
     await prisma.mediaAsset.delete({ where: { id: asset.id } });
     res.json({ ok: true });
   } catch (error) { res.status(502).json({ error: error instanceof Error ? error.message : 'تعذّر الحذف' }); }
