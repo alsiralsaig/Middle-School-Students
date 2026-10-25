@@ -489,7 +489,7 @@ export const LessonView: React.FC<LessonViewProps> = ({
               <span>طباعة المذكرة</span>
             </button>
 
-            {/* Ask Gemini AI Teacher Chat Button */}
+            {/* زر المعلم الذكي */}
             <button
               onClick={() => setIsChatOpen(true)}
               className="flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-black transition-all cursor-pointer shadow-sm bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-500 hover:to-amber-700 text-slate-950 border border-amber-300 dark:border-amber-500/40 min-h-[44px] shadow-amber-500/20 hover:scale-[1.02] active:scale-[0.98]"
@@ -498,9 +498,6 @@ export const LessonView: React.FC<LessonViewProps> = ({
             >
               <Sparkles className="w-4 h-4 text-slate-950 animate-pulse" />
               <span>اسأل المعلم الذكي</span>
-              <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-slate-950/20 text-slate-950 font-mono font-bold">
-                Gemini
-              </span>
             </button>
 
             {/* Reader Controls Toggle Button */}
@@ -1319,7 +1316,7 @@ export const LessonView: React.FC<LessonViewProps> = ({
         </div>
       )}
 
-      {/* Floating & Pop-up Gemini AI Chat Widget for this lesson */}
+      {/* مساعد الدرس العائم */}
       <div data-ssp-hide-in-focus="true">
       <ChatWidget 
         lesson={lesson} 

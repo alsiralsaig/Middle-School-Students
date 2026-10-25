@@ -63,7 +63,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
     {
       id: 'initial-greeting',
       sender: 'assistant',
-      text: `مرحباً بك يا بطل! 🇸🇩✨\nأنا معلمك الذكي لدرس «**${lesson.title}**» في مادة **${subject.name}**.\n\nتفضل بطرح أي استفسار أو مسألة حول هذا الدرس، وسأشرحها لك خطوة بخطوة بالاستعانة بنموذج Gemini الذكي.`,
+      text: `مرحباً بك يا بطل! 🇸🇩✨\nأنا معلمك الذكي لدرس «**${lesson.title}**» في مادة **${subject.name}**.\n\nتفضل بطرح أي استفسار أو مسألة حول هذا الدرس، وسأشرحها لك خطوة بخطوة.`,
       timestamp: 'الآن',
     },
   ]);
@@ -399,7 +399,7 @@ ${examTipsText}
                       <span className="w-2 h-2 rounded-full bg-indigo-600 animate-bounce [animation-delay:0.2s]"></span>
                       <span className="w-2 h-2 rounded-full bg-sky-600 animate-bounce [animation-delay:0.4s]"></span>
                     </div>
-                    <span>جاري تحليل محتوى الدرس وتوليد الإجابة عبر Gemini...</span>
+                    <span>بجهّز ليك الإجابة…</span>
                   </div>
                 </div>
               )}

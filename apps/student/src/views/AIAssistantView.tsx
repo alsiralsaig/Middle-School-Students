@@ -147,7 +147,7 @@ export const AIAssistantView: React.FC = () => {
     cleanupRecording();
   };
 
-  /** إرسال التسجيل للخادم — Gemini يفهم العامية ويرد بها */
+  /** إرسال الرسالة للخادم — المساعد يفهم العامية ويرد بها */
   const sendVoice = async (blob: Blob) => {
     if (!blob.size) return;
     if (blob.size > 650_000) {

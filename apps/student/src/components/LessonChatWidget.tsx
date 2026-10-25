@@ -384,7 +384,7 @@ ${examTipsText}
                       <span className="w-2 h-2 rounded-full bg-indigo-600 animate-bounce [animation-delay:0.2s]"></span>
                       <span className="w-2 h-2 rounded-full bg-sky-600 animate-bounce [animation-delay:0.4s]"></span>
                     </div>
-                    <span>جاري تحليل محتوى الدرس وتوليد الإجابة بواسطة Gemini...</span>
+                    <span>بجهّز ليك الإجابة…</span>
                   </div>
                 </div>
               )}
