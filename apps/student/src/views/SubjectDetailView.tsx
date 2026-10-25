@@ -374,13 +374,13 @@ export const SubjectDetailView: React.FC<SubjectDetailViewProps> = ({
               key={t.key}
               type="button"
               onClick={() => setTab(t.key)}
-              className={`flex-1 rounded-xl px-0.5 py-2 text-[10px] font-black transition-colors active:scale-95 ${
+              className={`flex-1 rounded-xl px-0.5 py-2 text-[10px] font-black transition-colors active:scale-95 whitespace-nowrap ${
                 active ? 'text-white shadow' : 'text-slate-600 dark:text-slate-300'
               }`}
               style={active ? { backgroundColor: activeBg } : undefined}
             >
               <span className="block text-[12px] leading-none">{t.emoji}</span>
-              <span className="mt-1 block">{t.label}</span>
+              <span className="mt-1 block whitespace-nowrap">{t.label}</span>
             </button>
           );
         })}

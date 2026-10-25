@@ -98,7 +98,7 @@ export const Header: React.FC<HeaderProps> = ({
             <GraduationCap className="w-6 h-6" />
           </div>
           <div className="min-w-0 text-right">
-            <span className="text-sm sm:text-lg font-bold tracking-tight text-white block truncate max-w-[40vw] sm:max-w-none">
+            <span className="text-sm sm:text-lg font-bold tracking-tight text-white block truncate whitespace-nowrap max-w-[46vw] sm:max-w-none">
               <span className="sm:hidden">{language === 'en' ? 'Student Platform' : 'الطالب السوداني'}</span>
               <span className="hidden sm:inline">{language === 'en' ? 'Smart Sudanese Student Platform' : 'منصة الطالب السوداني الذكية'}</span>
             </span>
@@ -109,7 +109,7 @@ export const Header: React.FC<HeaderProps> = ({
         </button>
 
         {/* Zone 2: Navigation Links */}
-        <nav className="hidden xl:flex items-center gap-5 text-sm font-medium text-slate-200">
+        <nav className="hidden xl:flex min-w-0 items-center gap-4 text-sm font-medium text-slate-200">
           {navLinks.map((link) => {
             const isActive = currentView === link.view;
             return (
