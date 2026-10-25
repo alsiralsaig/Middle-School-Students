@@ -63,7 +63,12 @@ export const LibraryPage: React.FC = () => {
   const [items, setItems] = useState<LibraryRow[] | null>(null);
   /** يزيد مع كل إضافة/حذف حتى تتحدّث لوحة «آخر ما أُضيف» فوراً */
   const [mediaVersion, setMediaVersion] = useState(0);
-  const [summary, setSummary] = useState<{ total: number; verified: number; downloads: number; published?: number; hidden?: number; interactive?: number } | null>(null);
+  const [summary, setSummary] = useState<{
+    total: number; verified: number; downloads: number;
+    published?: number; hidden?: number; interactive?: number;
+    pastExams?: number; textbooks?: number; notes?: number;
+    lessonQuizzes?: number; exams?: number;
+  } | null>(null);
   const [subjects, setSubjects] = useState<SubjectOption[]>([]);
   const [offline, setOffline] = useState(false);
   const [category, setCategory] = useState<ResourceCategory>('all');
@@ -93,7 +98,12 @@ export const LibraryPage: React.FC = () => {
       if (!res.ok) throw new Error(String(res.status));
       const data = await res.json() as {
         resources: LibraryRow[];
-        summary: { total: number; verified: number; downloads: number; published?: number; hidden?: number; interactive?: number };
+        summary: {
+          total: number; verified: number; downloads: number;
+          published?: number; hidden?: number; interactive?: number;
+          pastExams?: number; textbooks?: number; notes?: number;
+          lessonQuizzes?: number; exams?: number;
+        };
       };
       setItems(data.resources);
       setSummary(data.summary);
@@ -315,16 +325,32 @@ export const LibraryPage: React.FC = () => {
 
       {summary && (
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-          {[
-            ['إجمالي العناصر', summary.total],
-            ['منشور للطلاب', summary.published ?? '—'],
-            ['غير منشور', summary.hidden ?? '—'],
-            ['اختبارات تفاعلية', summary.interactive ?? '—'],
-            ['مرّات التحميل', summary.downloads],
-          ].map(([label, value]) => (
-            <div key={label as string} className="bg-white border border-slate-200 rounded-2xl p-3">
-              <div className="text-lg font-black text-navy-800 nums">{value}</div>
-              <div className="text-[11px] text-slate-500">{label}</div>
+          {([
+            { label: 'إجمالي العناصر', value: summary.total, hint: 'كل ما في المكتبة' },
+            { label: 'منشور للطلاب', value: summary.published ?? '—', hint: 'يظهر في تطبيق الطالب' },
+            {
+              label: 'غير منشور',
+              value: summary.hidden ?? '—',
+              hint: summary.hidden === 0 ? 'لا شيء مخفي — الكل ظاهر' : 'مسحوب من التطبيق',
+            },
+            {
+              label: 'كتب مدرسية',
+              value: summary.textbooks ?? '—',
+              hint: 'روابط PDF للكتب الرسمية',
+            },
+            {
+              label: 'اختبارات تفاعلية',
+              value: summary.interactive ?? '—',
+              hint:
+                summary.lessonQuizzes != null
+                  ? `+ ${summary.lessonQuizzes} اختباراً داخل الدروس · ${summary.pastExams ?? 0} امتحاناً سابقاً`
+                  : 'روابط اختبارات في المكتبة',
+            },
+          ] as Array<{ label: string; value: number | string; hint: string }>).map((c) => (
+            <div key={c.label} className="bg-white border border-slate-200 rounded-2xl p-3">
+              <div className="text-lg font-black text-navy-800 nums">{c.value}</div>
+              <div className="text-[11px] text-slate-500">{c.label}</div>
+              <div className="mt-0.5 text-[10px] leading-tight text-slate-400">{c.hint}</div>
             </div>
           ))}
         </div>

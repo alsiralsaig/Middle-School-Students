@@ -39,7 +39,12 @@ adminDataRouter.get('/library', requireAdmin, async (_req, res) => {
       include: { subject: { select: { id: true, name: true } } },
     });
 
-    res.json({
+    const [lessonQuizCount, examCount] = await Promise.all([
+        prisma.exam.count({ where: { status: 'lesson-quiz', subject: { status: { not: 'archived' } } } }),
+        prisma.exam.count({ where: { subject: { status: { not: 'archived' } } } }),
+      ]);
+      const counts = { lessonQuizzes: lessonQuizCount, exams: examCount };
+      res.json({
       resources: resources.map((r) => ({
         id: r.id,
         title: r.title,
@@ -70,7 +75,16 @@ adminDataRouter.get('/library', requireAdmin, async (_req, res) => {
         downloads: resources.reduce((a, r) => a + r.downloadCount, 0),
         published: resources.filter((r) => r.isPublished).length,
         hidden: resources.filter((r) => !r.isPublished).length,
+        /*
+         * «اختبارات تفاعلية» في المكتبة وحدها لا تعني عدد الاختبارات المتاحة
+         * للطالب: بنك الدروس فيه مئات الاختبارات مخزّنة في جدول الامتحانات لا
+         * في المكتبة. لذلك نرجّع التفصيل كاملاً حتى لا يبدو الرقم ١٨ ناقصاً.
+         */
         interactive: resources.filter((r) => r.category === 'interactive_exams').length,
+        pastExams: resources.filter((r) => r.category === 'past_exams').length,
+        textbooks: resources.filter((r) => r.category === 'textbook').length,
+        notes: resources.filter((r) => r.category === 'notes').length,
+        ...counts,
       },
     });
   } catch (e) {
