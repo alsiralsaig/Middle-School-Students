@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { ArrowRight, ChevronLeft, ChevronRight, Download, ExternalLink, Loader2, Maximize2, Minus, MoveVertical, Plus } from 'lucide-react';
+import { ArrowRight, ChevronLeft, ChevronRight, Download, ExternalLink, Loader2, Maximize2, Minus, MoveVertical, Plus, RotateCcw } from 'lucide-react';
 import { getApiBase } from '../utils/serverUrl';
 import { formatBytes, getOfflineObjectUrl, guessMime } from '../utils/offlineFiles';
 import { loadPdfEngine } from '../utils/pdfEngine';
@@ -60,6 +60,12 @@ export const InAppFileViewer: React.FC<Props> = ({ file, onClose }) => {
   /* وضع العرض: «عرض» = الصفحة بعرض الشاشة | «صفحة» = الصفحة كاملة في الشاشة بلا فراغ */
   const [fit, setFit] = useState<'width' | 'page'>('width');
   const wrapRef = useRef<HTMLDivElement | null>(null);
+  /** مهمة الرسم الحالية — pdf.js يرفض رسمين متزامنين على نفس الـcanvas */
+  const renderTaskRef = useRef<{ cancel?: () => void } | null>(null);
+  const paintSeq = useRef(0);
+  /** مفتاح آخر محاولة تلقائية — نعيد المحاولة مرة واحدة فقط لكل صفحة/مقاس */
+  const autoRetryKey = useRef('');
+  const paintRef = useRef<() => void>(() => {});
   const [box, setBox] = useState({ w: 0, h: 0 });
   const [pdfLoading, setPdfLoading] = useState(mime === 'application/pdf');
 
@@ -136,7 +142,12 @@ export const InAppFileViewer: React.FC<Props> = ({ file, onClose }) => {
   useEffect(() => {
     const el = wrapRef.current;
     if (!el) return;
-    const measure = () => setBox({ w: el.clientWidth, h: el.clientHeight });
+    const measure = () =>
+      setBox((prev) =>
+        prev.w === el.clientWidth && prev.h === el.clientHeight
+          ? prev
+          : { w: el.clientWidth, h: el.clientHeight },
+      );
     measure();
     const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(measure) : null;
     ro?.observe(el);
@@ -149,13 +160,31 @@ export const InAppFileViewer: React.FC<Props> = ({ file, onClose }) => {
     };
   }, [isPdf]);
 
-  /** رسم الصفحة الحالية */
+  /**
+   * رسم الصفحة الحالية.
+   *
+   * كان فيه خطأ حقيقي: كل تغيير في مقاس النافذة أو التكبير يبدأ رسماً جديداً
+   * بينما الرسم السابق لسه شغّال، وpdf.js يرفض ذلك ويرمي
+   * «Cannot use the same canvas during multiple render() operations»
+   * فتظهر رسالة «تعذّر رسم الصفحة» — وهي اللي كانت بتحصل مع الكتب المصوّرة
+   * (صفحاتها صور كبيرة فتأخذ وقتاً أطول في الرسم). الآن: كل رسم جديد يلغي
+   * اللي قبله أولاً، والإلغاء لا يُحسب خطأً.
+   */
   const paint = useCallback(async () => {
     const doc = pdfRef.current;
     const canvas = canvasRef.current;
     if (!doc || !canvas) return;
+
+    const seq = ++paintSeq.current;
+    if (renderTaskRef.current) {
+      try { renderTaskRef.current.cancel?.(); } catch { /* تجاهل */ }
+      renderTaskRef.current = null;
+    }
+
     try {
       const pdfPage = await doc.getPage(page);
+      if (seq !== paintSeq.current) return;
+
       const base = pdfPage.getViewport({ scale: 1 });
       const availW = box.w || window.innerWidth;
       const availH = box.h || window.innerHeight * 0.7;
@@ -164,19 +193,44 @@ export const InAppFileViewer: React.FC<Props> = ({ file, onClose }) => {
         ? Math.min(availW / base.width, availH / base.height)
         : availW / base.width;
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      const scale = (fitScale * zoom * dpr) as number;
+      let scale = fitScale * zoom * dpr;
+
+      /* سقف لعدد بكسلات اللوحة: على الجوالات الضعيفة الرسم بحجم ضخم يفرغ الذاكرة */
+      const MAX_PIXELS = 9_000_000;
+      const pixels = base.width * base.height * scale * scale;
+      if (pixels > MAX_PIXELS) scale = scale * Math.sqrt(MAX_PIXELS / pixels);
+
       const viewport = pdfPage.getViewport({ scale });
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
-      canvas.width = viewport.width;
-      canvas.height = viewport.height;
-      canvas.style.width = `${viewport.width / dpr}px`;
-      canvas.style.height = `${viewport.height / dpr}px`;
-      await pdfPage.render({ canvasContext: ctx, viewport, canvas }).promise;
-    } catch {
+      canvas.width = Math.floor(viewport.width);
+      canvas.height = Math.floor(viewport.height);
+      canvas.style.width = `${Math.floor(viewport.width / dpr)}px`;
+      canvas.style.height = `${Math.floor(viewport.height / dpr)}px`;
+
+      const task = pdfPage.render({ canvasContext: ctx, viewport, canvas });
+      renderTaskRef.current = task;
+      await task.promise;
+      if (seq !== paintSeq.current) return;
+      renderTaskRef.current = null;
+      setError('');
+    } catch (e) {
+      const name = (e as { name?: string } | null)?.name ?? '';
+      /* إلغاء مقصود (مستخدم غيّر الصفحة أو المقاس) — ليس خطأً */
+      if (name === 'RenderingCancelledException' || seq !== paintSeq.current) return;
+      console.error('[viewer] render failed', e);
+      /* محاولة تلقائية واحدة قبل إظهار الرسالة — تفشل أحياناً مرة واحدة لأسباب مؤقتة */
+      const key = `${page}|${fit}|${zoom}`;
+      if (autoRetryKey.current !== key) {
+        autoRetryKey.current = key;
+        window.setTimeout(() => paintRef.current(), 400);
+        return;
+      }
       setError('تعذّر رسم الصفحة. جرّب زر التنزيل.');
     }
   }, [page, zoom, fit, box.w, box.h]);
+
+  paintRef.current = () => { void paint(); };
 
   useEffect(() => {
     if (isPdf && !pdfLoading && numPages > 0) void paint();
@@ -248,6 +302,16 @@ export const InAppFileViewer: React.FC<Props> = ({ file, onClose }) => {
               <div className="flex h-full flex-col items-center justify-center gap-4 px-6 text-center">
                 <p className="text-sm font-bold text-rose-300">{error}</p>
                 <div className="flex flex-wrap justify-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setError('');
+                      void paint();
+                    }}
+                    className="inline-flex items-center gap-2 rounded-xl bg-amber-400 px-4 py-2.5 text-sm font-black text-slate-950"
+                  >
+                    <RotateCcw className="h-4 w-4" /> أعد المحاولة
+                  </button>
                   <a
                     href={src}
                     target="_blank"
