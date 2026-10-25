@@ -11,7 +11,6 @@ import {
   FileText, 
   CheckSquare, 
   Sparkles, 
-  User, 
   Menu, 
   X,
   GraduationCap,
@@ -34,7 +33,7 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({ 
   currentView, 
   onNavigate, 
-  completedCount,
+  completedCount: _completedCount,
   bookmarkedCount = 0,
   isDarkMode: _isDarkMode,
   onToggleDarkMode: _onToggleDarkMode
@@ -169,24 +168,6 @@ export const Header: React.FC<HeaderProps> = ({
               {activeAccount.name.split(' ')[0]}
             </span>
             <Users className="w-3.5 h-3.5 text-slate-400 hidden sm:block" />
-          </button>
-
-          {/* Student Dashboard Action Button */}
-          <button
-            onClick={() => handleNavClick('student-dashboard')}
-            className={`flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-xl transition-all cursor-pointer border ${
-              currentView === 'student-dashboard'
-                ? 'bg-amber-400 text-slate-950 border-amber-300 shadow-md font-bold'
-                : 'bg-[#162D4A] hover:bg-[#1E3A60] text-white border-[#27446C]'
-            }`}
-          >
-            <User className="w-4 h-4 text-amber-400" />
-            <span className="hidden md:inline">{t('dashboard')}</span>
-            {completedCount > 0 && (
-              <span className="bg-amber-500 text-slate-950 text-[10px] font-bold px-1.5 py-0.5 rounded-full">
-                {completedCount}
-              </span>
-            )}
           </button>
 
           {/* Mobile Hamburger Toggle */}

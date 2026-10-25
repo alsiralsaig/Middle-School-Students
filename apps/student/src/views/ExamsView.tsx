@@ -73,8 +73,9 @@ export const ExamsView: React.FC = () => {
               status: e.status,
               attachments: e.attachments || [],
             }))
-            // اختباران في القاعدة محتواهما مجرد كلمة («انجليزي») — نستثنيهما
-            .filter((e) => e.questionsCount >= 3)
+            // نستثني: (١) اختبارين محتواهما مجرد كلمة «انجليزي»،
+            // (٢) خمسة اختبارات عنوانها «الصف الثاني المتوسط» وهي لصفّ آخر.
+            .filter((e) => e.questionsCount >= 3 && !/الثاني المتوسط/.test(e.title))
             .sort((a, b) => b.questionsCount - a.questionsCount),
         );
       })
