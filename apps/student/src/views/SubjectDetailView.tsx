@@ -100,8 +100,11 @@ export const SubjectDetailView: React.FC<SubjectDetailViewProps> = ({
    * عنصراً (كتب، مذكرات، امتحانات سابقة) موزّعة على المواد.
    */
   const [libraryItems, setLibraryItems] = useState<
-    Array<{ id: string; title: string; url: string; category: string; fileType: string }>
+    Array<{ id: string; title: string; url: string; category: string; fileType: string; hasBody: boolean }>
   >([]);
+  /** مذكرة تُقرأ داخل التطبيق (موارد عندها نص محفوظ بلا ملف) */
+  const [noteView, setNoteView] = useState<{ title: string; body: string } | null>(null);
+  const [noteLoadingId, setNoteLoadingId] = useState('');
   const [quizLoadingId, setQuizLoadingId] = useState('');
 
   const refreshOffline = useCallback(async () => {
@@ -117,13 +120,14 @@ export const SubjectDetailView: React.FC<SubjectDetailViewProps> = ({
         if (!alive) return;
         const rows = (resources || [])
           .filter((r) => String(r.subjectId || '') === subject.id)
-          .filter((r) => typeof r.filePath === 'string' && /^https?:/i.test(String(r.filePath)))
+          .filter((r) => r.hasBody === true || (typeof r.filePath === 'string' && /^https?:/i.test(String(r.filePath))))
           .map((r) => ({
             id: String(r.id),
             title: String(r.title || 'ملف'),
-            url: String(r.filePath),
+            url: typeof r.filePath === 'string' && /^https?:/i.test(r.filePath) ? r.filePath : '',
             category: String(r.category || ''),
             fileType: String(r.fileType || ''),
+            hasBody: r.hasBody === true,
           }));
         setLibraryItems(rows);
       })
@@ -195,6 +199,7 @@ export const SubjectDetailView: React.FC<SubjectDetailViewProps> = ({
     // مكتبة المذكرات والكتب المرفوعة من الإدارة (ندمج بلا تكرار بالعنوان)
     const seen = new Set(books.map((b) => b.title.trim()));
     for (const r of libraryItems) {
+      if (!r.url) continue;
       const title = r.title.trim();
       if (seen.has(title)) continue;
       seen.add(title);
@@ -270,6 +275,28 @@ export const SubjectDetailView: React.FC<SubjectDetailViewProps> = ({
   const handleRemove = async (url: string) => {
     await removeOfflineFile(url);
     await refreshOffline();
+  };
+
+  /** المذكرات النصية (body) — تُقرأ داخل التطبيق بلا ملف ولا إنترنت بعد التحميل */
+  const noteItems = useMemo(
+    () => libraryItems.filter((r) => r.hasBody && !/exam|اختبار|امتحان/i.test(r.category + ' ' + r.title)),
+    [libraryItems],
+  );
+
+  const openNote = async (item: { id: string; title: string }) => {
+    setNoteLoadingId(item.id);
+    try {
+      const res = await fetch(`${resolveFileUrl(`/api/resources/${item.id}`)}?t=${Date.now()}`, {
+        headers: { Accept: 'application/json' },
+      });
+      const data = (await res.json().catch(() => null)) as { resource?: { body?: string | null } } | null;
+      const body = data?.resource?.body || '';
+      setNoteView({ title: item.title, body: body || 'النص لسه ما جاهز — جرّب تفتحه بعد قليل.' });
+    } catch {
+      setNoteView({ title: item.title, body: 'تعذّر تحميل النص — تأكد من الاتصال بالإنترنت.' });
+    } finally {
+      setNoteLoadingId('');
+    }
   };
 
   const renderFiles = (files: ViewerFile[], emptyText: string) => {
@@ -369,7 +396,39 @@ export const SubjectDetailView: React.FC<SubjectDetailViewProps> = ({
       {tab === 'books' && (
         <section className="space-y-2.5">
           <h2 className="px-1 text-[13px] font-black text-slate-900 dark:text-white">كتب ومذكرات {subject.name}</h2>
-          {renderFiles(bookFiles, 'ما في كتب أو مذكرات مرفوعة للمادة دي حالياً.')}
+          {noteItems.length > 0 && (
+            <>
+              <h2 className="px-1 pt-2 text-[13px] font-black text-slate-900 dark:text-white">
+                مذكرات وملخصات {subject.name}
+              </h2>
+              <div className="space-y-2.5">
+                {noteItems.map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => void openNote(item)}
+                    disabled={noteLoadingId === item.id}
+                    className="flex w-full items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-3.5 text-right active:scale-[0.99] disabled:opacity-60 dark:border-[#1C3A62] dark:bg-[#0D1F35]"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate text-[13px] font-bold text-slate-900 dark:text-white">{item.title}</p>
+                      <p className="mt-0.5 text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                        {noteLoadingId === item.id ? 'بنجهّز المذكرة…' : 'مذكرة تُقرأ داخل التطبيق'}
+                      </p>
+                    </div>
+                    <BookOpen className="h-5 w-5 shrink-0 text-blue-700 dark:text-amber-400" />
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+
+          {renderFiles(
+            bookFiles,
+            noteItems.length > 0
+              ? 'ما في كتاب مدرسي مرفوع للمادة دي — بس المذكرات فوق جاهزة للقراءة.'
+              : 'ما في كتب مرفوعة للمادة دي حالياً. تقدر تذاكر من الدروس المشروحة والتدريبات.',
+          )}
         </section>
       )}
 
