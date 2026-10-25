@@ -343,7 +343,8 @@ export const SubjectDetailView: React.FC<SubjectDetailViewProps> = ({
               key={`${absolute}-${i}`}
               title={f.title}
               subtitle={f.sizeLabel || undefined}
-              badge={fileBadge(mime)}
+              badge={f.kind === 'link' ? 'رابط' : fileBadge(mime)}
+              link={f.kind === 'link'}
               accent={visual.accent}
               offline={offlineUrls.has(absolute)}
               downloading={progress[absolute] !== undefined}
@@ -353,7 +354,7 @@ export const SubjectDetailView: React.FC<SubjectDetailViewProps> = ({
                   ? window.open(resolveFileUrl(f.url), '_blank', 'noopener,noreferrer')
                   : setViewing(f)
               }
-              onDownload={() => void handleDownload(f)}
+              onDownload={f.kind === 'link' ? undefined : () => void handleDownload(f)}
             />
           );
         })}

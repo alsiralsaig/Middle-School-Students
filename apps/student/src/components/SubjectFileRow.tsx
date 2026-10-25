@@ -16,6 +16,8 @@ interface Props {
   progress?: number;
   onOpen: () => void;
   onDownload?: () => void;
+  /** رابط خارجي (اختبار تفاعلي) — لا تحميل ولا حفظ بدون نت */
+  link?: boolean;
   onRemove?: () => void;
 }
 
@@ -30,6 +32,7 @@ export const SubjectFileRow: React.FC<Props> = ({
   onOpen,
   onDownload,
   onRemove,
+  link = false,
 }) => {
   return (
     <div className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-3.5 dark:border-[#1C3A62] dark:bg-[#0D1F35]">
@@ -59,10 +62,10 @@ export const SubjectFileRow: React.FC<Props> = ({
           onClick={onOpen}
           className="min-h-[42px] rounded-xl bg-emerald-500 px-4 text-[13px] font-black text-white active:scale-95"
         >
-          فتح
+          {link ? 'فتح الرابط' : 'فتح'}
         </button>
 
-        {onDownload && !offline && (
+        {onDownload && !offline && !link && (
           <button
             type="button"
             onClick={onDownload}
