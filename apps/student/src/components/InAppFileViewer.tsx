@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { ArrowRight, ChevronLeft, ChevronRight, Download, ExternalLink, Loader2, Minus, Plus } from 'lucide-react';
+import { ArrowRight, ChevronLeft, ChevronRight, Download, ExternalLink, Loader2, Maximize2, Minus, MoveVertical, Plus } from 'lucide-react';
 import { getApiBase } from '../utils/serverUrl';
 import { formatBytes, getOfflineObjectUrl, guessMime } from '../utils/offlineFiles';
 import { loadPdfEngine } from '../utils/pdfEngine';
@@ -57,6 +57,10 @@ export const InAppFileViewer: React.FC<Props> = ({ file, onClose }) => {
   const [numPages, setNumPages] = useState(0);
   const [page, setPage] = useState(1);
   const [zoom, setZoom] = useState(1);
+  /* وضع العرض: «عرض» = الصفحة بعرض الشاشة | «صفحة» = الصفحة كاملة في الشاشة بلا فراغ */
+  const [fit, setFit] = useState<'width' | 'page'>('width');
+  const wrapRef = useRef<HTMLDivElement | null>(null);
+  const [box, setBox] = useState({ w: 0, h: 0 });
   const [pdfLoading, setPdfLoading] = useState(mime === 'application/pdf');
 
   const isPdf = mime === 'application/pdf' && !externalPage;
@@ -128,6 +132,23 @@ export const InAppFileViewer: React.FC<Props> = ({ file, onClose }) => {
     };
   }, [isPdf, src]);
 
+  /** قياس مساحة العرض — عشان «ملء الصفحة» تعرف طول الشاشة وتتكيّف مع الدوران */
+  useEffect(() => {
+    const el = wrapRef.current;
+    if (!el) return;
+    const measure = () => setBox({ w: el.clientWidth, h: el.clientHeight });
+    measure();
+    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(measure) : null;
+    ro?.observe(el);
+    window.addEventListener('orientationchange', measure);
+    window.addEventListener('resize', measure);
+    return () => {
+      ro?.disconnect();
+      window.removeEventListener('orientationchange', measure);
+      window.removeEventListener('resize', measure);
+    };
+  }, [isPdf]);
+
   /** رسم الصفحة الحالية */
   const paint = useCallback(async () => {
     const doc = pdfRef.current;
@@ -136,11 +157,14 @@ export const InAppFileViewer: React.FC<Props> = ({ file, onClose }) => {
     try {
       const pdfPage = await doc.getPage(page);
       const base = pdfPage.getViewport({ scale: 1 });
-      /* الصفحة تملأ عرض الشاشة بالكامل: كان فيها هامش ٢٤ بكسل وسقف ٩٠٠ بكسل
-         حتى على الجوال، فكان النص صغيراً. الآن العرض = عرض الجهاز. */
-      const available = zoom === 1 ? window.innerWidth : Math.min(window.innerWidth, 900);
+      const availW = box.w || window.innerWidth;
+      const availH = box.h || window.innerHeight * 0.7;
+      /* «عرض»: الصفحة بعرض الشاشة (تمرير رأسي) | «صفحة»: الصفحة كلها داخل الشاشة */
+      const fitScale = fit === 'page'
+        ? Math.min(availW / base.width, availH / base.height)
+        : availW / base.width;
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      const scale = ((available / base.width) * zoom * dpr) as number;
+      const scale = (fitScale * zoom * dpr) as number;
       const viewport = pdfPage.getViewport({ scale });
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
@@ -152,7 +176,7 @@ export const InAppFileViewer: React.FC<Props> = ({ file, onClose }) => {
     } catch {
       setError('تعذّر رسم الصفحة. جرّب زر التنزيل.');
     }
-  }, [page, zoom]);
+  }, [page, zoom, fit, box.w, box.h]);
 
   useEffect(() => {
     if (isPdf && !pdfLoading && numPages > 0) void paint();
@@ -211,7 +235,7 @@ export const InAppFileViewer: React.FC<Props> = ({ file, onClose }) => {
       </header>
 
       {/* المحتوى */}
-      <div className="relative flex-1 overflow-auto overscroll-contain bg-[#0A1626]">
+      <div ref={wrapRef} className="relative flex-1 overflow-auto overscroll-contain bg-[#0A1626]">
         {isPdf && (
           <>
             {pdfLoading && (
@@ -241,8 +265,8 @@ export const InAppFileViewer: React.FC<Props> = ({ file, onClose }) => {
                 </div>
               </div>
             )}
-            <div className={pdfLoading || error ? 'hidden' : `flex justify-center ${zoom === 1 ? 'p-0' : 'p-3'}`}>
-              <canvas ref={canvasRef} className={`bg-white ${zoom === 1 ? '' : 'rounded-lg shadow-2xl'}`} />
+            <div className={pdfLoading || error ? 'hidden' : `flex justify-center p-0 ${fit === 'page' ? 'min-h-full items-center' : ''}`}>
+              <canvas ref={canvasRef} className="bg-white" />
             </div>
           </>
         )}
@@ -321,6 +345,18 @@ export const InAppFileViewer: React.FC<Props> = ({ file, onClose }) => {
               <Minus className="h-4 w-4" />
             </button>
             <span className="w-11 text-center text-[11px] font-bold text-slate-300">{Math.round(zoom * 100)}٪</span>
+            <button
+              type="button"
+              onClick={() => {
+                setFit((f) => (f === 'page' ? 'width' : 'page'));
+                setZoom(1);
+              }}
+              className="inline-flex min-h-[40px] items-center gap-1 rounded-lg border border-[#24476F] bg-[#122844] px-2.5 text-[11px] font-bold text-slate-100 active:scale-95"
+              aria-label="طريقة العرض"
+            >
+              {fit === 'page' ? <Maximize2 className="h-3.5 w-3.5" /> : <MoveVertical className="h-3.5 w-3.5" />}
+              {fit === 'page' ? 'ملء العرض' : 'ملء الصفحة'}
+            </button>
             <button
               type="button"
               onClick={() => setZoom((z) => Math.min(3, +(z + 0.2).toFixed(2)))}
