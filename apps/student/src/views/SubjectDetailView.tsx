@@ -28,6 +28,7 @@ import {
   saveOfflineFile,
   type OfflineFileMeta,
 } from '../utils/offlineFiles';
+import { isInAppPdf, viewerKindFor, viewerMimeFor } from '../utils/fileKind';
 
 interface SubjectDetailViewProps {
   subject: Subject;
@@ -180,9 +181,10 @@ export const SubjectDetailView: React.FC<SubjectDetailViewProps> = ({
         .map<ViewerFile>((r) => ({
           title: r.title,
           url: r.url,
-          // الروابط الخارجية (اختبارات تفاعلية) ما تنفع عارض PDF — نعلّمها «link»
-          mimeType: /^https?:\/\//i.test(r.url) ? null : 'application/pdf',
-          kind: /^https?:\/\//i.test(r.url) ? 'link' : 'document',
+          /* ملف PDF مرفوع على التخزين يُقرأ داخل التطبيق، وصفحة درايف أو
+             اختبار تفاعلي يفتح في المتصفح. الحكم على الامتداد لا على البروتوكول. */
+          mimeType: viewerMimeFor(r.url, r.fileType),
+          kind: viewerKindFor(r.url, r.fileType),
         })),
     [libraryItems],
   );
@@ -235,12 +237,13 @@ export const SubjectDetailView: React.FC<SubjectDetailViewProps> = ({
       const title = r.title.trim();
       if (seen.has(title)) continue;
       seen.add(title);
+      const inApp = isInAppPdf(r.url, r.fileType);
       books.push({
         title,
         url: r.url,
-        mimeType: /^https?:\/\//i.test(r.url) ? null : 'application/pdf',
-        kind: /^https?:\/\//i.test(r.url) ? 'link' : 'document',
-        sizeLabel: /^https?:\/\//i.test(r.url) ? 'رابط خارجي' : r.category === 'textbook' ? 'كتاب' : undefined,
+        mimeType: inApp ? 'application/pdf' : null,
+        kind: inApp ? 'document' : 'link',
+        sizeLabel: inApp ? (r.category === 'textbook' ? 'كتاب' : 'PDF') : 'رابط خارجي',
       });
     }
 

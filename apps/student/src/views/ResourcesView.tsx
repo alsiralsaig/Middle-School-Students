@@ -332,7 +332,14 @@ export const ResourcesView: React.FC<ResourcesViewProps> = ({
                       title="افتح الاختبار التفاعلي في المتصفح — تصحيح ودرجة فورية"
                     >
                       <ExternalLink className="w-4 h-4" />
-                      <span>ابدأ الاختبار</span>
+                      {/* التسمية حسب نوع العنصر: كتاب ⟶ قراءة، امتحان ⟶ ابدأ */}
+                      <span>
+                        {item.category === 'textbook'
+                          ? 'قراءة الكتاب'
+                          : item.category === 'past_exams'
+                          ? 'ابدأ الاختبار'
+                          : 'فتح الرابط'}
+                      </span>
                     </a>
                     <button
                       type="button"
