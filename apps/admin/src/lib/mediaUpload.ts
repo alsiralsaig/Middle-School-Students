@@ -167,6 +167,12 @@ export async function listMediaAssets(ownerType: MediaOwnerType, ownerId: string
   return (await request<{ assets: MediaAsset[] }>(`/api/media?${q}`)).assets;
 }
 
+/** آخر ما أُضيف من كل الأقسام (مادة/وحدة/درس/امتحان/مكتبة) — للإدارة */
+export async function listRecentMedia(limit = 30) {
+  const q = new URLSearchParams({ limit: String(limit) });
+  return (await request<{ assets: Array<MediaAsset & { ownerLabel?: string }> }>(`/api/admin/media/recent?${q}`)).assets;
+}
+
 export async function addMediaLink(ownerType: MediaOwnerType, ownerId: string, title: string, url: string, category?: string) {
   return (
     await request<{ asset: MediaAsset }>('/api/media/links', {

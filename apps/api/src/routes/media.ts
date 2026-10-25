@@ -223,6 +223,46 @@ mediaRouter.get('/media', requireAuth, async (req, res) => {
   res.json({ assets: assets.map(mediaAssetDto) });
 });
 
+/**
+ * «آخر ما أُضيف» عبر النظام كله — للإدارة فقط.
+ *
+ * ليه: المعلم يرفع رابطاً على وحدة أو درس ثم يسأل «وين راح الرابط؟» لأن القائمة
+ * كانت داخل قسم واحد فقط ولا توجد شاشة تجمع الجديد. هنا تُرجَع آخر العناصر من
+ * كل الأقسام مع اسم القسم (المادة/الوحدة/الدرس) فيبان مصير كل رابط.
+ */
+mediaRouter.get('/admin/media/recent', requireAdmin, async (req, res) => {
+  try {
+    const limit = Math.min(Math.max(Number(req.query.limit) || 30, 1), 100);
+    const assets = await prisma.mediaAsset.findMany({ orderBy: { createdAt: 'desc' }, take: limit });
+    const ids = (type: string) => assets.filter((a) => a.ownerType === type).map((a) => a.ownerId);
+    const [subjects, units, lessons] = await Promise.all([
+      prisma.subject.findMany({ where: { id: { in: ids('subject') } }, select: { id: true, name: true } }),
+      prisma.unit.findMany({ where: { id: { in: ids('unit') } }, select: { id: true, title: true } }),
+      prisma.lesson.findMany({ where: { id: { in: ids('lesson') } }, select: { id: true, title: true } }),
+    ]);
+    const nameOf = new Map<string, string>([
+      ...subjects.map((s) => [`subject:${s.id}`, s.name] as [string, string]),
+      ...units.map((u) => [`unit:${u.id}`, u.title] as [string, string]),
+      ...lessons.map((l) => [`lesson:${l.id}`, l.title] as [string, string]),
+      ['library:shared-library', 'المكتبة المشتركة'],
+    ]);
+    const label: Record<string, string> = {
+      subject: 'مادة', unit: 'وحدة', lesson: 'درس', exam: 'امتحان',
+      library: 'مكتبة', 'interactive-lesson': 'درس تفاعلي',
+    };
+    res.setHeader('Cache-Control', 'private, no-store');
+    res.json({
+      assets: assets.map((a) => ({
+        ...mediaAssetDto(a),
+        ownerLabel: `${label[a.ownerType] || a.ownerType}: ${nameOf.get(`${a.ownerType}:${a.ownerId}`) || a.ownerId}`,
+      })),
+    });
+  } catch (error) {
+    console.error('[media recent]', error);
+    res.status(500).json({ error: 'تعذّر تحميل آخر الوسائط' });
+  }
+});
+
 mediaRouter.get('/media/:id/content', requireAuth, async (req, res) => {
   const user = currentUser(req);
   const asset = await prisma.mediaAsset.findUnique({ where: { id: req.params.id } });

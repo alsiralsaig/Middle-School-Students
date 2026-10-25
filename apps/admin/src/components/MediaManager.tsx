@@ -95,9 +95,15 @@ export const MediaManager: React.FC<{
 
   const link = async (e: React.FormEvent) => {
     e.preventDefault();
+    /* تحقّق صريح بدل الاعتماد على `required`/`type=url` — متصفح أندرويد داخل
+       التطبيق لا يُظهر فقاعة الخطأ أحياناً فيبدو الزر «ما يعمل». */
+    const t = linkTitle.trim();
+    const u = linkUrl.trim();
+    if (!t) { setError('اكتب عنوان الرابط أولاً (مثال: اختبار الوحدة الأولى).'); return; }
+    if (!/^https?:\/\//i.test(u)) { setError('الرابط لازم يبدأ بـ https:// — انسخه كاملاً من المتصفح.'); return; }
     setBusy(true); setError('');
     try {
-      const saved = await addMediaLink(ownerType, ownerId, linkTitle, linkUrl, category);
+      const saved = await addMediaLink(ownerType, ownerId, t, u, category);
       setLinkMode(false); setPicked('');
       setNotice(`تم حفظ الرابط «${saved.title}» — ظاهر الآن في قائمة الوسائط أدناه${ownerType === 'lesson' ? ' وفي تبويب المرفقات داخل الدرس' : ownerType === 'subject' ? ' وفي تبويب الكتب للمادة' : ownerType === 'library' ? ' وفي المكتبة' : ''}.`);
       setLinkTitle(''); setLinkUrl('');
@@ -200,6 +206,9 @@ export const MediaManager: React.FC<{
           <input required value={linkTitle} onChange={(e) => setLinkTitle(e.target.value)} placeholder="عنوان الرابط" className="rounded-lg border px-3 py-2 text-xs" />
           <input required type="url" value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} placeholder="https://…" className="rounded-lg border px-3 py-2 text-xs" />
           <button disabled={busy} className="rounded-lg bg-emerald-700 px-3 py-2 text-xs font-bold text-white">حفظ الرابط</button>
+          <p className="text-[10px] text-slate-500 sm:col-span-3">
+            املأ الحقلين: العنوان + الرابط كاملاً (يبدأ بـ https://). بعد الحفظ يظهر تأكيد أخضر وتجده في القائمة أسفل النموذج.
+          </p>
         </form>
       )}
 

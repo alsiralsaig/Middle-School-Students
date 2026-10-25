@@ -11,6 +11,7 @@ import {
 import type { ResourceCategory } from '@shared/curriculumTypes';
 import { getApiBase } from '../lib/serverUrl';
 import { MediaManager } from '../components/MediaManager';
+import { RecentMediaPanel } from '../components/RecentMediaPanel';
 import { uploadMediaAsset } from '../lib/mediaUpload';
 
 interface LibraryRow {
@@ -301,6 +302,9 @@ export const LibraryPage: React.FC = () => {
         </div>
       </header>
       <MediaManager ownerType="library" ownerId="shared-library" title="ملفات وروابط المكتبة عبر النظام المشترك" />
+
+      {/* أين ذهب الرابط الذي حفظته؟ هذه اللوحة تجمع آخر ٣٠ عنصراً من كل الأقسام */}
+      <RecentMediaPanel />
 
       {summary && (
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
