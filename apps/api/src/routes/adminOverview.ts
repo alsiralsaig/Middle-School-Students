@@ -30,16 +30,23 @@ adminOverviewRouter.get('/overview', requireAdmin, async (_req, res) => {
       attemptsCount,
       subjects,
     ] = await Promise.all([
-      prisma.subject.count(),
-      prisma.unit.count(),
-      prisma.lesson.count(),
-      prisma.lesson.count({ where: { status: 'verified' } }),
+      /*
+       * الأرقام كلها للمواد **غير المؤرشفة** فقط.
+       * ليه: كانت اللوحة تقول «١٢ مادة» و«٦٦ وحدة» و«٤٠٥ درس» بينما تطبيق
+       * الطالب يعرض ١٠ مواد و٣٩٢ درساً، لأن المواد المؤرشفة (التربية الوطنية
+       * والدراسات الاجتماعية) تُحسب هنا وتُخفى هناك. الفرق كان يربك المدير.
+       */
+      prisma.subject.count({ where: { status: { not: 'archived' } } }),
+      prisma.unit.count({ where: { subject: { status: { not: 'archived' } } } }),
+      prisma.lesson.count({ where: { subject: { status: { not: 'archived' } } } }),
+      prisma.lesson.count({ where: { status: 'verified', subject: { status: { not: 'archived' } } } }),
       prisma.resource.count({ where: { category: { not: 'exam-attachment' } } }),
       prisma.user.count({ where: { role: 'student' } }),
       prisma.accessCode.count({ where: { status: 'active' } }),
-      prisma.exam.count(),
+      prisma.exam.count({ where: { subject: { status: { not: 'archived' } } } }),
       prisma.examAttempt.count(),
       prisma.subject.findMany({
+        where: { status: { not: 'archived' } },
         orderBy: { code: 'asc' },
         select: {
           id: true,
@@ -53,6 +60,12 @@ adminOverviewRouter.get('/overview', requireAdmin, async (_req, res) => {
         },
       }),
     ]);
+
+    const archivedSubjects = await prisma.subject.findMany({
+      where: { status: 'archived' },
+      orderBy: { code: 'asc' },
+      select: { id: true, name: true },
+    });
 
     const plannedLessons = subjects.reduce((a, s) => a + s.lessonsCount, 0);
     const plannedUnits = subjects.reduce((a, s) => a + s.unitsCount, 0);
@@ -82,6 +95,9 @@ adminOverviewRouter.get('/overview', requireAdmin, async (_req, res) => {
         plannedLessons,
         verifiedLessons,
         sampleLessons: lessonsCount - verifiedLessons,
+        /* المواد المؤرشفة تبقى في قاعدة البيانات (ومحتواها في المكتبة) لكنها
+           لا تُحسب في المنهج ولا تظهر للطالب — نُظهر عددها فقط للتوضيح. */
+        archivedSubjects: archivedSubjects.map((s) => s.name),
         resources: resourcesCount,
         students: studentsCount,
         activeCodes,

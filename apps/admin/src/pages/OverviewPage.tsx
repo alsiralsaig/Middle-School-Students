@@ -52,6 +52,8 @@ interface OverviewStats {
   exams: number;
   examAttempts: number;
   coverage: number;
+  /** أسماء المواد المؤرشفة — مخفية عن الطالب ومحتواها باقٍ في المكتبة */
+  archivedSubjects?: string[];
 }
 
 interface OverviewSubject {
@@ -130,7 +132,17 @@ export const OverviewPage: React.FC = () => {
 
       {/* إحصاءات */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <StatCard icon={BookOpen} label="المواد" value={stats?.subjects ?? '—'} to="/subjects" />
+        <StatCard
+          icon={BookOpen}
+          label="المواد"
+          value={stats?.subjects ?? '—'}
+          hint={
+            stats?.archivedSubjects?.length
+              ? `+ ${stats.archivedSubjects.length} مؤرشفة (مخفية عن الطالب)`
+              : undefined
+          }
+          to="/subjects"
+        />
         <StatCard
           icon={Layers}
           label="الوحدات"
@@ -154,9 +166,15 @@ export const OverviewPage: React.FC = () => {
         <StatCard icon={GraduationCap} label="الامتحانات" value={stats?.exams ?? '—'} to="/exams" />
         <StatCard
           icon={CheckCircle2}
-          label="دروس مُراجَعة"
+          label="دروس معتمدة (مُراجَعة)"
           value={stats ? `${stats.verifiedLessons}/${stats.lessons}` : '—'}
-          hint={stats ? `${stats.sampleLessons} بوسم «تجريبي»` : undefined}
+          hint={
+            stats
+              ? stats.verifiedLessons === 0
+                ? `لم يُعتمد أي درس بعد — كل ${stats.lessons} درساً موسوم «تجريبي»`
+                : `${stats.sampleLessons} درساً لم يُعتمد بعد`
+              : undefined
+          }
           to="/content"
         />
       </div>
@@ -165,7 +183,11 @@ export const OverviewPage: React.FC = () => {
       <div className="grid lg:grid-cols-2 gap-4">
         <Card
           title="المواد وتغطية المنهج"
-          subtitle="من قاعدة البيانات — المصدر الوحيد للمنهج"
+          subtitle={
+            stats?.archivedSubjects?.length
+              ? `المواد الظاهرة للطالب فقط — ${stats.archivedSubjects.length} مادة مؤرشفة مخفية (${stats.archivedSubjects.join(' · ')})`
+              : 'من قاعدة البيانات — المصدر الوحيد للمنهج'
+          }
         >
           {stats === null ? (
             <div className="space-y-2">
