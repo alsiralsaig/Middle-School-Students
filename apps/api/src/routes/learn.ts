@@ -41,6 +41,13 @@ learnRouter.get('/subjects', async (req, res) => {
       subjects: subjects.map((s) => ({
         mediaAssets:bySubject.get(s.id)||[],
         ...s,
+        /*
+         * العدّادات المخزّنة في الجدول تتأخر عن الواقع (الرياضيات كانت ٠ درساً
+         * وفيها ٣٥، والإنجليزي ٦٤ وفيها ٩٢)، فتظهر المادة للطالب «٠ من ٠».
+         * نحسبها من البيانات نفسها — هي المصدر الحقيقي.
+         */
+        unitsCount: s.units.length,
+        lessonsCount: s.units.reduce((n, u) => n + u.lessons.length, 0),
         official: indexOnly ? null : s.official ? JSON.parse(s.official) : null,
         // الهيكل الرسمي من الكتاب (ليس بالضرورة مساوياً لـ `units` المؤلَّفة)
         syllabus: indexOnly ? null : s.syllabus ? JSON.parse(s.syllabus) : null,
