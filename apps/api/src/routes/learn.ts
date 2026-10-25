@@ -23,6 +23,12 @@ learnRouter.get('/subjects', async (req, res) => {
   const indexOnly = String(req.query.view || '') === 'index';
   try {
     const subjects = await prisma.subject.findMany({
+      /*
+       * المواد المؤرشفة (status = 'archived') لا تظهر للطالب إطلاقاً.
+       * «التربية الوطنية والحياتية» لصفٍّ آخر — أُرشفت بدل حذفها حتى ترجع
+       * بضغطة واحدة لما نفتح للفصول الأصغر. محتواها في المكتبة كما هو.
+       */
+      where: { status: { not: 'archived' } },
       orderBy: { code: 'asc' },
       include: {
         units: {

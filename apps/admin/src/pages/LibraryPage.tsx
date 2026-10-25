@@ -72,6 +72,8 @@ export const LibraryPage: React.FC = () => {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadError, setUploadError] = useState('');
   const [file, setFile] = useState<File | null>(null);
+  /** رابط بديل عن الملف (اختبار خارجي أو ملف مستضاف) */
+  const [linkUrl, setLinkUrl] = useState('');
   const [title, setTitle] = useState('');
   const [uploadCategory, setUploadCategory] = useState<ResourceCategory>('textbook');
   const [subjectId, setSubjectId] = useState('');
@@ -189,7 +191,59 @@ export const LibraryPage: React.FC = () => {
 
   const resetUploadForm = () => {
     setFile(null); setTitle(''); setUploadCategory('textbook'); setSubjectId('');
-    setAuthor(''); setPublishYear(''); setPageCount(''); setDescription(''); setUploadError('');
+    setAuthor(''); setPublishYear(''); setPageCount(''); setDescription(''); setUploadError(''); setLinkUrl('');
+  };
+
+  /**
+   * إضافة عنصر **برابط** بدل رفع ملف.
+   *
+   * ليه: رفع الملف يحتاج منتقي ملفات من النظام، وفي بعض المتصفحات/أغلفة
+   * الأندرويد القديمة ما يفتح. الرابط يشتغل في كل الحالات، ومفيد كذلك
+   * للاختبارات التفاعلية المستضافة على موقع خارجي.
+   */
+  const addByLink = async () => {
+    const url = linkUrl.trim();
+    if (!url || !/^https?:\/\//i.test(url)) {
+      setUploadError('اكتب رابطاً يبدأ بـ https://');
+      return;
+    }
+    if (!title.trim()) {
+      setUploadError('اكتب اسم العنصر');
+      return;
+    }
+    setUploading(true);
+    setUploadError('');
+    try {
+      const subjectName = subjects.find((s2) => s2.id === subjectId)?.name || '';
+      const res = await fetch(`${getApiBase()}/api/admin/library/import`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json', 'X-App': 'admin', Accept: 'application/json' },
+        body: JSON.stringify({
+          publish: true,
+          items: [
+            {
+              id: `lib-link-${Date.now()}`,
+              title: title.trim(),
+              category: uploadCategory,
+              subject: subjectName,
+              description: description.trim(),
+              externalUrl: url,
+              isPublished: true,
+            },
+          ],
+        }),
+      });
+      const data = (await res.json().catch(() => ({}))) as { error?: string };
+      if (!res.ok) throw new Error(data.error || 'تعذّر إضافة الرابط');
+      await refreshLibrary();
+      resetUploadForm();
+      setShowUpload(false);
+    } catch (error) {
+      setUploadError(error instanceof Error ? error.message : 'تعذّر إضافة الرابط');
+    } finally {
+      setUploading(false);
+    }
   };
 
   const uploadResource = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -389,10 +443,49 @@ export const LibraryPage: React.FC = () => {
             <label className="block space-y-1 text-xs font-bold text-slate-700">وصف مختصر (اختياري)
               <textarea value={description} onChange={(event) => setDescription(event.target.value)} maxLength={600} rows={2} className="w-full rounded-xl border border-slate-200 px-3 py-2.5 font-normal" />
             </label>
-            <label className="block space-y-1 text-xs font-bold text-slate-700">الملف
-              <input required type="file" accept={ACCEPTED_FILES} onChange={(event) => setFile(event.target.files?.[0] ?? null)} disabled={uploading} className="block w-full rounded-xl border border-slate-200 p-2 text-xs font-normal file:ml-3 file:rounded-lg file:border-0 file:bg-slate-100 file:px-3 file:py-2" />
-              <span className="block text-[10px] font-normal text-slate-400">PDF، ملفات Office، TXT/CSV أو صور. الحد الأقصى ٢٠ ميغابايت.{file ? ` الملف المحدد: ${file.name} (${(file.size / (1024 * 1024)).toFixed(1)} MB)` : ''}</span>
-            </label>
+            {/* اختيار الملف: زر حقيقي بدل عنصر المتصفح الافتراضي */}
+            <div className="space-y-2 rounded-xl border border-dashed border-slate-300 p-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="text-xs font-bold text-slate-700">ملف من الجهاز</span>
+                <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-navy-800 px-4 py-2.5 text-xs font-bold text-white active:scale-95">
+                  <Upload className="h-4 w-4" />
+                  {file ? 'تغيير الملف' : 'اختيار ملف'}
+                  <input
+                    type="file"
+                    accept={ACCEPTED_FILES}
+                    disabled={uploading}
+                    onChange={(event) => setFile(event.target.files?.[0] ?? null)}
+                    className="hidden"
+                  />
+                </label>
+              </div>
+              <p className="text-[10px] font-normal text-slate-500">
+                {file
+                  ? `${file.name} — ${(file.size / (1024 * 1024)).toFixed(1)} MB`
+                  : 'PDF أو Office أو صورة — حتى ٢٠ ميغابايت'}
+              </p>
+            </div>
+
+            {/* أو رابط جاهز — لا يحتاج منتقي ملفات */}
+            <div className="space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-3">
+              <span className="text-xs font-bold text-slate-700">أو رابط ملف/اختبار جاهز</span>
+              <input
+                value={linkUrl}
+                onChange={(event) => setLinkUrl(event.target.value)}
+                dir="ltr"
+                placeholder="https://…"
+                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs font-normal outline-none focus:border-navy-500"
+              />
+              <button
+                type="button"
+                disabled={uploading || !linkUrl.trim() || !title.trim()}
+                onClick={() => void addByLink()}
+                className="w-full rounded-xl border border-navy-800 px-4 py-2.5 text-xs font-bold text-navy-800 disabled:opacity-40"
+              >
+                أضف هذا الرابط للمكتبة
+              </button>
+            </div>
+
             {uploadError && <p role="alert" className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700">{uploadError}</p>}
             <footer className="flex flex-wrap items-center justify-end gap-2 border-t border-slate-100 pt-3">
               <button type="button" disabled={uploading} onClick={() => setShowUpload(false)} className="rounded-xl border border-slate-200 px-4 py-2.5 text-xs font-bold text-slate-600 disabled:opacity-50">إلغاء</button>

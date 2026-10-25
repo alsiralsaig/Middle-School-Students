@@ -9,6 +9,8 @@ export const examsRouter = Router();
 
 examsRouter.get('/exams', async (_req, res) => {
   const exams = await prisma.exam.findMany({
+    // امتحانات المواد المؤرشفة لا تُعرض للطالب
+    where: { subject: { status: { not: 'archived' } } },
     include: { subject: true, _count: { select: { questions: true } } },
     orderBy: { createdAt: 'desc' },
   });
