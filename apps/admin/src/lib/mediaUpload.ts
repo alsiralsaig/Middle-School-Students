@@ -142,13 +142,26 @@ export async function uploadMediaAsset(a: {
     sizeBytes: a.file.size,
   };
 
-  const { clientToken } = await request<{ clientToken: string }>('/api/media/upload', {
-    method: 'POST',
-    body: JSON.stringify({
-      type: 'blob.generate-client-token',
-      payload: { pathname, clientPayload: JSON.stringify(clientPayload), multipart },
-    }),
-  });
+  let clientToken = '';
+  try {
+    ({ clientToken } = await request<{ clientToken: string }>('/api/media/upload', {
+      method: 'POST',
+      body: JSON.stringify({
+        type: 'blob.generate-client-token',
+        payload: { pathname, clientPayload: JSON.stringify(clientPayload), multipart },
+      }),
+    }));
+  } catch (e) {
+    /* لو رفض الخادم الحجم، نقول الحجم الحقيقي بدل «نوع الملف أو حجمه غير مسموح»
+       التي لا تخبر المستخدم بشيء. */
+    const msg = e instanceof Error ? e.message : '';
+    if (msg.includes('غير مسموح')) {
+      throw new Error(
+        `الخادم رفض «${a.file.name}» (${formatFileSize(a.file.size)}). الحد المفعّل على الخادم الآن ٢٠ ميغابايت للمستندات، والرفع حتى ٦٠ ميغابايت يُفعَّل مع النشر القادم. حلّ فوري: اضغط الملف أو أضِفه بزر «رابط خارجي».`,
+      );
+    }
+    throw e;
+  }
 
   const blob = await put(pathname, a.file, {
     access: 'public',
