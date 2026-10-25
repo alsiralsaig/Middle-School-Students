@@ -57,6 +57,10 @@ const MIME_BY_EXTENSION: Record<string, string> = {
   ppt: 'application/vnd.ms-powerpoint', pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
   txt: 'text/plain', csv: 'text/csv', jpg: 'image/jpeg', jpeg: 'image/jpeg',
   png: 'image/png', webp: 'image/webp',
+  /* صوت وفيديو — المكتبة تقبلها مثل الوسائط تماماً */
+  mp3: 'audio/mpeg', m4a: 'audio/mp4', aac: 'audio/aac', wav: 'audio/wav',
+  ogg: 'audio/ogg', opus: 'audio/opus', flac: 'audio/flac',
+  mp4: 'video/mp4', webm: 'video/webm', mov: 'video/quicktime',
 };
 
 export const LibraryPage: React.FC = () => {
@@ -262,9 +266,15 @@ export const LibraryPage: React.FC = () => {
   const uploadResource = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!file || uploading) return;
-    if (file.size > MAX_SIZE) { setUploadError(`حجم الملف ${(file.size / 1048576).toFixed(1)} ميغابايت — الحد ٦٠ ميغابايت`); return; }
     const extension = file.name.split('.').pop()?.toLowerCase() || '';
-    if (!MIME_BY_EXTENSION[extension]) { setUploadError('نوع الملف غير مدعوم'); return; }
+    const mime = MIME_BY_EXTENSION[extension];
+    if (!mime) { setUploadError('نوع الملف غير مدعوم'); return; }
+    /* لكل نوع حده كما في الخادم: видео ١٠٠، صوت ٥٠، والباقي ٦٠ */
+    const limit = mime.startsWith('audio/') ? 50 * 1024 * 1024 : mime.startsWith('video/') ? 100 * 1024 * 1024 : MAX_SIZE;
+    if (file.size > limit) {
+      setUploadError(`حجم الملف ${(file.size / 1048576).toFixed(1)} ميغابايت — الحد ${Math.round(limit / 1048576)} ميغابايت لهذا النوع`);
+      return;
+    }
     setUploading(true); setUploadProgress(0); setUploadError('');
     try {
       const uploaded = await uploadMediaAsset({
