@@ -186,11 +186,18 @@ export async function listRecentMedia(limit = 30) {
   return (await request<{ assets: Array<MediaAsset & { ownerLabel?: string }> }>(`/api/admin/media/recent?${q}`)).assets;
 }
 
-export async function addMediaLink(ownerType: MediaOwnerType, ownerId: string, title: string, url: string, category?: string) {
+export async function addMediaLink(
+  ownerType: MediaOwnerType,
+  ownerId: string,
+  title: string,
+  url: string,
+  category?: string,
+  subjectId?: string,
+) {
   return (
     await request<{ asset: MediaAsset }>('/api/media/links', {
       method: 'POST',
-      body: JSON.stringify({ ownerType, ownerId, title, url, category: category || undefined }),
+      body: JSON.stringify({ ownerType, ownerId, title, url, category: category || undefined, subjectId: subjectId || undefined }),
     })
   ).asset;
 }

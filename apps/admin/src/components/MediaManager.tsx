@@ -1,5 +1,6 @@
 import React from 'react';
-import { FileText, Headphones, Link2, Loader2, Tag, Trash2, Upload, Video } from 'lucide-react';
+import { BookOpen, FileText, Headphones, Link2, Loader2, Tag, Trash2, Upload, Video } from 'lucide-react';
+import { getApiBase } from '../lib/serverUrl';
 import { addMediaLink, deleteMediaAsset, formatFileSize, listMediaAssets, MediaAsset, MediaCategory, MediaOwnerType, updateMediaCategory, uploadMediaAsset, validateFile } from '../lib/mediaUpload';
 
 /*
@@ -51,6 +52,15 @@ export const MediaManager: React.FC<{
   const [linkTitle, setLinkTitle] = React.useState('');
   const [linkUrl, setLinkUrl] = React.useState('');
   const [category, setCategory] = React.useState<MediaCategory>('');
+  /**
+   * المادة التي يخصّها الملف/الرابط — مهمة فقط عندما يكون القسم هو المكتبة
+   * العامة، لأن الرفع من صفحة مادة يعرف مادته تلقائياً.
+   *
+   * ليه: رُفع كتاب «الأدب الإنجليزي» من المكتبة بلا تحديد مادة فدخل المكتبة
+   * العامة ولم يظهر داخل مادة الأدب الإنجليزي عند الطالب.
+   */
+  const [subjects, setSubjects] = React.useState<Array<{ id: string; name: string }>>([]);
+  const [subjectId, setSubjectId] = React.useState('');
 
   const refresh = React.useCallback(async () => {
     try {
@@ -64,6 +74,18 @@ export const MediaManager: React.FC<{
   }, [ownerType, ownerId]);
 
   React.useEffect(() => { void refresh(); }, [refresh]);
+
+  React.useEffect(() => {
+    if (ownerType !== 'library') return;
+    let alive = true;
+    fetch(`${getApiBase()}/api/subjects?view=index`, { headers: { Accept: 'application/json' } })
+      .then((r) => (r.ok ? r.json() : { subjects: [] }))
+      .then((data: { subjects?: Array<{ id: string; name: string }> }) => {
+        if (alive) setSubjects((data.subjects || []).map((s) => ({ id: s.id, name: s.name })));
+      })
+      .catch(() => undefined);
+    return () => { alive = false; };
+  }, [ownerType]);
 
   const upload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.currentTarget.files?.[0];
@@ -82,7 +104,13 @@ export const MediaManager: React.FC<{
     }
     try {
       const old = new Set(assets.map((x) => x.id));
-      await uploadMediaAsset({ ownerType, ownerId, file, metadata: { ...(metadata || {}), category }, onProgress: setProgress });
+      await uploadMediaAsset({
+        ownerType,
+        ownerId,
+        file,
+        metadata: { ...(metadata || {}), category, ...(subjectId ? { subjectId } : {}) },
+        onProgress: setProgress,
+      });
       let found = false;
       for (let n = 0; n < 12; n++) {
         await new Promise((r) => setTimeout(r, 350));
@@ -113,7 +141,7 @@ export const MediaManager: React.FC<{
     if (!/^https?:\/\//i.test(u)) { setError('الرابط لازم يبدأ بـ https:// — انسخه كاملاً من المتصفح.'); return; }
     setBusy(true); setError('');
     try {
-      const saved = await addMediaLink(ownerType, ownerId, t, u, category);
+      const saved = await addMediaLink(ownerType, ownerId, t, u, category, subjectId);
       setLinkMode(false); setPicked('');
       setNotice(`تم حفظ الرابط «${saved.title}» — ظاهر الآن في قائمة الوسائط أدناه${ownerType === 'lesson' ? ' وفي تبويب المرفقات داخل الدرس' : ownerType === 'subject' ? ' وفي تبويب الكتب للمادة' : ownerType === 'library' ? ' وفي المكتبة' : ''}.`);
       setLinkTitle(''); setLinkUrl('');
@@ -184,6 +212,23 @@ export const MediaManager: React.FC<{
             </select>
           </label>
 
+          {ownerType === 'library' && (
+            <label className="inline-flex items-center gap-1 rounded-lg border border-slate-300 bg-slate-50 px-2 py-1.5 text-[11px] font-bold text-slate-700">
+              <BookOpen className="h-3.5 w-3.5" />
+              <select
+                value={subjectId}
+                onChange={(e) => setSubjectId(e.target.value)}
+                className="max-w-[9rem] bg-transparent text-[11px] font-bold text-slate-800 outline-none"
+                aria-label="المادة"
+              >
+                <option value="">بدون مادة (المكتبة فقط)</option>
+                {subjects.map((s) => (
+                  <option key={s.id} value={s.id}>{s.name}</option>
+                ))}
+              </select>
+            </label>
+          )}
+
           {allowFiles && (
             <>
               <label className="inline-flex cursor-pointer items-center gap-1 rounded-lg bg-slate-900 px-3 py-2 text-[11px] font-bold text-white">
@@ -210,6 +255,16 @@ export const MediaManager: React.FC<{
           </button>
         </div>
       </div>
+
+      {ownerType === 'library' && (
+        <p className={`rounded-lg px-3 py-2 text-[10.5px] font-bold leading-relaxed ${
+          subjectId ? 'border border-emerald-200 bg-emerald-50 text-emerald-800' : 'border border-amber-200 bg-amber-50 text-amber-800'
+        }`}>
+          {subjectId
+            ? 'سيظهر هذا العنصر داخل المادة المختارة وفي المكتبة، وفي تبويب «المكتبات» عند الطالب.'
+            : 'اختر «المادة» قبل الرفع: بدونها يظهر العنصر في المكتبة العامة فقط ولا يظهر داخل أي مادة في تطبيق الطالب.'}
+        </p>
+      )}
 
       <p className="text-[10px] leading-relaxed text-slate-500">
         الحد الأقصى: مستند أو صورة <b>٦٠ ميغابايت</b> · صوت ٥٠ · فيديو ١٠٠. الملفات الكبيرة تُرفع على دفعات تلقائياً.
