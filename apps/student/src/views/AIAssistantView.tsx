@@ -30,6 +30,36 @@ export const AIAssistantView: React.FC = () => {
   // المادة المختارة: تُغذّي الخادم بحدود المنهج فيتجنّب النموذج الإجابات العامة
   const subjects = useSubjects();
   const [activeSubject, setActiveSubject] = useState('');
+
+  /**
+   * اقتراحات المادة المختارة وحدها.
+   *
+   * ليه: كان الاختيار بيتغيّر شكله بس، والقائمة تفضل تعرض أسئلة كل المواد —
+   * فطالب يختار «اللغة العربية» ويجد سؤال فيثاغورس وشيكان. الآن التصفية فعلية،
+   * والمقارنة تتم بعد تطبيع الاسم (أ/ا، ة/ه) عشان تسميات قاعدة البيانات تختلف.
+   */
+  const normalizeSubject = (name: string) =>
+    name
+      .replace(/[أإآٱ]/g, 'ا')
+      .replace(/ى/g, 'ي')
+      .replace(/ة/g, 'ه')
+      .replace(/\s+/g, ' ')
+      .trim();
+  const presetsForSubject = activeSubject
+    ? AI_ASSISTANT_PRESETS.filter((p) =>
+        ((p as { subjects?: string[] }).subjects ?? [p.subject]).some(
+          (name) => normalizeSubject(name) === normalizeSubject(activeSubject),
+        ),
+      )
+    : AI_ASSISTANT_PRESETS;
+  /** لو مادة ما عندهـا اقتراحات جاهزة، نولّد أسئلة على نفس المادة بدل قائمة فاضية */
+  const genericPrompts = activeSubject
+    ? [
+        `اشرح لي أهم قاعدة في منهج ${activeSubject} للصف الثالث المتوسط بأمثلة`,
+        `لخص لي أهم نقاط ${activeSubject} المقررة قبل الامتحان`,
+        `أعطني أسئلة تدريبية على ${activeSubject} مع الحل`,
+      ]
+    : [];
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: 'welcome',
@@ -330,7 +360,8 @@ export const AIAssistantView: React.FC = () => {
         p.prompt.includes(query) ||
         (query.includes('فيثاغورس') && p.subject === 'الرياضيات') ||
         (query.includes('رابطة') && p.subject === 'العلوم') ||
-        (query.includes('شيكان') && p.subject === 'الدراسات الاجتماعية'),
+        (query.includes('شيكان') &&
+          (((p as { subjects?: string[] }).subjects ?? []).includes('التاريخ') || p.subject === 'التاريخ')),
     );
 
     const replyText =
@@ -436,13 +467,22 @@ export const AIAssistantView: React.FC = () => {
           ))}
         </div>
         <div className="flex flex-wrap gap-2 pt-1">
-          {AI_ASSISTANT_PRESETS.map((p) => (
+          {(activeSubject ? presetsForSubject : AI_ASSISTANT_PRESETS).map((p) => (
             <button
               key={p.id}
               onClick={() => handleSend(p.prompt)}
               className="text-[12.5px] font-semibold py-2 px-3 rounded-xl bg-slate-50 dark:bg-[#122844] hover:bg-amber-50 dark:hover:bg-[#18365D] hover:border-amber-200 dark:hover:border-amber-400/40 border border-slate-300 dark:border-[#2A4A72] text-slate-900 dark:text-slate-100 hover:text-amber-900 dark:hover:text-amber-200 text-right transition-colors cursor-pointer"
             >
               {p.prompt}
+            </button>
+          ))}
+          {activeSubject && presetsForSubject.length < 2 && genericPrompts.map((q) => (
+            <button
+              key={q}
+              onClick={() => handleSend(q)}
+              className="text-[12.5px] font-semibold py-2 px-3 rounded-xl bg-slate-50 dark:bg-[#122844] hover:bg-amber-50 dark:hover:bg-[#18365D] hover:border-amber-200 dark:hover:border-amber-400/40 border border-slate-300 dark:border-[#2A4A72] text-slate-900 dark:text-slate-100 hover:text-amber-900 dark:hover:text-amber-200 text-right transition-colors cursor-pointer"
+            >
+              {q}
             </button>
           ))}
         </div>
