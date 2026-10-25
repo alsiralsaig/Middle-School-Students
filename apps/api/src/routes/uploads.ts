@@ -13,7 +13,7 @@ export const uploadsRouter = Router();
 
 if (!process.env.VERCEL) ensureUploadDir();
 
-const MAX_SIZE = 20 * 1024 * 1024; // 20 ميغابايت
+const MAX_SIZE = 60 * 1024 * 1024; // ٦٠ ميغابايت — كتب PDF الرسمية تصل ٥٠
 const ALLOWED = new Map([
   ['application/pdf', 'pdf'],
   ['application/msword', 'doc'],
@@ -238,7 +238,7 @@ uploadsRouter.post(examBlobClientRoute, async (req, res) => {
         const extension = path.extname(fileName).slice(1).toLowerCase();
         if (!fileName || !ALLOWED_EXTENSIONS.has(extension)) throw new Error('نوع الملف غير مدعوم');
         if (!Number.isFinite(sizeBytes) || sizeBytes < 1 || sizeBytes > MAX_SIZE) {
-          throw new Error('حجم الملف أكبر من ٢٠ ميغابايت');
+          throw new Error('حجم الملف أكبر من ٦٠ ميغابايت');
         }
         const expectedPrefix = `exam-attachments/${exam.id}/`;
         if (!pathname.startsWith(expectedPrefix) || pathname.slice(expectedPrefix.length).includes('/')) {
@@ -337,7 +337,7 @@ uploadsRouter.post(lessonBlobClientRoute, async (req, res) => {
         const sizeBytes = Number(client.sizeBytes);
         const extension = path.extname(fileName).slice(1).toLowerCase();
         if (!fileName || !ALLOWED_EXTENSIONS.has(extension)) throw new Error('نوع الملف غير مدعوم');
-        if (!Number.isFinite(sizeBytes) || sizeBytes < 1 || sizeBytes > MAX_SIZE) throw new Error('حجم الملف أكبر من ٢٠ ميغابايت');
+        if (!Number.isFinite(sizeBytes) || sizeBytes < 1 || sizeBytes > MAX_SIZE) throw new Error('حجم الملف أكبر من ٦٠ ميغابايت');
         const expectedPrefix = `lesson-attachments/${lesson.id}/`;
         if (!pathname.startsWith(expectedPrefix) || pathname.slice(expectedPrefix.length).includes('/')) {
           throw new Error('مسار مرفق الدرس غير صالح');
@@ -434,7 +434,7 @@ uploadsRouter.post(resourceBlobClientRoute, async (req, res) => {
         const category = cleanText(client.category, 30);
         const subjectId = cleanText(client.subjectId, 40);
         if (!fileName || !ALLOWED_EXTENSIONS.has(extension)) throw new Error('نوع الملف غير مدعوم');
-        if (!Number.isFinite(sizeBytes) || sizeBytes < 1 || sizeBytes > MAX_SIZE) throw new Error('حجم الملف أكبر من ٢٠ ميغابايت');
+        if (!Number.isFinite(sizeBytes) || sizeBytes < 1 || sizeBytes > MAX_SIZE) throw new Error('حجم الملف أكبر من ٦٠ ميغابايت');
         if (!resourceCategories.has(category)) throw new Error('تصنيف الملف غير صالح');
         if (subjectId && !(await prisma.subject.findUnique({ where: { id: subjectId }, select: { id: true } }))) {
           throw new Error('المادة المحددة غير موجودة');

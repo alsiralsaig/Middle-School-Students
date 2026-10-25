@@ -72,7 +72,7 @@ export function validateFile(file: File): { ok: true; mime: string; limitMb: num
   if (!mime || !MIME[ext]) {
     return { ok: false, reason: `«${file.name}» صيغته غير مدعومة${ext ? ` (${ext})` : ''}. المقبول: PDF, Word, Excel, PowerPoint, صور, صوت, فيديو.` };
   }
-  const limit = mime.startsWith('audio/') ? 50 * MB : mime.startsWith('video/') ? 100 * MB : 20 * MB;
+  const limit = mime.startsWith('audio/') ? 50 * MB : mime.startsWith('video/') ? 100 * MB : 60 * MB;
   if (!file.size || file.size < 1) {
     return {
       ok: false,

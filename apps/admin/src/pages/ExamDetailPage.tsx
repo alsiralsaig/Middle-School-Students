@@ -51,7 +51,7 @@ export const ExamDetailPage: React.FC = () => {
     <Link to="/exams" className="inline-flex items-center gap-1 text-xs font-bold text-navy-800"><ArrowRight className="w-4 h-4" /> رجوع للامتحانات</Link>
     <header className="flex flex-wrap items-start justify-between gap-3"><div><h1 className="text-xl font-black text-navy-800">{exam.title}</h1><p className="text-xs text-slate-500 mt-1">{exam.subjectName} · {exam.questions.length} أسئلة · {exam.durationMinutes} دقيقة</p></div><Badge tone="amber">نموذج تدريبي — غير وزاري</Badge></header>
 
-    <Card title="ملفات الامتحان" subtitle="PDF وWord وExcel وPowerPoint والنصوص والصور، حتى ٢٠ ميغابايت؛ دوام الملفات يتطلب خادماً بقرص دائم.">
+    <Card title="ملفات الامتحان" subtitle="PDF وWord وExcel وPowerPoint والنصوص والصور، حتى ٦٠ ميغابايت؛ دوام الملفات يتطلب خادماً بقرص دائم.">
       <div className="p-4 space-y-3">
         <p className="text-xs text-slate-500">الملفات القديمة تظهر أدناه. لإضافة وسيط جديد استخدم مدير الوسائط المشترك.</p>
         {fileError && <p role="alert" className="text-xs text-rose-700 bg-rose-50 border border-rose-200 rounded-xl px-3 py-2">{fileError}</p>}

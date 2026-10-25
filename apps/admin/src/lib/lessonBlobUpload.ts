@@ -1,7 +1,7 @@
 import { put } from '@vercel/blob/client';
 import { getApiBase } from './serverUrl';
 
-const MAX_SIZE = 20 * 1024 * 1024;
+const MAX_SIZE = 60 * 1024 * 1024;
 const MIME_BY_EXTENSION: Record<string, string> = {
   pdf: 'application/pdf', doc: 'application/msword',
   docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
@@ -17,7 +17,7 @@ export async function uploadLessonAttachmentBlob(
   file: File,
   onProgress?: (percentage: number) => void,
 ): Promise<{ url: string; pathname: string }> {
-  if (file.size < 1 || file.size > MAX_SIZE) throw new Error('حجم الملف يجب ألا يتجاوز ٢٠ ميغابايت');
+  if (file.size < 1 || file.size > MAX_SIZE) throw new Error('حجم الملف يجب ألا يتجاوز ٦٠ ميغابايت');
   const extension = file.name.split('.').pop()?.toLowerCase() || '';
   const contentType = MIME_BY_EXTENSION[extension];
   if (!contentType) throw new Error('نوع الملف غير مدعوم');

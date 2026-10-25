@@ -63,7 +63,7 @@ export const MediaManager: React.FC<{
     const facts = `${file.name} · ${formatFileSize(file.size)} · ${file.type || 'نوع غير معلوم من الجهاز'}`;
     setPicked(facts);
     /* فحص مبكر: لو الملف فارغ أو صيغته غير مدعومة نوقف قبل أي اتصال بالخادم
-       ونقول السبب بحجمه الفعلي بدل رسالة «تجاوز ٢٠ ميغابايت» المضلّلة. */
+       ونقول السبب بحجمه الفعلي بدل رسالة «تجاوز الحد» المضلّلة. */
     const pre = validateFile(file);
     if (!pre.ok) {
       setError(pre.reason);
@@ -192,7 +192,7 @@ export const MediaManager: React.FC<{
       </div>
 
       <p className="text-[10px] leading-relaxed text-slate-500">
-        الحد الأقصى: مستند أو صورة <b>٢٠ ميغابايت</b> · صوت ٥٠ · فيديو ١٠٠. الملفات الكبيرة تُرفع على دفعات تلقائياً.
+        الحد الأقصى: مستند أو صورة <b>٦٠ ميغابايت</b> · صوت ٥٠ · فيديو ١٠٠. الملفات الكبيرة تُرفع على دفعات تلقائياً.
       </p>
 
       {picked && (

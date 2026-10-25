@@ -49,7 +49,7 @@ const CATEGORY_LABEL: Record<ResourceCategory, string> = {
 const CATEGORIES: ResourceCategory[] = ['all', 'notes', 'textbook', 'worksheets', 'past_exams', 'interactive_exams'];
 const UPLOAD_CATEGORIES = CATEGORIES.filter((category) => category !== 'all');
 const ACCEPTED_FILES = '.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.jpg,.jpeg,.png,.webp';
-const MAX_SIZE = 20 * 1024 * 1024;
+const MAX_SIZE = 60 * 1024 * 1024;
 const MIME_BY_EXTENSION: Record<string, string> = {
   pdf: 'application/pdf', doc: 'application/msword',
   docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
@@ -250,7 +250,7 @@ export const LibraryPage: React.FC = () => {
   const uploadResource = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!file || uploading) return;
-    if (file.size > MAX_SIZE) { setUploadError('حجم الملف أكبر من ٢٠ ميغابايت'); return; }
+    if (file.size > MAX_SIZE) { setUploadError(`حجم الملف ${(file.size / 1048576).toFixed(1)} ميغابايت — الحد ٦٠ ميغابايت`); return; }
     const extension = file.name.split('.').pop()?.toLowerCase() || '';
     if (!MIME_BY_EXTENSION[extension]) { setUploadError('نوع الملف غير مدعوم'); return; }
     setUploading(true); setUploadProgress(0); setUploadError('');
@@ -415,7 +415,7 @@ export const LibraryPage: React.FC = () => {
       {showUpload && <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-3" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !uploading) setShowUpload(false); }}>
         <section role="dialog" aria-modal="true" aria-labelledby="library-upload-title" dir="rtl" className="w-full max-w-2xl max-h-[92vh] overflow-y-auto rounded-2xl bg-white shadow-2xl">
           <header className="sticky top-0 z-10 flex items-start justify-between gap-3 border-b border-slate-100 bg-white p-4">
-            <div><h2 id="library-upload-title" className="font-black text-navy-800">رفع كتاب أو ملف للمكتبة</h2><p className="mt-1 text-[11px] text-slate-500">الرفع مباشر إلى التخزين، بحد أقصى ٢٠ ميغابايت.</p></div>
+            <div><h2 id="library-upload-title" className="font-black text-navy-800">رفع كتاب أو ملف للمكتبة</h2><p className="mt-1 text-[11px] text-slate-500">الرفع مباشر إلى التخزين، بحد أقصى ٦٠ ميغابايت (كتب PDF الرسمية مقبولة).</p></div>
             <button type="button" aria-label="إغلاق" disabled={uploading} onClick={() => setShowUpload(false)} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 disabled:opacity-40"><X className="h-4 w-4" /></button>
           </header>
           <form onSubmit={(event) => void uploadResource(event)} className="space-y-3 p-4">
@@ -466,7 +466,7 @@ export const LibraryPage: React.FC = () => {
               <p className="text-[10px] font-normal text-slate-500">
                 {file
                   ? `${file.name} — ${(file.size / (1024 * 1024)).toFixed(1)} MB`
-                  : 'PDF أو Office أو صورة — حتى ٢٠ ميغابايت'}
+                  : 'PDF أو Office أو صورة — حتى ٦٠ ميغابايت'}
               </p>
             </div>
 

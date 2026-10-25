@@ -123,7 +123,7 @@ app.use(
   ): void => {
     // أخطاء الرفع (multer) تُعرض للطالب لأنها متعلقة بملفه
     if (err?.code === 'LIMIT_FILE_SIZE') {
-      res.status(400).json({ error: 'حجم الملف أكبر من ٢٠ ميغابايت' });
+      res.status(400).json({ error: 'حجم الملف أكبر من ٦٠ ميغابايت' });
       return;
     }
     if (err?.code === 'LIMIT_UNEXPECTED_FILE') {

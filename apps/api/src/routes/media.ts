@@ -8,7 +8,13 @@ import { cleanText, currentUser, requireAdmin, requireAuth } from '../lib/auth.j
 
 export const mediaRouter = Router();
 const MB = 1024 * 1024;
-const LIMIT = { document: 20 * MB, image: 20 * MB, audio: 50 * MB, video: 100 * MB } as const;
+/*
+ * حدود الرفع. المستند كان ٢٠ ميغابايت فكانت كتب الـPDF الرسمية (٢٥–٥٠ م.
+ * ب) تُرفض، ولا يوجد في السودان خدمة ضغط مجانية تعمل بلا بطاقة. رفعناه إلى
+ * ٦٠ ميغابايت — وVercel Blob يرفع الملف الكبير على أجزاء (multipart) فلا
+ * يحتاج الخادم أن يحمل الملف كاملاً في الذاكرة.
+ */
+const LIMIT = { document: 60 * MB, image: 60 * MB, audio: 50 * MB, video: 100 * MB } as const;
 type Access = 'public' | 'private';
 type Kind = keyof typeof LIMIT;
 type Owner = 'subject' | 'unit' | 'lesson' | 'exam' | 'library' | 'interactive-lesson' | 'planner-event';
