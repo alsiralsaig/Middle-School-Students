@@ -720,6 +720,32 @@ export const SubjectDetailView: React.FC<SubjectDetailViewProps> = ({
       )}
 
       {/* عارض الملفات داخل التطبيق */}
+      {noteView && (
+        <div
+          className="fixed inset-0 z-[70] flex items-end justify-center bg-black/50 sm:items-center sm:p-4"
+          onClick={() => setNoteView(null)}
+        >
+          <div
+            className="max-h-[85vh] w-full max-w-2xl overflow-y-auto rounded-t-3xl bg-white p-5 text-right sm:rounded-3xl dark:bg-[#0D1F35]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-3 flex items-center justify-between gap-3 border-b border-slate-100 pb-3 dark:border-[#1E3A60]">
+              <h3 className="text-sm font-black text-slate-900 dark:text-white">{noteView.title}</h3>
+              <button
+                type="button"
+                onClick={() => setNoteView(null)}
+                className="rounded-xl bg-slate-100 px-3 py-1.5 text-xs font-bold text-slate-700 dark:bg-[#142A46] dark:text-slate-200"
+              >
+                إغلاق
+              </button>
+            </div>
+            <p className="whitespace-pre-wrap text-[13px] leading-7 text-slate-700 dark:text-slate-200">
+              {noteView.body}
+            </p>
+          </div>
+        </div>
+      )}
+
       {viewing && <InAppFileViewer file={viewing} onClose={() => setViewing(null)} />}
 
       {/* الأسئلة التفاعلية — داخل التطبيق مع زر رجوع واضح */}
