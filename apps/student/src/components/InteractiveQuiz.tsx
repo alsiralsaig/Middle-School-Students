@@ -373,7 +373,7 @@ export const InteractiveQuiz: React.FC<InteractiveQuizProps> = ({
                 >
                   <div className="flex items-center gap-3">
                     <span className="w-7 h-7 rounded-xl bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs flex items-center justify-center shrink-0">
-                      {String.fromCharCode(1571 + idx)}
+                      {['أ', 'ب', 'ج', 'د', 'هـ'][idx] ?? idx + 1}
                     </span>
                     <span>{option}</span>
                   </div>

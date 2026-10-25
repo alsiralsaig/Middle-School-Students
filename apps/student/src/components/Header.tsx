@@ -92,7 +92,7 @@ export const Header: React.FC<HeaderProps> = ({
         {/* Zone 1: Single Brand Wordmark */}
         <button
           onClick={() => handleNavClick('home')}
-          className="flex items-center gap-2.5 text-right cursor-pointer group focus:outline-none min-w-0 shrink"
+          className="flex shrink-0 items-center gap-2.5 text-right cursor-pointer group focus:outline-none"
         >
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center text-slate-950 shadow-inner shrink-0 group-hover:scale-105 transition-transform">
             <GraduationCap className="w-6 h-6" />
@@ -109,7 +109,7 @@ export const Header: React.FC<HeaderProps> = ({
         </button>
 
         {/* Zone 2: Navigation Links */}
-        <nav className="hidden xl:flex min-w-0 items-center gap-4 text-sm font-medium text-slate-200">
+        <nav className="hidden min-w-0 flex-1 items-center justify-center gap-4 overflow-x-auto text-sm font-medium text-slate-200 xl:flex [scrollbar-width:none]">
           {navLinks.map((link) => {
             const isActive = currentView === link.view;
             return (

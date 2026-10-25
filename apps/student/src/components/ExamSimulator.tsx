@@ -458,7 +458,7 @@ export const ExamSimulator: React.FC = () => {
                             : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
                         }`}
                       >
-                        {String.fromCharCode(1571 + idx)}
+                        {['أ', 'ب', 'ج', 'د', 'هـ'][idx] ?? idx + 1}
                       </div>
                       <span>{option}</span>
                     </div>
