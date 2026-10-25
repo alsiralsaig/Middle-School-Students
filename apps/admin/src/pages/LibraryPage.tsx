@@ -61,6 +61,8 @@ const MIME_BY_EXTENSION: Record<string, string> = {
 
 export const LibraryPage: React.FC = () => {
   const [items, setItems] = useState<LibraryRow[] | null>(null);
+  /** يزيد مع كل إضافة/حذف حتى تتحدّث لوحة «آخر ما أُضيف» فوراً */
+  const [mediaVersion, setMediaVersion] = useState(0);
   const [summary, setSummary] = useState<{ total: number; verified: number; downloads: number; published?: number; hidden?: number; interactive?: number } | null>(null);
   const [subjects, setSubjects] = useState<SubjectOption[]>([]);
   const [offline, setOffline] = useState(false);
@@ -301,10 +303,15 @@ export const LibraryPage: React.FC = () => {
           </button>
         </div>
       </header>
-      <MediaManager ownerType="library" ownerId="shared-library" title="ملفات وروابط المكتبة عبر النظام المشترك" />
+      <MediaManager
+        ownerType="library"
+        ownerId="shared-library"
+        title="ملفات وروابط المكتبة عبر النظام المشترك"
+        onChanged={() => setMediaVersion((v) => v + 1)}
+      />
 
       {/* أين ذهب الرابط الذي حفظته؟ هذه اللوحة تجمع آخر ٣٠ عنصراً من كل الأقسام */}
-      <RecentMediaPanel />
+      <RecentMediaPanel refreshKey={mediaVersion} />
 
       {summary && (
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">

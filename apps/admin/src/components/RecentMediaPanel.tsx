@@ -9,7 +9,7 @@ import { formatFileSize, listRecentMedia, MediaAsset } from '../lib/mediaUpload'
  * ثم يفتح المكتبة لا يجده ويظن أن الحفظ ضاع. هذه اللوحة تجمع آخر ٣٠ عنصراً من
  * كل الأقسام مع اسم القسم والتاريخ، حتى يُعرَف مصير كل ملف أو رابط.
  */
-export const RecentMediaPanel: React.FC = () => {
+export const RecentMediaPanel: React.FC<{ refreshKey?: number }> = ({ refreshKey = 0 }) => {
   const [rows, setRows] = React.useState<Array<MediaAsset & { ownerLabel?: string }>>([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState('');
@@ -25,7 +25,9 @@ export const RecentMediaPanel: React.FC = () => {
     }
   }, []);
 
-  React.useEffect(() => { void load(); }, [load]);
+  /* يتحدّث تلقائياً عند أي إضافة/حذف في نفس الصفحة — كان يبقى «لم يُضف شيء»
+     بعد حفظ رابط جديد لأن التحميل حدث قبل الإضافة. */
+  React.useEffect(() => { void load(); }, [load, refreshKey]);
 
   const when = (iso?: string | null) => {
     if (!iso) return '';
