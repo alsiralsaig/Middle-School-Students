@@ -24,6 +24,15 @@ import { api } from '../utils/apiClient';
 import { MediaAssetViewer, type MediaAssetView } from '../components/MediaAssetViewer';
 import { LessonAttachments } from '../components/LessonAttachments';
 
+type ExamCard = { id: string; title: string; subjectName: string };
+
+/** يختار اختباراً عشوائياً غير الاختبار الحالي — عشان «تدريب سريع» يتغيّر كل مرة */
+function randomExam<T extends ExamCard>(list: T[], excludeId: string): T | null {
+  const pool = list.filter((e) => e.id !== excludeId);
+  if (!pool.length) return list[0] ?? null;
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
 export const ExamsView: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'exam-bank' | 'simulator' | 'practice-quiz' | 'past-papers'>('exam-bank');
   /**
@@ -52,6 +61,7 @@ export const ExamsView: React.FC = () => {
   const [paperResources, setPaperResources] = useState<
     Array<{ id: string; title: string; subjectName: string; url: string; category: string; kind: 'file' | 'link' }>
   >([]);
+  const [quickExam, setQuickExam] = useState<{ id: string; title: string; subjectName: string } | null>(null);
   const [openExam, setOpenExam] = useState<{ id: string; title: string; subjectName: string } | null>(null);
   useEffect(() => {
     let alive = true;
@@ -59,8 +69,7 @@ export const ExamsView: React.FC = () => {
       .exams()
       .then(({ exams }) => {
         if (!alive) return;
-        setServerExams(
-          exams
+        const sorted = exams
             // تدريبات الدروس تُفتح من داخل الدرس نفسه — ما نغرق بيها بنك الأسئلة
             .filter((e) => e.status !== 'lesson-quiz')
             .map((e) => ({
@@ -76,8 +85,9 @@ export const ExamsView: React.FC = () => {
             // نستثني: (١) اختبارين محتواهما مجرد كلمة «انجليزي»،
             // (٢) خمسة اختبارات عنوانها «الصف الثاني المتوسط» وهي لصفّ آخر.
             .filter((e) => e.questionsCount >= 3 && !/الثاني المتوسط/.test(e.title))
-            .sort((a, b) => b.questionsCount - a.questionsCount),
-        );
+            .sort((a, b) => b.questionsCount - a.questionsCount);
+        setServerExams(sorted);
+        setQuickExam((prev) => prev ?? randomExam(sorted, ''));
       })
       .catch(() => undefined);
 
@@ -306,7 +316,31 @@ export const ExamsView: React.FC = () => {
       )}
 
       {/* Mode 2: Interactive Practice Quiz */}
-      {activeTab === 'practice-quiz' && (
+      {activeTab === 'practice-quiz' && quickExam && (
+        <div className="space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-2 px-1">
+            <p className="text-xs font-bold text-slate-600 dark:text-slate-300">
+              تدريب سريع من بنك الأسئلة — أسئلة حقيقية، وتتغيّر كل مرة.
+            </p>
+            <button
+              type="button"
+              onClick={() => setQuickExam(randomExam(serverExams, quickExam.id))}
+              className="px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-[#193A64] text-white text-xs font-bold flex items-center gap-1.5"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              اختبار آخر
+            </button>
+          </div>
+          <ServerExamRunner
+            examId={quickExam.id}
+            examTitle={quickExam.title}
+            subjectName={quickExam.subjectName}
+            onExit={() => setQuickExam(randomExam(serverExams, quickExam.id))}
+          />
+        </div>
+      )}
+
+      {activeTab === 'practice-quiz' && !quickExam && (
         <div className="bg-white dark:bg-[#0D1F35] rounded-3xl border border-slate-200 dark:border-[#1C3A62] p-6 sm:p-10 shadow-sm max-w-3xl mx-auto space-y-6 text-right">
           {!quizCompleted ? (
             <>
