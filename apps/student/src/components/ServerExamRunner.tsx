@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { CheckCircle2, XCircle, ChevronLeft, RotateCcw, Loader2, Award, AlertCircle } from 'lucide-react';
 import { api } from '../utils/apiClient';
+import { QuestionText } from './QuestionText';
 
 /**
  * لاعب اختبارات بنك الأسئلة.
@@ -180,7 +181,7 @@ export const ServerExamRunner: React.FC<ServerExamRunnerProps> = ({
                 <span className="shrink-0 w-6 h-6 rounded-lg bg-slate-100 dark:bg-[#16304F] text-slate-700 dark:text-slate-200 text-xs font-bold flex items-center justify-center">
                   {idx + 1}
                 </span>
-                <p className="text-sm font-bold text-slate-900 dark:text-white leading-relaxed">{q.question}</p>
+                <QuestionText text={q.question} className="flex-1 min-w-0" />
               </div>
 
               <div className="space-y-2">

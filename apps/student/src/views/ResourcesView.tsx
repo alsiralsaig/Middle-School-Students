@@ -1,19 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { ResourceItem, ResourceCategory, Subject } from '../types';
-import { 
-  FileText, 
-  Search, 
-  Download, 
-  Eye, 
-  Award, 
-  CheckCircle2, 
-  Filter, 
-  X,
-  BookOpen,
-  Share2,
-  ClipboardCopy,
-  ExternalLink
-} from 'lucide-react';
+import { Award, BookOpen, CheckCircle2, ClipboardCopy, Download, ExternalLink, Eye, FileText, Filter, Printer, Search, Share2, X } from 'lucide-react';
 import { PDFViewerModal } from '../components/PDFViewerModal';
 import { downloadResourcePDF } from '../utils/pdfDownloader';
 import { api } from '../utils/apiClient';
@@ -111,6 +98,43 @@ export const ResourcesView: React.FC<ResourcesViewProps> = ({
       setDownloadToast('النسخ غير مسموح في هذا المتصفح — حدّد النص وانسخه يدوياً.');
       setTimeout(() => setDownloadToast(null), 4000);
     }
+  };
+
+  /**
+   * «حفظ PDF» من داخل التطبيق.
+   *
+   * ليه: نافذة القراءة بطول الشاشة (overflow) فكانت الطباعة/الحفظ من نظام
+   * الجوال يطبع **صفحة واحدة فيها الغلاف فقط** ويضيع باقي الملخص (شكوى
+   * المستخدم: «الملخص صفحة واحدة وفاضية»). هنا نفتح نافذة طباعة مستقلة
+   * بالنص كاملاً، بترويسة ورقم صفحة، فتُطبع كل الصفحات.
+   */
+  const printReading = () => {
+    if (!reading || !readingText) return;
+    const win = window.open('', '_blank');
+    if (!win) {
+      setDownloadToast('المتصفح منع فتح نافذة الطباعة — اسمح بالنوافذ المنبثقة ثم أعد المحاولة.');
+      setTimeout(() => setDownloadToast(null), 4000);
+      return;
+    }
+    const esc = (t: string) => t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    win.document.write(`<!doctype html><html dir="rtl" lang="ar"><head><meta charset="utf-8">
+<title>${esc(reading.title)}</title>
+<style>
+  @page { size: A4; margin: 16mm 14mm; }
+  body { font-family: "Segoe UI", Tahoma, Arial, sans-serif; color:#111; line-height:1.9; font-size:12.5pt; }
+  h1 { font-size:16pt; margin:0 0 4mm; }
+  .meta { color:#666; font-size:9.5pt; margin-bottom:6mm; }
+  pre { white-space:pre-wrap; word-wrap:break-word; font-family:inherit; margin:0; }
+  .foot { margin-top:8mm; color:#888; font-size:9pt; border-top:1px solid #ddd; padding-top:2mm; }
+</style></head><body>
+<h1>${esc(reading.title)}</h1>
+<div class="meta">منصة الطالب السوداني — الصف الثالث المتوسط · ${readingText.length.toLocaleString('ar-EG')} حرف</div>
+<pre>${esc(readingText)}</pre>
+<div class="foot">منصة الطالب السوداني الذكية</div>
+</body></html>`);
+    win.document.close();
+    win.focus();
+    setTimeout(() => win.print(), 400);
   };
 
   const triggerDownload = (item: ResourceItem) => {
@@ -361,6 +385,9 @@ export const ResourcesView: React.FC<ResourcesViewProps> = ({
               <div className="flex items-center gap-1.5">
                 <button type="button" onClick={() => void copyReadingText()} disabled={readingBusy || !readingText} className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2 text-[11px] font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-40">
                   <ClipboardCopy className="w-3.5 h-3.5" /> نسخ
+                </button>
+                <button type="button" onClick={printReading} disabled={readingBusy || !readingText} className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-2 text-[11px] font-bold text-white hover:bg-emerald-700 disabled:opacity-40">
+                  <Printer className="w-3.5 h-3.5" /> حفظ PDF
                 </button>
                 <button type="button" onClick={() => setReading(null)} aria-label="إغلاق" className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800">
                   <X className="w-4 h-4" />

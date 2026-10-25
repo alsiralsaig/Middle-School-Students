@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { Lesson } from '../types';
 import { api } from '../utils/apiClient';
+import { QuestionText } from './QuestionText';
 
 interface GeneratedQuizQuestion {
   id: number;
@@ -339,9 +340,9 @@ export const InteractiveQuiz: React.FC<InteractiveQuizProps> = ({
             <span className="text-xs font-bold text-amber-600 dark:text-amber-400 block">
               {usingServer ? subjectName || 'من الدرس' : localQuestions[currentIndex]?.conceptTag}
             </span>
-            <h4 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white leading-relaxed">
-              {currentQ.question}
-            </h4>
+            <div className="text-base sm:text-lg font-bold text-slate-900 dark:text-white leading-relaxed">
+              <QuestionText text={currentQ.question} />
+            </div>
           </div>
 
           {/* Options Grid */}

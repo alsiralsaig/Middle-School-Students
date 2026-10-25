@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { EXAM_PACKAGES, ExamPackage, SimulatorQuestion } from '../data/examSimulatorData';
 import { useAccount } from '../context/AccountContext';
+import { QuestionText } from './QuestionText';
 
 interface StudentExamResult {
   examId: string;
@@ -425,8 +426,8 @@ export const ExamSimulator: React.FC = () => {
               <div className="text-xs text-amber-600 dark:text-amber-400 font-bold">
                 الموضوع: {currentQ.topic}
               </div>
-              <h3 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white leading-relaxed">
-                {currentQ.question}
+              <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white leading-relaxed">
+                <QuestionText text={currentQ.question} />
               </h3>
             </div>
 
@@ -855,9 +856,9 @@ export const ExamSimulator: React.FC = () => {
                         </span>
                       </div>
 
-                      <p className="text-sm font-bold text-slate-900 dark:text-white mt-3 leading-relaxed">
-                        {q.question}
-                      </p>
+                      <div className="mt-3">
+                        <QuestionText text={q.question} />
+                      </div>
 
                       {/* Options preview */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 my-3 text-xs">

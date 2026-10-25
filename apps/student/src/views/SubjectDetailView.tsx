@@ -747,13 +747,31 @@ export const SubjectDetailView: React.FC<SubjectDetailViewProps> = ({
           >
             <div className="mb-3 flex items-center justify-between gap-3 border-b border-slate-100 pb-3 dark:border-[#1E3A60]">
               <h3 className="text-sm font-black text-slate-900 dark:text-white">{noteView.title}</h3>
-              <button
-                type="button"
-                onClick={() => setNoteView(null)}
-                className="rounded-xl bg-slate-100 px-3 py-1.5 text-xs font-bold text-slate-700 dark:bg-[#142A46] dark:text-slate-200"
-              >
-                إغلاق
-              </button>
+              <div className="flex items-center gap-1.5">
+                {/* الحفظ من نظام الجوال كان يطبع صفحة واحدة فقط لأن النافذة محدودة الارتفاع */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    const win = window.open('', '_blank');
+                    if (!win) return;
+                    const esc = (t: string) => t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                    win.document.write(`<!doctype html><html dir="rtl" lang="ar"><head><meta charset="utf-8"><title>${esc(noteView.title)}</title><style>@page{size:A4;margin:16mm 14mm}body{font-family:"Segoe UI",Tahoma,Arial,sans-serif;color:#111;line-height:1.9;font-size:12.5pt}h1{font-size:16pt;margin:0 0 4mm}.meta{color:#666;font-size:9.5pt;margin-bottom:6mm}pre{white-space:pre-wrap;word-wrap:break-word;font-family:inherit;margin:0}</style></head><body><h1>${esc(noteView.title)}</h1><div class="meta">منصة الطالب السوداني — ${noteView.body.length.toLocaleString('ar-EG')} حرف</div><pre>${esc(noteView.body)}</pre></body></html>`);
+                    win.document.close();
+                    win.focus();
+                    setTimeout(() => win.print(), 400);
+                  }}
+                  className="rounded-xl bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white"
+                >
+                  حفظ PDF
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setNoteView(null)}
+                  className="rounded-xl bg-slate-100 px-3 py-1.5 text-xs font-bold text-slate-700 dark:bg-[#142A46] dark:text-slate-200"
+                >
+                  إغلاق
+                </button>
+              </div>
             </div>
             <p className="whitespace-pre-wrap text-[13px] leading-7 text-slate-700 dark:text-slate-200">
               {noteView.body}

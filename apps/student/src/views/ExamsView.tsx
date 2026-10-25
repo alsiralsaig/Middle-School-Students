@@ -23,6 +23,7 @@ import { ServerExamRunner } from '../components/ServerExamRunner';
 import { api } from '../utils/apiClient';
 import { MediaAssetViewer, type MediaAssetView } from '../components/MediaAssetViewer';
 import { LessonAttachments } from '../components/LessonAttachments';
+import { QuestionText } from '../components/QuestionText';
 
 type ExamCard = { id: string; title: string; subjectName: string };
 
@@ -372,7 +373,7 @@ export const ExamsView: React.FC = () => {
               {/* Question Text */}
               <div className="py-2">
                 <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white leading-relaxed">
-                  {currentQ.question}
+                  <QuestionText text={currentQ.question} />
                 </h3>
               </div>
 

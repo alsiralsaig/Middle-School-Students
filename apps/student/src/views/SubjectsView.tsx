@@ -38,17 +38,15 @@ export const SubjectsView: React.FC<SubjectsViewProps> = ({
     { key: 'tech', label: 'التكنولوجيا والحاسوب' },
   ];
 
-  // Quick subject search chips for 1-tap filtering on mobile
-  const quickSearchChips = [
-    'الرياضيات',
-    'العلوم',
-    'اللغة العربية',
-    'التربية الإسلامية',
-    'الدراسات الاجتماعية',
-    'اللغة الإنجليزية',
-    'تكنولوجيا المعلومات',
-    'التربية الوطنية',
-  ];
+  /*
+   * أزرار البحث السريع تُبنى من المواد الحقيقية التي وصلت من الخادم.
+   * كانت قائمة ثابتة مكتوبة يدوياً فيها «الدراسات الاجتماعية» و«التربية
+   * الوطنية» — وكلتاهما مؤرشفة الآن، فكان الطالب يضغط زراً لا يرجّع شيئاً.
+   */
+  const quickSearchChips = useMemo(
+    () => subjects.slice(0, 8).map((s) => s.name.split('(')[0].trim()),
+    [subjects],
+  );
 
   const normalizedQuery = useMemo(() => normalizeArabicText(searchQuery), [searchQuery]);
 
