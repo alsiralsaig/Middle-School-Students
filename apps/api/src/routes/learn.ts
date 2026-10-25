@@ -337,9 +337,14 @@ learnRouter.get('/resources', async (_req, res) => {
       previewSummary: true, filePath: true, externalUrl: true, body: true,
     },
   });
+  // اسم المادة يُرفق هنا حتى لا يعتمد العميل على قائمة المواد (المؤرشفة خارجها)
+  const subjectNames = new Map(
+    (await prisma.subject.findMany({ select: { id: true, name: true } })).map((s) => [s.id, s.name]),
+  );
   res.json({
     resources: resources.map(({ body, ...r }) => ({
       ...r,
+      subjectName: r.subjectId ? subjectNames.get(r.subjectId) || '' : '',
       previewSummary: JSON.parse(r.previewSummary || '[]'),
       hasBody: Boolean(body),
       bodyChars: body ? body.length : 0,
