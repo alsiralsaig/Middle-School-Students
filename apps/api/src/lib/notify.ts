@@ -38,14 +38,23 @@ export async function notifyAdmin(title: string, message: string, level: NotifyL
   try {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 4000);
-    await fetch(`${server()}/${t}`, {
+    /*
+     * النشر عبر JSON لا عبر الترويسات.
+     * السبب: Node's fetch يرفض أي حرف عربي داخل قيمة ترويسة
+     * («Cannot convert argument to a ByteString»)، وكان الحل السابق
+     * encodeURIComponent فأصبح العنوان يظهر للمستخدم مشفّراً
+     * (%D8%AA%D8%AC…). الـJSON يقبل UTF-8 كما هو.
+     */
+    await fetch(`${server()}/`, {
       method: 'POST',
-      headers: {
-        Title: encodeURIComponent(title),
-        Tags: TAGS[level],
-        Priority: String(PRIORITY[level]),
-      },
-      body: message,
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        topic: t,
+        title,
+        message,
+        priority: PRIORITY[level],
+        tags: [TAGS[level]],
+      }),
       signal: controller.signal,
     }).finally(() => clearTimeout(timer));
   } catch (e) {
