@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { prisma } from '../lib/prisma.js';
+import { notifyAdminSoon } from '../lib/notify.js';
 import {
   cleanText,
   clearAuthCookie,
@@ -120,6 +121,13 @@ authRouter.post('/register', async (req, res) => {
       where: { id: accessCode.id },
       data: { status: 'used', usedAt: new Date(), usedById: user.id },
     });
+
+    /* تنبيه الإدارة: طالب جديد سجّل — يصل على الجوال حتى لو اللوحة مقفولة */
+    notifyAdminSoon(
+      'طالب جديد سجّل',
+      `الاسم: ${user.name}\nالهاتف: ${user.phone ?? '-'}\nالصف: ${user.grade ?? '-'}\nالمدرسة: ${user.school ?? '-'}`,
+      'success',
+    );
 
     const token = signToken({ uid: user.id, role: 'student', name: user.name, app: 'student' });
     setAuthCookie(res, token, 'student');

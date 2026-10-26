@@ -1094,6 +1094,62 @@ export const PasswordRequestsCard: React.FC = () => {
   );
 };
 
+/* ============================ تنبيهات الجوال ============================ */
+
+/**
+ * بطاقة «تنبيهات الجوال» — تشرح القناة وتتيح تجربة الإرسال.
+ *
+ * ليه: التنبيهات تعمل على الخادم، ولا سبيل للمدير أن يثق بها إلا بأن يرى
+ * تنبيهاً واحداً يصل جواله من داخل اللوحة.
+ */
+export const NotifyTestCard: React.FC = () => {
+  const [state, setState] = React.useState<'idle' | 'sending' | 'ok' | 'fail'>('idle');
+  const [msg, setMsg] = React.useState('');
+
+  const send = async () => {
+    setState('sending');
+    setMsg('');
+    try {
+      const res = await fetch(`${getApiBase()}/api/admin/notify-test`, {
+        method: 'POST',
+        headers: adminHeaders,
+        credentials: 'include',
+      });
+      if (!res.ok) throw new Error(String(res.status));
+      setState('ok');
+      setMsg('✅ أُرسلت التجربة — افتح تطبيق ntfy وتأكد من وصولها.');
+    } catch {
+      setState('fail');
+      setMsg('❌ تعذّر الإرسال — تحقّق من الاتصال بالخادم.');
+    }
+  };
+
+  return (
+    <div className="bg-white border border-slate-200 rounded-2xl p-4 space-y-3">
+      <div className="flex items-center gap-2">
+        <ShieldAlert className="w-4 h-4 text-navy-800" />
+        <h2 className="text-sm font-black text-navy-800">تنبيهات الجوال</h2>
+      </div>
+      <p className="text-[11px] leading-relaxed text-slate-600">
+        تنبيهات فورية على جوالك بلا اشتراك ولا بطاقة: طالب جديد سجّل · ملف جديد رُفع · فشل رفع ملف.
+        تعمل عبر تطبيق <strong>ntfy</strong> على قناة خاصة بالإدارة.
+      </p>
+      <div className="flex items-center gap-2 flex-wrap">
+        <button
+          type="button"
+          onClick={() => void send()}
+          disabled={state === 'sending'}
+          className="inline-flex items-center gap-1.5 rounded-xl bg-navy-800 px-3 py-2 text-[11px] font-bold text-white disabled:opacity-50"
+        >
+          {state === 'sending' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
+          جرّب التنبيه
+        </button>
+        {msg && <span className="text-[11px] font-bold text-slate-600">{msg}</span>}
+      </div>
+    </div>
+  );
+};
+
 export const SettingsPage: React.FC = () => {
   const rows = [
     ['اسم المنصة', 'منصة الطالب السوداني الذكية'],
@@ -1114,6 +1170,8 @@ export const SettingsPage: React.FC = () => {
           إعدادات العرض والهوية — القيم تُقرأ من الحزمة المشتركة shared/brand.ts.
         </p>
       </header>
+
+      <NotifyTestCard />
 
       <LoginContactCard />
 

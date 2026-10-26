@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { prisma } from '../lib/prisma.js';
-import { requireAdmin } from '../lib/auth.js';
+import { currentUser, requireAdmin } from '../lib/auth.js';
+import { notifyAdmin } from '../lib/notify.js';
 
 /**
  * نظرة عامة للوحة الإدارة — الإدارة فقط.
@@ -154,5 +155,25 @@ adminOverviewRouter.get('/overview', requireAdmin, async (_req, res) => {
   } catch (e) {
     console.error('admin overview error:', e);
     res.status(500).json({ error: 'تعذّر تحميل النظرة العامة' });
+  }
+});
+
+/**
+ * POST /api/admin/notify-test — زر «جرّب التنبيه».
+ *
+ * ليه: لا سبيل للمدير أن يعرف أن القناة تعمل إلا بأن يصل تنبيه فعلي على
+ * جواله. هذا المسار يرسل واحداً وينتظر النتيجة ليخبره بالصدق.
+ */
+adminOverviewRouter.post('/notify-test', requireAdmin, async (req, res) => {
+  try {
+    const name = currentUser(req)?.name ?? '';
+    await notifyAdmin(
+      'تجربة تنبيه',
+      `هذه رسالة تجريبية من لوحة الإدارة${name ? ` — ${name}` : ''}.\nلو وصلتك، فالتنبيهات تعمل.`,
+      'info',
+    );
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(502).json({ error: e instanceof Error ? e.message : 'تعذّر إرسال التنبيه' });
   }
 });

@@ -5,6 +5,7 @@ import { handleUpload, type HandleUploadBody } from '@vercel/blob/client';
 import { Router, type Request } from 'express';
 import { prisma } from '../lib/prisma.js';
 import { cleanText, currentUser, requireAdmin, requireAuth } from '../lib/auth.js';
+import { notifyAdminSoon } from '../lib/notify.js';
 
 export const mediaRouter = Router();
 const MB = 1024 * 1024;
@@ -221,11 +222,26 @@ mediaRouter.post('/media/upload', async (req, res) => {
             update: { filePath: asset.url, subjectId, isPublished: true },
           });
         }
+        /* تنبيه الإدارة أن الملف وصل فعلاً — يفيد لما يرفع المعلم من جهازه
+           ويترك التطبيق، فيعرف المدير أن الرفع مكتمل بلا أن يفتح اللوحة */
+        if (access === 'public' && ADMIN_OWNERS.has(ownerType as Owner)) {
+          notifyAdminSoon(
+            'ملف جديد أُضيف',
+            `${asset.title}\nالحجم: ${(actual.size / MB).toFixed(1)} م.ب\nالمادة: ${asset.subjectId ?? 'غير محددة'}\nالنوع: ${file.kind}`,
+            'success',
+          );
+        }
       },
     });
     res.json(result);
   } catch (error) {
     console.error('[media]', error);
+    /* فشل رفع ملف: أهم تنبيه — الحجم غالباً السبب، فيصل الرقم الحقيقي للمدير */
+    notifyAdminSoon(
+      'فشل رفع ملف',
+      error instanceof Error ? error.message : 'خطأ غير معروف',
+      'error',
+    );
     res.status(400).json({ error: error instanceof Error ? error.message : 'تعذّر رفع الملف' });
   }
 });
