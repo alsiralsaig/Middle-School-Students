@@ -59,11 +59,9 @@ const ViewLoader = () => (
     <span className="sr-only">جارٍ التحميل…</span>
   </div>
 );
-import { AuthGate } from './components/AuthGate';
 import { WelcomeBanner } from './components/WelcomeBanner';
 import { AIAssistantFab } from './components/AIAssistantFab';
 import { WhatsAppFab } from './components/WhatsAppFab';
-import { useSession } from './hooks/useSession';
 import { ServerSetupDialog } from './components/ServerSetupDialog';
 import { ThemeSwitch } from './components/ThemeSwitch';
 import { InstallAppBanner } from './components/InstallAppBanner';
@@ -190,14 +188,7 @@ function AppContent() {
     (u) => u.lessons
   );
 
-  const { user: gateUser } = useSession();
-  const [authOpen, setAuthOpen] = useState(false);
-  const isGuest = !gateUser;
-
-  /* بعد الدخول نقفل شاشة الحساب ونرجع للمنهج */
-  useEffect(() => {
-    if (gateUser) setAuthOpen(false);
-  }, [gateUser]);
+  /* الحساب مؤجَّل لوقت النشر — الحين المنهج مفتوح بلا دخول */
 
   /**
    * أول زيارة (لا نسخة محفوظة) — المنهج يصل من الخادم بعد لحظة.
@@ -235,8 +226,7 @@ function AppContent() {
         bookmarkedCount={bookmarkedLessonIds.length}
         theme={theme}
         onThemeChange={setTheme}
-        isGuest={isGuest}
-        onOpenAuth={() => setAuthOpen(true)}
+        isGuest={true}
       />
       <InstallAppBanner />
       <div className="px-3 py-2 border-b border-[var(--ssp-border)] bg-[var(--ssp-card)]">
@@ -255,8 +245,7 @@ function AppContent() {
             completedLessonIds={completedLessonIds}
             onNavigate={handleNavigate}
             onSelectSubject={handleSelectSubject}
-            isGuest={isGuest}
-            onOpenAuth={() => setAuthOpen(true)}
+            isGuest={true}
           />
         )}
 
@@ -348,12 +337,6 @@ function AppContent() {
 
       {/* Student Account Switcher and Creator Modal */}
       <AccountManagerModal />
-
-      {authOpen && isGuest && (
-        <div className="fixed inset-0 z-[80] overflow-y-auto" style={{ background: 'var(--ssp-bg)' }}>
-          <AuthGate onBrowse={() => setAuthOpen(false)} />
-        </div>
-      )}
 
       {/* نافذة ضبط عنوان الخادم — تُفتح تلقائياً داخل حزمة APK أول مرة */}
       <ServerSetupDialog />

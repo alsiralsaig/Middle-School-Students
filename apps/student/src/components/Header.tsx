@@ -159,15 +159,7 @@ export const Header: React.FC<HeaderProps> = ({
             )}
           </button>
 
-          {isGuest ? (
-            <button
-              onClick={() => onOpenAuth?.()}
-              className="flex items-center gap-1.5 px-3 py-2 text-xs font-black rounded-xl bg-[#F1AC12] text-[#071322] hover:bg-[#ffc433] min-h-[40px]"
-              title="دخول أو تفعيل رمز"
-            >
-              دخول
-            </button>
-          ) : (
+          {!isGuest && (
           <button
             onClick={() => setIsAccountModalOpen(true)}
             className="flex items-center gap-2 px-3 py-2 text-xs font-semibold rounded-xl transition-all cursor-pointer border border-[var(--ssp-header-border)] bg-[var(--ssp-chip)] hover:bg-[var(--ssp-chip-hover)] text-white shadow-sm"
@@ -233,23 +225,23 @@ export const Header: React.FC<HeaderProps> = ({
               </span>
             </button>
 
-            {/* Account Switcher in Mobile Drawer */}
+            {!isGuest && (
             <button
               onClick={() => {
-                if (isGuest) onOpenAuth?.();
-                else setIsAccountModalOpen(true);
+                setIsAccountModalOpen(true);
                 setMobileMenuOpen(false);
               }}
               className="w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-sm font-medium bg-[var(--ssp-chip)] text-white cursor-pointer min-h-[44px]"
             >
               <div className="flex items-center gap-2.5">
-                <StudentAvatar avatar={activeAccount.avatar} name={isGuest ? 'ضيف' : activeAccount.name} className="w-8 h-8" textClassName="text-[13px]" />
-                <span>{isGuest ? 'تصفح بدون حساب' : activeAccount.name}</span>
+                <StudentAvatar avatar={activeAccount.avatar} name={activeAccount.name} className="w-8 h-8" textClassName="text-[13px]" />
+                <span>{activeAccount.name}</span>
               </div>
               <span className="text-xs text-emerald-400 font-semibold bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
-                {isGuest ? 'دخول' : 'حسابي'}
+                حسابي
               </span>
             </button>
+            )}
           </div>
         </div>
       )}

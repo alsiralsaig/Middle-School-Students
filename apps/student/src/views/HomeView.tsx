@@ -40,20 +40,6 @@ export const HomeView: React.FC<HomeViewProps> = ({
 
   return (
     <div className="space-y-4">
-      {isGuest && (
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 rounded-2xl border px-3.5 py-3 border-[var(--ssp-border)] bg-[var(--ssp-card)] text-[var(--ssp-text)]">
-          <p className="text-[12px] font-bold leading-relaxed">
-            المنهج مفتوح للتصفح. سجّل بحسابك عشان يتسجل تقدمك والامتحانات.
-          </p>
-          <button
-            type="button"
-            onClick={() => onOpenAuth?.()}
-            className="shrink-0 min-h-[40px] px-4 rounded-xl bg-[#F1AC12] text-[#071322] text-[12px] font-black"
-          >
-            دخول / تفعيل رمز
-          </button>
-        </div>
-      )}
       <div className="px-1 text-right">
         <h1 className="text-[17px] font-black text-[var(--ssp-text)]">المقررات الدراسية</h1>
         <p className="mt-1 text-[11px] font-semibold text-[var(--ssp-muted)]">
