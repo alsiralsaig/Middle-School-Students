@@ -1,6 +1,9 @@
 import {createRoot} from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
+import { applyTheme, readSavedTheme } from './utils/theme';
+
+applyTheme(readSavedTheme());
 
 createRoot(document.getElementById('root')!).render(<App />);
 

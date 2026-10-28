@@ -28,7 +28,7 @@ export const SubjectCard: React.FC<SubjectCardProps> = ({
     <button
       type="button"
       onClick={() => onSelect(subject.id)}
-      className="group relative flex min-h-[132px] flex-col items-center justify-center gap-2 overflow-hidden rounded-3xl border bg-white p-4 text-center shadow-sm transition-transform active:scale-[0.98] dark:bg-[#0F2742]"
+      className="group relative flex min-h-[132px] flex-col items-center justify-center gap-2 overflow-hidden rounded-3xl border p-4 text-center shadow-sm transition-transform active:scale-[0.98] bg-[var(--ssp-card)]"
       style={{ borderColor: `${visual.accent}55` }}
       aria-label={`فتح مادة ${subject.name}`}
     >
@@ -41,17 +41,17 @@ export const SubjectCard: React.FC<SubjectCardProps> = ({
 
       <span className="relative text-[40px] leading-none drop-shadow-sm">{visual.emoji}</span>
 
-      <h3 className="relative text-[13.5px] font-black leading-tight text-slate-900 dark:text-white">
+      <h3 className="relative text-[13.5px] font-black leading-tight text-[var(--ssp-text)]">
         {subject.name}
       </h3>
 
-      <span className="relative flex items-center gap-1 text-[10.5px] font-bold text-slate-500 dark:text-slate-300">
+      <span className="relative flex items-center gap-1 text-[10.5px] font-bold text-[var(--ssp-muted)]">
         <CheckCircle2 className="h-3 w-3" style={{ color: visual.accent }} />
         {completedLessonsCount} من {subject.lessonsCount} درس
       </span>
 
       {/* شريط تقدّم رقيق أسفل المربع */}
-      <span className="absolute inset-x-0 bottom-0 h-1 bg-slate-100 dark:bg-[#0B1E36]" aria-hidden="true">
+      <span className="absolute inset-x-0 bottom-0 h-1 bg-[var(--ssp-border)]" aria-hidden="true">
         <span
           className="block h-full transition-all duration-300"
           style={{ width: `${percent}%`, backgroundColor: visual.accent }}

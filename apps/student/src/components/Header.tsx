@@ -5,6 +5,8 @@ import { useAccount } from '../context/AccountContext';
 import { StudentAvatar } from './StudentAvatar';
 import { Camera } from 'lucide-react';
 import { NotificationCenter } from './NotificationCenter';
+import { ThemeSwitch } from './ThemeSwitch';
+import type { ShellTheme } from '../utils/theme';
 import { 
   BookOpen, 
   Layers, 
@@ -26,8 +28,8 @@ interface HeaderProps {
   onNavigate: (view: ViewMode) => void;
   completedCount: number;
   bookmarkedCount?: number;
-  isDarkMode: boolean;
-  onToggleDarkMode: () => void;
+  theme: ShellTheme;
+  onThemeChange: (theme: ShellTheme) => void;
   isGuest?: boolean;
   onOpenAuth?: () => void;
 }
@@ -37,8 +39,8 @@ export const Header: React.FC<HeaderProps> = ({
   onNavigate, 
   completedCount: _completedCount,
   bookmarkedCount = 0,
-  isDarkMode: _isDarkMode,
-  onToggleDarkMode: _onToggleDarkMode,
+  theme,
+  onThemeChange,
   isGuest = false,
   onOpenAuth,
 }) => {
@@ -63,9 +65,9 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-[#0B1E36] text-white border-b border-[#1A3353] shadow-md" dir={isRtl ? 'rtl' : 'ltr'}>
+    <header className="sticky top-0 z-40 bg-[var(--ssp-header)] text-[var(--ssp-header-text)] border-b border-[var(--ssp-header-border)] shadow-md" dir={isRtl ? 'rtl' : 'ltr'}>
       {/* Top Banner Bar for Grade & Curriculum Recognition */}
-      <div className="bg-[#071322] border-b border-[#14263D] py-1 px-4 text-xs">
+      <div className="bg-[var(--ssp-header-2)] border-b border-[var(--ssp-header-border)] py-1 px-4 text-xs">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2 text-slate-300">
             <span className="inline-block w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
@@ -77,11 +79,12 @@ export const Header: React.FC<HeaderProps> = ({
               {language === 'en' ? 'Middle School Certificate' : 'الشهادة المتوسطة — الصف الثالث المتوسط'}
             </span>
           </div>
-          <div className="flex items-center gap-4 text-slate-300">
+          <div className="flex items-center gap-2 text-slate-300">
+            <ThemeSwitch theme={theme} onChange={onThemeChange} />
             {/* Language Switcher in Top Bar */}
             <button
               onClick={toggleLanguage}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 min-h-[32px] rounded-lg bg-[#122846] hover:bg-[#1C3B65] text-amber-300 hover:text-white border border-[#234572] transition-colors cursor-pointer text-[11px] font-semibold"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 min-h-[32px] rounded-lg bg-[var(--ssp-chip)] hover:bg-[var(--ssp-chip-hover)] text-amber-200 hover:text-white border border-[var(--ssp-header-border)] transition-colors cursor-pointer text-[11px] font-semibold"
               title="Switch Interface Language (EN / AR)"
             >
               <Languages className="w-3.5 h-3.5" />
@@ -144,13 +147,13 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Quick Bookmarks Button */}
           <button
             onClick={() => handleNavClick('student-dashboard')}
-            className="hidden sm:flex p-2 rounded-xl bg-[#162D4A] hover:bg-[#1E3A60] text-amber-300 hover:text-amber-200 border border-[#27446C] transition-all cursor-pointer min-h-[40px] min-w-[40px] items-center justify-center shadow-sm relative"
+            className="hidden sm:flex p-2 rounded-xl bg-[var(--ssp-chip)] hover:bg-[var(--ssp-chip-hover)] text-amber-200 hover:text-amber-100 border border-[var(--ssp-header-border)] transition-all cursor-pointer min-h-[40px] min-w-[40px] items-center justify-center shadow-sm relative"
             title={`قائمة المتابعة لاحقاً (${bookmarkedCount} دروس)`}
             aria-label="قائمة المتابعة لاحقاً"
           >
             <Bookmark className={`w-4 h-4 ${bookmarkedCount > 0 ? 'fill-amber-400 text-amber-400' : 'text-amber-300'}`} />
             {bookmarkedCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-amber-400 text-slate-950 font-bold text-[10px] min-w-[18px] h-[18px] rounded-full flex items-center justify-center border-2 border-[#0B1E36] px-1">
+              <span className="absolute -top-1 -right-1 bg-amber-400 text-slate-950 font-bold text-[10px] min-w-[18px] h-[18px] rounded-full flex items-center justify-center border-2 border-[var(--ssp-header)] px-1">
                 {bookmarkedCount}
               </span>
             )}
@@ -167,7 +170,7 @@ export const Header: React.FC<HeaderProps> = ({
           ) : (
           <button
             onClick={() => setIsAccountModalOpen(true)}
-            className="flex items-center gap-2 px-3 py-2 text-xs font-semibold rounded-xl transition-all cursor-pointer border border-[#27446C] bg-[#162D4A] hover:bg-[#1E3A60] text-white shadow-sm"
+            className="flex items-center gap-2 px-3 py-2 text-xs font-semibold rounded-xl transition-all cursor-pointer border border-[var(--ssp-header-border)] bg-[var(--ssp-chip)] hover:bg-[var(--ssp-chip-hover)] text-white shadow-sm"
             title="حسابي — بياناتي وصورتي"
           >
             <span className="relative">
@@ -186,7 +189,7 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Mobile Hamburger Toggle */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="xl:hidden p-2 rounded-xl bg-[#162D4A] text-slate-200 hover:text-white cursor-pointer min-h-[40px] min-w-[40px] flex items-center justify-center border border-[#27446C]"
+            className="xl:hidden p-2 rounded-xl bg-[var(--ssp-chip)] text-white/90 hover:text-white cursor-pointer min-h-[40px] min-w-[40px] flex items-center justify-center border border-[var(--ssp-header-border)]"
             aria-label="القائمة الرئيسية"
           >
             {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -196,7 +199,7 @@ export const Header: React.FC<HeaderProps> = ({
 
       {/* Mobile Drawer Navigation */}
       {mobileMenuOpen && (
-        <div className="xl:hidden bg-[#0A182B] border-b border-[#1A3353] px-4 py-4 space-y-2 animate-in slide-in-from-top duration-200">
+        <div className="xl:hidden bg-[var(--ssp-header-2)] border-b border-[var(--ssp-header-border)] px-4 py-4 space-y-2 animate-in slide-in-from-top duration-200">
           {navLinks.map((link) => {
             const isActive = currentView === link.view;
             return (
@@ -206,7 +209,7 @@ export const Header: React.FC<HeaderProps> = ({
                 className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium transition-colors text-right cursor-pointer min-h-[44px] ${
                   isActive
                     ? 'bg-amber-400/10 text-amber-400 border border-amber-400/30'
-                    : 'text-slate-300 hover:bg-[#12243C] hover:text-white'
+                    : 'text-white/80 hover:bg-[var(--ssp-chip)] hover:text-white'
                 }`}
               >
                 {link.icon}
@@ -219,13 +222,13 @@ export const Header: React.FC<HeaderProps> = ({
             {/* Language Switcher in Mobile Drawer */}
             <button
               onClick={toggleLanguage}
-              className="w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-sm font-medium bg-[#162D4A] text-amber-300 cursor-pointer min-h-[44px]"
+              className="w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-sm font-medium bg-[var(--ssp-chip)] text-amber-200 cursor-pointer min-h-[44px]"
             >
               <div className="flex items-center gap-2.5">
                 <Languages className="w-4 h-4 text-amber-300" />
                 <span>{language === 'ar' ? 'English (Interface)' : 'واجهة باللغة العربية'}</span>
               </div>
-              <span className="text-xs bg-[#0E2440] px-2.5 py-1 rounded-lg text-white font-mono">
+              <span className="text-xs bg-[var(--ssp-header-2)] px-2.5 py-1 rounded-lg text-white font-mono">
                 {language.toUpperCase()}
               </span>
             </button>
@@ -237,7 +240,7 @@ export const Header: React.FC<HeaderProps> = ({
                 else setIsAccountModalOpen(true);
                 setMobileMenuOpen(false);
               }}
-              className="w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-sm font-medium bg-[#162D4A] text-slate-200 cursor-pointer min-h-[44px]"
+              className="w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-sm font-medium bg-[var(--ssp-chip)] text-white cursor-pointer min-h-[44px]"
             >
               <div className="flex items-center gap-2.5">
                 <StudentAvatar avatar={activeAccount.avatar} name={isGuest ? 'ضيف' : activeAccount.name} className="w-8 h-8" textClassName="text-[13px]" />

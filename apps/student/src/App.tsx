@@ -65,6 +65,7 @@ import { AIAssistantFab } from './components/AIAssistantFab';
 import { WhatsAppFab } from './components/WhatsAppFab';
 import { useSession } from './hooks/useSession';
 import { ServerSetupDialog } from './components/ServerSetupDialog';
+import { applyTheme, readSavedTheme, type ShellTheme } from './utils/theme';
 
 function AppContent() {
   /* المنهج من قاعدة البيانات (مع نسخة محفوظة تعمل دون اتصال) */
@@ -86,14 +87,7 @@ function AppContent() {
   const completedLessonIds = activeAccount.completedLessonIds || [];
   const bookmarkedLessonIds = activeAccount.bookmarkedLessonIds || [];
 
-  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('sudanese_platform_theme');
-      if (saved) return saved === 'dark';
-      return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-    }
-    return false;
-  });
+  const [theme, setTheme] = useState<ShellTheme>(() => readSavedTheme());
 
   /* ===== الجلسة والمزامنة مع خادم المنصة (apps/api) =====
      كل شيء اختياري: إذا تعذّر الاتصال تبقى المنصة تعمل من localStorage. */
@@ -114,18 +108,9 @@ function AppContent() {
     };
   }, []);
 
-  // Sync theme with document class and localStorage
   useEffect(() => {
-    if (isDarkMode) {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('sudanese_platform_theme', 'dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('sudanese_platform_theme', 'light');
-    }
-  }, [isDarkMode]);
-
-  const toggleDarkMode = () => setIsDarkMode((prev) => !prev);
+    applyTheme(theme);
+  }, [theme]);
 
   // Scroll to top when view changes
   useEffect(() => {
@@ -222,7 +207,8 @@ function AppContent() {
       <WelcomeBanner />
       <div
         dir={isRtl ? 'rtl' : 'ltr'}
-        className="min-h-screen bg-[#071322] text-white flex flex-col items-center justify-center gap-3 px-6"
+        className="min-h-screen flex flex-col items-center justify-center gap-3 px-6"
+        style={{ background: 'var(--ssp-bg)', color: 'var(--ssp-text)' }}
       >
         <span className="h-9 w-9 rounded-full border-[3px] border-amber-400/30 border-t-amber-400 animate-spin" />
         <p className="text-sm font-bold text-amber-300">جارٍ تحميل المنهج…</p>
@@ -234,11 +220,8 @@ function AppContent() {
 
   return (
     <div 
-      className={`min-h-screen flex flex-col font-sans transition-colors duration-200 ${
-        isDarkMode 
-          ? 'dark bg-[#071322] text-slate-100 selection:bg-amber-900/60 selection:text-amber-200' 
-          : 'bg-slate-50 text-slate-900 selection:bg-amber-100 selection:text-amber-900'
-      }`}
+      className="min-h-screen flex flex-col font-sans transition-colors duration-200"
+      style={{ background: 'var(--ssp-bg)', color: 'var(--ssp-text)' }}
       dir={isRtl ? 'rtl' : 'ltr'}
     >
       <WelcomeBanner />
@@ -248,8 +231,8 @@ function AppContent() {
         onNavigate={handleNavigate}
         completedCount={completedLessonIds.length}
         bookmarkedCount={bookmarkedLessonIds.length}
-        isDarkMode={isDarkMode}
-        onToggleDarkMode={toggleDarkMode}
+        theme={theme}
+        onThemeChange={setTheme}
         isGuest={isGuest}
         onOpenAuth={() => setAuthOpen(true)}
       />
@@ -358,7 +341,7 @@ function AppContent() {
       <AccountManagerModal />
 
       {authOpen && isGuest && (
-        <div className="fixed inset-0 z-[80] overflow-y-auto bg-[#071322]">
+        <div className="fixed inset-0 z-[80] overflow-y-auto" style={{ background: 'var(--ssp-bg)' }}>
           <AuthGate onBrowse={() => setAuthOpen(false)} />
         </div>
       )}

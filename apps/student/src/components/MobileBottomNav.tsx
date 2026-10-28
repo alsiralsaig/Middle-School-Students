@@ -23,7 +23,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ currentView, o
   return (
     <nav 
       aria-label="التنقل السفلي للهاتف"
-      className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#0B1E36]/95 backdrop-blur-md border-t border-[#1C3659] pb-safe"
+      className="lg:hidden fixed bottom-0 left-0 right-0 z-40 backdrop-blur-md border-t pb-safe bg-[var(--ssp-nav)] border-[var(--ssp-header-border)]"
       dir={isRtl ? 'rtl' : 'ltr'}
     >
       <div className="grid grid-cols-6 h-16 items-center px-0.5 gap-0.5">
@@ -36,7 +36,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ currentView, o
               key={tab.view}
               onClick={() => onNavigate(tab.view)}
               className={`flex flex-col items-center justify-center min-h-[48px] min-w-0 py-1 px-0.5 transition-colors cursor-pointer relative ${
-                isActive ? 'text-amber-400 font-semibold' : 'text-slate-400 hover:text-slate-200'
+                isActive ? 'text-[var(--ssp-nav-active)] font-semibold' : 'text-[var(--ssp-nav-text)] hover:opacity-90'
               }`}
             >
               <div className="relative">

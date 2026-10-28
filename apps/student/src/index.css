@@ -6,6 +6,65 @@
   :root {
     --font-arabic: 'Cairo', 'Tajawal', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   }
+
+  /* فاتح سماوي — الافتراضي */
+  html,
+  html[data-theme="light"] {
+    --ssp-bg: #e7f4fc;
+    --ssp-bg-2: #f4fbff;
+    --ssp-header: #2b90c9;
+    --ssp-header-2: #1f7eb6;
+    --ssp-header-border: #5eb0dc;
+    --ssp-chip: #1a73a8;
+    --ssp-chip-hover: #156492;
+    --ssp-card: #ffffff;
+    --ssp-text: #0c3350;
+    --ssp-muted: #4d6f88;
+    --ssp-border: #c5e0f2;
+    --ssp-nav: #ffffff;
+    --ssp-nav-text: #4d6f88;
+    --ssp-nav-active: #1f7eb6;
+    --ssp-header-text: #ffffff;
+  }
+
+  /* متوسط — أزرق فولاذي */
+  html[data-theme="medium"] {
+    --ssp-bg: #2d5f86;
+    --ssp-bg-2: #245274;
+    --ssp-header: #214c6e;
+    --ssp-header-2: #1b415e;
+    --ssp-header-border: #3d7199;
+    --ssp-chip: #2a6088;
+    --ssp-chip-hover: #34719c;
+    --ssp-card: #e8f3fa;
+    --ssp-text: #0c3350;
+    --ssp-muted: #355874;
+    --ssp-border: #9ec6e0;
+    --ssp-nav: #214c6e;
+    --ssp-nav-text: #d5e8f5;
+    --ssp-nav-active: #f1ac12;
+    --ssp-header-text: #ffffff;
+  }
+
+  /* داكن — أرفع شوية من الأسود السابق */
+  html[data-theme="dark"],
+  html.dark {
+    --ssp-bg: #0e1c2e;
+    --ssp-bg-2: #0b1624;
+    --ssp-header: #123049;
+    --ssp-header-2: #0d2438;
+    --ssp-header-border: #1e4a6e;
+    --ssp-chip: #173a58;
+    --ssp-chip-hover: #1e4c70;
+    --ssp-card: #14324c;
+    --ssp-text: #f1f5f9;
+    --ssp-muted: #9fb4c8;
+    --ssp-border: #1e4a6e;
+    --ssp-nav: #123049;
+    --ssp-nav-text: #9fb4c8;
+    --ssp-nav-active: #f1ac12;
+    --ssp-header-text: #ffffff;
+  }
   
   html {
     font-family: var(--font-arabic);

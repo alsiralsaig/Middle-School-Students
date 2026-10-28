@@ -41,7 +41,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
   return (
     <div className="space-y-4">
       {isGuest && (
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 rounded-2xl border border-[#27446C] bg-[#0B1E36] px-3.5 py-3 text-white">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 rounded-2xl border px-3.5 py-3 border-[var(--ssp-border)] bg-[var(--ssp-card)] text-[var(--ssp-text)]">
           <p className="text-[12px] font-bold leading-relaxed">
             المنهج مفتوح للتصفح. سجّل بحسابك عشان يتسجل تقدمك والامتحانات.
           </p>
@@ -55,8 +55,8 @@ export const HomeView: React.FC<HomeViewProps> = ({
         </div>
       )}
       <div className="px-1 text-right">
-        <h1 className="text-[17px] font-black text-slate-900 dark:text-white">المقررات الدراسية</h1>
-        <p className="mt-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+        <h1 className="text-[17px] font-black text-[var(--ssp-text)]">المقررات الدراسية</h1>
+        <p className="mt-1 text-[11px] font-semibold text-[var(--ssp-muted)]">
           وفق وثيقة المنهج السوداني القومي · الصف الثالث المتوسط
         </p>
       </div>
