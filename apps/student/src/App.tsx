@@ -66,6 +66,7 @@ import { WhatsAppFab } from './components/WhatsAppFab';
 import { useSession } from './hooks/useSession';
 import { ServerSetupDialog } from './components/ServerSetupDialog';
 import { ThemeSwitch } from './components/ThemeSwitch';
+import { InstallAppBanner } from './components/InstallAppBanner';
 import { applyTheme, readSavedTheme, type ShellTheme } from './utils/theme';
 
 function AppContent() {
@@ -237,6 +238,7 @@ function AppContent() {
         isGuest={isGuest}
         onOpenAuth={() => setAuthOpen(true)}
       />
+      <InstallAppBanner />
       <div className="px-3 py-2 border-b border-[var(--ssp-border)] bg-[var(--ssp-card)]">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-2">
           <span className="text-[12px] font-black text-[var(--ssp-text)]">الألوان</span>
