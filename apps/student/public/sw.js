@@ -4,7 +4,7 @@
  * الهدف: التطبيق يفتح **بدون إنترنت** (مهم جداً لطلاب السودان) ويتثبّت على الهاتف،
  * ويتحدّث فوراً عند صدور نسخة جديدة بدون الحاجة لمسح الكاش يدوياً.
  */
-const VERSION = 'ssp-v1.3.0';
+const VERSION = 'ssp-v1.3.1';
 const SHELL_CACHE = `${VERSION}-shell`;
 const ASSET_CACHE = `${VERSION}-assets`;
 /**
