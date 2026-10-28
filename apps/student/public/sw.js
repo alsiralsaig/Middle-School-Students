@@ -1,20 +1,15 @@
 /**
  * Service Worker — منصة الطالب السوداني الذكية
  *
- * الهدف: التطبيق يفتح **بدون إنترنت** (مهم جداً لطلاب السودان) ويتثبّت على الهاتف.
- * الاستراتيجية:
- *   • التطبيق نفسه (شل): cache-first — يفتح فوراً حتى بدون نت.
- *   • الملفات الثابتة (JS/CSS/صور): cache-first وتُحدَّث في الخلفية.
- *   • طلبات API: الشبكة فقط (الذكاء الاصطناعي محتاج نت) مع رسالة واضحة لو فشل.
- *   • الصفحات: network-first مع الرجوع للكاش.
+ * الهدف: التطبيق يفتح **بدون إنترنت** (مهم جداً لطلاب السودان) ويتثبّت على الهاتف،
+ * ويتحدّث فوراً عند صدور نسخة جديدة بدون الحاجة لمسح الكاش يدوياً.
  */
-const VERSION = 'ssp-v1.2.0-theme';
+const VERSION = 'ssp-v1.3.0';
 const SHELL_CACHE = `${VERSION}-shell`;
 const ASSET_CACHE = `${VERSION}-assets`;
 /**
  * كاش الملفات التي حمّلها الطالب للاستخدام بدون إنترنت.
- * ⚠️ اسمه مستقل ولا يُحذف عند تحديث نسخة التطبيق — وإلا خسر الطالب كل
- * ما حمّله من كتب ونماذج كل مرة ننشر تحديثاً (والمستخدمون على إنترنت ضعيف).
+ * ⚠️ اسمه مستقل ولا يُحذف عند تحديث نسخة التطبيق.
  */
 const USER_FILES_CACHE = 'ssp-offline-files-v1';
 const OFFLINE_URL = '/offline.html';
@@ -44,7 +39,13 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-const isApi = (url) => url.pathname.startsWith('/api/');
+self.addEventListener('message', (event) => {
+  if (event.data === 'skip-waiting') {
+    self.skipWaiting();
+  }
+});
+
+const isApi = (url) => url.pathname.startsWith('/api/') || url.pathname.startsWith('/backend/');
 
 self.addEventListener('fetch', (event) => {
   const req = event.request;
@@ -53,7 +54,7 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;
 
-  // الذكاء الاصطناعي: شبكة فقط
+  // واجهات الخادم والذكاء الاصطناعي: الشبكة فقط
   if (isApi(url)) {
     event.respondWith(
       fetch(req).catch(
@@ -67,13 +68,15 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // التنقل بين الصفحات: الشبكة أولاً، والكاش عند عدم التغطية
+  // التنقل بين الصفحات: الشبكة أولاً (بدون كاش المتصفح القديم) ثم الكاش عند انقطاع الإنترنت
   if (req.mode === 'navigate') {
     event.respondWith(
-      fetch(req)
+      fetch(req, { cache: 'no-store' })
         .then((res) => {
-          const copy = res.clone();
-          caches.open(SHELL_CACHE).then((c) => c.put('/', copy)).catch(() => {});
+          if (res.ok) {
+            const copy = res.clone();
+            caches.open(SHELL_CACHE).then((c) => c.put('/', copy)).catch(() => {});
+          }
           return res;
         })
         .catch(async () => {
@@ -84,7 +87,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // باقي الملفات: cache-first مع تحديث في الخلفية
+  // باقي الملفات الثابتة: cache-first مع تحديث في الخلفية
   event.respondWith(
     caches.match(req).then((cached) => {
       const network = fetch(req)

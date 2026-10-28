@@ -65,6 +65,7 @@ import { WhatsAppFab } from './components/WhatsAppFab';
 import { ServerSetupDialog } from './components/ServerSetupDialog';
 import { ThemeSwitch } from './components/ThemeSwitch';
 import { InstallAppBanner } from './components/InstallAppBanner';
+import { AutoUpdate } from './components/AutoUpdate';
 import { applyTheme, readSavedTheme, type ShellTheme } from './utils/theme';
 
 function AppContent() {
@@ -197,6 +198,7 @@ function AppContent() {
   if (SUBJECTS_DATA.length === 0) {
     return (
       <>
+      <AutoUpdate />
       <WelcomeBanner />
       <div
         dir={isRtl ? 'rtl' : 'ltr'}
@@ -217,6 +219,7 @@ function AppContent() {
       style={{ background: 'var(--ssp-bg)', color: 'var(--ssp-text)' }}
       dir={isRtl ? 'rtl' : 'ltr'}
     >
+      <AutoUpdate />
       <WelcomeBanner />
       {/* Platform Header */}
       <Header
