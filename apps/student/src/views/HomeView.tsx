@@ -7,6 +7,8 @@ interface HomeViewProps {
   completedLessonIds: string[];
   onNavigate: (view: ViewMode) => void;
   onSelectSubject: (subjectId: string) => void;
+  isGuest?: boolean;
+  onOpenAuth?: () => void;
 }
 
 /**
@@ -22,6 +24,8 @@ export const HomeView: React.FC<HomeViewProps> = ({
   subjects,
   completedLessonIds,
   onSelectSubject,
+  isGuest = false,
+  onOpenAuth,
 }) => {
   /**
    * نستبعد أي مادة ليست مقرّرة على هذا الصف (مثل «التربية الوطنية» التي
@@ -36,6 +40,20 @@ export const HomeView: React.FC<HomeViewProps> = ({
 
   return (
     <div className="space-y-4">
+      {isGuest && (
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 rounded-2xl border border-[#27446C] bg-[#0B1E36] px-3.5 py-3 text-white">
+          <p className="text-[12px] font-bold leading-relaxed">
+            المنهج مفتوح للتصفح. سجّل بحسابك عشان يتسجل تقدمك والامتحانات.
+          </p>
+          <button
+            type="button"
+            onClick={() => onOpenAuth?.()}
+            className="shrink-0 min-h-[40px] px-4 rounded-xl bg-[#F1AC12] text-[#071322] text-[12px] font-black"
+          >
+            دخول / تفعيل رمز
+          </button>
+        </div>
+      )}
       <div className="px-1 text-right">
         <h1 className="text-[17px] font-black text-slate-900 dark:text-white">المقررات الدراسية</h1>
         <p className="mt-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400">

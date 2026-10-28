@@ -17,11 +17,16 @@ const toLatinDigits = (v: string) =>
     .replace(/[\u06f0-\u06f9]/g, (d) => String(d.charCodeAt(0) - 0x06f0))
     .replace(/[\u200e\u200f\u061c]/g, '');
 
+interface AuthGateProps {
+  /** تصفّح المنهج من غير حساب — الرمز للحفظ والامتحانات فقط */
+  onBrowse?: () => void;
+}
+
 /**
- * بوابة الدخول — لا يُفتح التطبيق إلا بحساب مُفعَّل برمز من الإدارة.
- * (نظام رموز الدخول: الإدارة تولّد الرمز ← الطالب يفعّل حسابه به)
+ * شاشة الحساب: تفعيل برمز أو دخول.
+ * المنهج نفسه مفتوح للتصفح من غير رمز.
  */
-export const AuthGate: React.FC = () => {
+export const AuthGate: React.FC<AuthGateProps> = ({ onBrowse }) => {
   const { connection } = useSession();
   const [mode, setMode] = useState<'login' | 'register'>('register');
   const [identifier, setIdentifier] = useState('');
@@ -114,13 +119,26 @@ export const AuthGate: React.FC = () => {
             <GraduationCap className="w-4 h-4" />
             الصف الثالث متوسط — المنهج القومي
           </p>
+          <p className="mt-2 text-[12px] text-slate-300 text-center leading-relaxed">
+            تصفّح الدروس مفتوح للجميع. الحساب برمز الإدارة يحفظ تقدمك وامتحاناتك.
+          </p>
         </div>
+
+        {onBrowse && (
+          <button
+            type="button"
+            onClick={onBrowse}
+            className="mb-4 w-full min-h-[48px] rounded-xl bg-[#F1AC12] text-[#071322] font-black text-[15px]"
+          >
+            تصفّح المنهج بدون حساب
+          </button>
+        )}
 
         {/* بطاقة الدخول */}
         <div className="rounded-2xl border border-[#1A375A] bg-[#08182B]/95 p-5 shadow-2xl shadow-black/50">
           <p className="text-[13px] font-bold text-white flex items-center gap-2 mb-4">
             <ShieldCheck className="w-4.5 h-4.5 text-[#F1AC12] shrink-0" />
-            الدخول متاح لحاملي رمز الإدارة فقط
+            حسابك — تفعيل برمز أو دخول
           </p>
 
           {/* تبويب */}

@@ -28,6 +28,8 @@ interface HeaderProps {
   bookmarkedCount?: number;
   isDarkMode: boolean;
   onToggleDarkMode: () => void;
+  isGuest?: boolean;
+  onOpenAuth?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({ 
@@ -36,7 +38,9 @@ export const Header: React.FC<HeaderProps> = ({
   completedCount: _completedCount,
   bookmarkedCount = 0,
   isDarkMode: _isDarkMode,
-  onToggleDarkMode: _onToggleDarkMode
+  onToggleDarkMode: _onToggleDarkMode,
+  isGuest = false,
+  onOpenAuth,
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { language, toggleLanguage, t, isRtl } = useLanguage();
@@ -152,7 +156,15 @@ export const Header: React.FC<HeaderProps> = ({
             )}
           </button>
 
-          {/* Student Profile & Account Switcher Button */}
+          {isGuest ? (
+            <button
+              onClick={() => onOpenAuth?.()}
+              className="flex items-center gap-1.5 px-3 py-2 text-xs font-black rounded-xl bg-[#F1AC12] text-[#071322] hover:bg-[#ffc433] min-h-[40px]"
+              title="دخول أو تفعيل رمز"
+            >
+              دخول
+            </button>
+          ) : (
           <button
             onClick={() => setIsAccountModalOpen(true)}
             className="flex items-center gap-2 px-3 py-2 text-xs font-semibold rounded-xl transition-all cursor-pointer border border-[#27446C] bg-[#162D4A] hover:bg-[#1E3A60] text-white shadow-sm"
@@ -169,6 +181,7 @@ export const Header: React.FC<HeaderProps> = ({
             </span>
             <Users className="w-3.5 h-3.5 text-slate-400 hidden sm:block" />
           </button>
+          )}
 
           {/* Mobile Hamburger Toggle */}
           <button
@@ -220,17 +233,18 @@ export const Header: React.FC<HeaderProps> = ({
             {/* Account Switcher in Mobile Drawer */}
             <button
               onClick={() => {
-                setIsAccountModalOpen(true);
+                if (isGuest) onOpenAuth?.();
+                else setIsAccountModalOpen(true);
                 setMobileMenuOpen(false);
               }}
               className="w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-sm font-medium bg-[#162D4A] text-slate-200 cursor-pointer min-h-[44px]"
             >
               <div className="flex items-center gap-2.5">
-                <StudentAvatar avatar={activeAccount.avatar} name={activeAccount.name} className="w-8 h-8" textClassName="text-[13px]" />
-                <span>{activeAccount.name}</span>
+                <StudentAvatar avatar={activeAccount.avatar} name={isGuest ? 'ضيف' : activeAccount.name} className="w-8 h-8" textClassName="text-[13px]" />
+                <span>{isGuest ? 'تصفح بدون حساب' : activeAccount.name}</span>
               </div>
               <span className="text-xs text-emerald-400 font-semibold bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
-                حسابي
+                {isGuest ? 'دخول' : 'حسابي'}
               </span>
             </button>
           </div>

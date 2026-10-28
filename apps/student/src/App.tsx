@@ -203,16 +203,14 @@ function AppContent() {
     (u) => u.lessons
   );
 
-  /* بوابة الدخول: التطبيق لا يُفتح إلا بحساب مُفعَّل برمز من الإدارة */
   const { user: gateUser } = useSession();
-  if (!gateUser) {
-    return (
-      <>
-        <WelcomeBanner />
-        <AuthGate />
-      </>
-    );
-  }
+  const [authOpen, setAuthOpen] = useState(false);
+  const isGuest = !gateUser;
+
+  /* بعد الدخول نقفل شاشة الحساب ونرجع للمنهج */
+  useEffect(() => {
+    if (gateUser) setAuthOpen(false);
+  }, [gateUser]);
 
   /**
    * أول زيارة (لا نسخة محفوظة) — المنهج يصل من الخادم بعد لحظة.
@@ -252,6 +250,8 @@ function AppContent() {
         bookmarkedCount={bookmarkedLessonIds.length}
         isDarkMode={isDarkMode}
         onToggleDarkMode={toggleDarkMode}
+        isGuest={isGuest}
+        onOpenAuth={() => setAuthOpen(true)}
       />
 
       {/* Main Container */}
@@ -263,6 +263,8 @@ function AppContent() {
             completedLessonIds={completedLessonIds}
             onNavigate={handleNavigate}
             onSelectSubject={handleSelectSubject}
+            isGuest={isGuest}
+            onOpenAuth={() => setAuthOpen(true)}
           />
         )}
 
@@ -354,6 +356,12 @@ function AppContent() {
 
       {/* Student Account Switcher and Creator Modal */}
       <AccountManagerModal />
+
+      {authOpen && isGuest && (
+        <div className="fixed inset-0 z-[80] overflow-y-auto bg-[#071322]">
+          <AuthGate onBrowse={() => setAuthOpen(false)} />
+        </div>
+      )}
 
       {/* نافذة ضبط عنوان الخادم — تُفتح تلقائياً داخل حزمة APK أول مرة */}
       <ServerSetupDialog />
