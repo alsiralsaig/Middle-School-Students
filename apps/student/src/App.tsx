@@ -65,6 +65,7 @@ import { AIAssistantFab } from './components/AIAssistantFab';
 import { WhatsAppFab } from './components/WhatsAppFab';
 import { useSession } from './hooks/useSession';
 import { ServerSetupDialog } from './components/ServerSetupDialog';
+import { ThemeSwitch } from './components/ThemeSwitch';
 import { applyTheme, readSavedTheme, type ShellTheme } from './utils/theme';
 
 function AppContent() {
@@ -236,6 +237,12 @@ function AppContent() {
         isGuest={isGuest}
         onOpenAuth={() => setAuthOpen(true)}
       />
+      <div className="px-3 py-2 border-b border-[var(--ssp-border)] bg-[var(--ssp-card)]">
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-2">
+          <span className="text-[12px] font-black text-[var(--ssp-text)]">الألوان</span>
+          <ThemeSwitch theme={theme} onChange={setTheme} />
+        </div>
+      </div>
 
       {/* Main Container */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-8 pb-24 lg:pb-12">

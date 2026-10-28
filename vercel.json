@@ -1,6 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "buildCommand": "npm run build --workspace apps/student",
+  "ignoreCommand": "exit 1",
   "outputDirectory": "apps/student/dist",
   "rewrites": [
     {

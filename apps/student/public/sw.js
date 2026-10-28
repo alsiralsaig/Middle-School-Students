@@ -8,7 +8,7 @@
  *   • طلبات API: الشبكة فقط (الذكاء الاصطناعي محتاج نت) مع رسالة واضحة لو فشل.
  *   • الصفحات: network-first مع الرجوع للكاش.
  */
-const VERSION = 'ssp-v1.1.0';
+const VERSION = 'ssp-v1.2.0-theme';
 const SHELL_CACHE = `${VERSION}-shell`;
 const ASSET_CACHE = `${VERSION}-assets`;
 /**
